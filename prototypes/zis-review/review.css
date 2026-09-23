@@ -1,0 +1,30 @@
+/* Review-only fixes; production components are a separate planned phase. */
+.logo img {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.hdr-inner { padding-block: 8px; }
+.hdr.scrolled .hdr-inner { padding-block: 6px; }
+.footer-brand .logo { margin-bottom: 12px; }
+
+/* Grid children and native inputs must shrink inside the available column. */
+.contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.contact-grid > *, .contact-form .field { min-width: 0; }
+.contact-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.contact-info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.contact-info dd { overflow-wrap: anywhere; }
+.field input, .field textarea { min-width: 0; max-width: 100%; }
+.packages-grid > * { min-width: 0; }
+.pkg-head, .pkg-foot { flex-wrap: wrap; }
+
+@media (max-width: 880px) {
+  .contact-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .contact-form { grid-template-columns: minmax(0, 1fr); }
+  .contact-info { grid-template-columns: minmax(0, 1fr); }
+}

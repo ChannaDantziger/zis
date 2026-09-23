@@ -1,0 +1,86 @@
+[
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "errors": [],
+    "menuLogoLoaded": null,
+    "horizontalOverflow": false,
+    "title": "זיס — תצוגה לבדיקה",
+    "logos": [
+      {
+        "src": "./assets/zis-logo-dark.png",
+        "loaded": true
+      },
+      {
+        "src": "./assets/zis-logo-light.png",
+        "loaded": true
+      }
+    ],
+    "brokenImages": 0
+  },
+  {
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "errors": [],
+    "menuLogoLoaded": true,
+    "horizontalOverflow": false,
+    "title": "זיס — תצוגה לבדיקה",
+    "logos": [
+      {
+        "src": "./assets/zis-logo-dark.png",
+        "loaded": true
+      },
+      {
+        "src": "./assets/zis-logo-light.png",
+        "loaded": true
+      }
+    ],
+    "brokenImages": 0
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "errors": [],
+    "menuLogoLoaded": true,
+    "horizontalOverflow": false,
+    "title": "זיס — תצוגה לבדיקה",
+    "logos": [
+      {
+        "src": "./assets/zis-logo-dark.png",
+        "loaded": true
+      },
+      {
+        "src": "./assets/zis-logo-light.png",
+        "loaded": true
+      }
+    ],
+    "brokenImages": 0
+  },
+  {
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "errors": [],
+    "menuLogoLoaded": true,
+    "horizontalOverflow": false,
+    "title": "זיס — תצוגה לבדיקה",
+    "logos": [
+      {
+        "src": "./assets/zis-logo-dark.png",
+        "loaded": true
+      },
+      {
+        "src": "./assets/zis-logo-light.png",
+        "loaded": true
+      }
+    ],
+    "brokenImages": 0
+  }
+]
