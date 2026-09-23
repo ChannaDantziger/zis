@@ -45,6 +45,7 @@
 | [DECISIONS](docs/planning/DECISIONS.md) | כללים קיימים והרחבות עתידיות | החלטות |
 | [DECISION_EXPLANATIONS](docs/planning/DECISION_EXPLANATIONS.md) | הסבר פשוט לסעיפים 1–13, הוראות מ־22.09 והבחירות שנותרו | החלטות והצעות נפרדות |
 | [OPERATIONS_EXCEPTIONS](docs/planning/OPERATIONS_EXCEPTIONS.md) | כל תרחישי חוסר, חלופה, ביטול לאחר אריזה וטיפול בכסף | מפרט והכרעות שנותרו |
+| [ADMIN_MOBILE_SPEC](docs/planning/ADMIN_MOBILE_SPEC.md) | שלושת מסכי הליבה בניהול נייד: מסלול היום, הזמנות וייצור | מפרט יעד והחלטות 24.09 |
 | [VISUAL_REVIEW](docs/planning/VISUAL_REVIEW.md) | תצוגת זיס, צילומי דפדפן, תיקונים והמלצות לפני פיצול לרכיבים | סקירה חזותית |
 | [Preview README](prototypes/zis-review/README.md) | הפעלת עותק הבדיקה, מקורות, יצירה מחדש ומגבלות | אב־טיפוס |
 | [OPEN_ISSUES](OPEN_ISSUES.md) | פערים, סתירות ותנאי סגירה | פתוח |

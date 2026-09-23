@@ -133,7 +133,7 @@ packages/
 
 - כתובת נפרדת, למשל `https://admin.zis.example`, ולא מסלול בתוך אתר הלקוחות.
 - `/login` — התחברות.
-- `/` — Dashboard מובייל.
+- `/` — Dashboard מובייל: סך הזמנות היום, משימות פתוחות וסיכום ייצור; פירוט ב־[אפיון הניהול הנייד](docs/planning/ADMIN_MOBILE_SPEC.md).
 - `/products` — רשימת מוצרים.
 - `/products/new` — יצירת מוצר.
 - `/products/:productId/edit` — עריכת מוצר, וריאציות ותמונות.
@@ -143,11 +143,12 @@ packages/
 - ערכי הפתיחה לפי החלטת 22.09: ירושלים, ביתר ובית שמש, עם הוספת ערים בניהול. מסכי הניהול יאפשרו שינוי שעת חיתוך (בתחילה 09:00), בחירת מדיניות חוסר ואישור זמינות מילוי שבועי לפי וריאציה.
 - `/orders` — רשימת הזמנות.
 - `/orders/:orderId` — פרטי הזמנה וביטול.
+- `/production` — מה צריך לייצר היום, מאוגד לפי מוצר ווריאציה.
 - `/shipping` — אזורים וכללי משלוח.
 - `/store-settings` — פתיחה, סגירה ונעילה.
 - `/audit-log` — לוג פעולות.
 
-מסך ההזמנה יציג את רצף הסטטוסים `ordered`, `in_preparation`, `packed`, `in_transit`, `delivered`, `approved`, `cancelled`; פעולת ביטול תוצג ותאופשר רק לפני `packed`.
+מסך ההזמנה יציג את רצף הסטטוסים `ordered`, `in_preparation`, `packed`, `in_transit`, `delivered`, `approved`, `cancelled`. ביטול אפשרי בכל שלב; אחרי `packed` נדרשים בירור החזקה בחבילה, אישור נוסף וטיפול כספי נפרד לפי [מטריצת החריגים](docs/planning/OPERATIONS_EXCEPTIONS.md). שינוי סטטוס מרוכז מותר רק קדימה; ביטול ושינוי לאחור נשארים פרטניים.
 
 האפליקציה תהיה Mobile-first ותתוכנן קודם למסכי טלפון, אך תישאר נגישה ונוחה גם במסך מחשב; אין צורך לחסום תצוגה לפי מכשיר.
 
@@ -188,6 +189,9 @@ packages/
 - `useAdminProductsQuery`.
 - `useUpdateInventoryMutation`.
 - `useCancelOrderMutation`.
+- `useAdminDashboardQuery`.
+- `useAdminOrdersQuery` ו־`useBulkOrderStatusMutation`.
+- `useProductionQuery` ו־`useAdminTasksQuery`.
 
 אין לקרוא ל־`fetch` ישירות מתוך רכיב תצוגה.
 
