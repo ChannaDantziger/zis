@@ -10,9 +10,15 @@ import {
   type MediaUploadResult,
 } from '../contracts/media.contracts.js';
 
+export interface StorageService {
+  upload(input: MediaUploadInput, content: Buffer): Promise<MediaUploadResult>;
+  createSignedUrl(bucket: MediaBucket, storagePath: string): Promise<MediaUploadResult>;
+  remove(bucket: MediaBucket, storagePath: string): Promise<void>;
+}
+
 const SIGNED_URL_TTL_SECONDS = 60 * 15;
 
-export function createSupabaseStorageService(supabase: SupabaseClient) {
+export function createSupabaseStorageService(supabase: SupabaseClient): StorageService {
   return {
     upload,
     createSignedUrl,

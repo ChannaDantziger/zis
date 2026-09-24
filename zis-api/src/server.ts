@@ -10,6 +10,10 @@ import { createPostgresCatalogRepository } from './catalog/postgres-catalog.repo
 import { createCatalogService } from './catalog/catalog.service.js';
 import { PRODUCT_MEDIA_BUCKET } from './contracts/media.contracts.js';
 import { createSupabaseStorageService } from './storage/storage.service.js';
+import { createPostgresAdminCatalogRepository } from './catalog/postgres-admin-catalog.repository.js';
+import { createAdminCatalogService } from './catalog/admin-catalog.service.js';
+import { createPostgresDashboardRepository } from './dashboard/postgres-dashboard.repository.js';
+import { createDashboardService } from './dashboard/dashboard.service.js';
 
 const port = Number(process.env.PORT ?? DEFAULT_PORT);
 const serverConfig = readServerConfig();
@@ -31,6 +35,8 @@ const app = hasServerDependencies
       const resolveAdminUserId = createSupabaseAuthResolver(supabase);
       const storage = createSupabaseStorageService(supabase);
       const catalogRepository = createPostgresCatalogRepository(createPostgresClientFactory(pool));
+      const adminCatalogRepository = createPostgresAdminCatalogRepository(createPostgresClientFactory(pool));
+      const dashboardRepository = createPostgresDashboardRepository(createPostgresClientFactory(pool));
       const catalogService = createCatalogService(
         catalogRepository,
         (bucket, storagePath) => storage.createSignedUrl(bucket, storagePath).then((result) => result.url),
@@ -39,6 +45,9 @@ const app = hasServerDependencies
         inventoryService,
         resolveAdminUserId,
         catalogService,
+        storageService: storage,
+        adminCatalogService: createAdminCatalogService(adminCatalogRepository),
+        dashboardService: createDashboardService(dashboardRepository),
         allowedOrigins: serverConfig.allowedOrigins,
         readinessChecks: {
           postgres: async () => {
@@ -47,7 +56,14 @@ const app = hasServerDependencies
         },
       });
     })()
-  : createApp({ allowedOrigins: serverConfig.allowedOrigins });
+  : createApp({
+      allowedOrigins: serverConfig.allowedOrigins,
+      readinessChecks: {
+        configuration: async () => {
+          throw new Error('Server dependencies are not configured');
+        },
+      },
+    });
 
 if (!hasServerDependencies) {
   console.warn('Supabase/PostgreSQL configuration is missing; admin inventory routes are disabled.');

@@ -56,12 +56,12 @@
 
 ## P2 — API ותשתית שרת
 
-- [ ] להשלים Config validation, שגיאות אחידות, request ID, לוגים מסוננים, CORS ומגבלות בקשות.
-- [ ] להפריד liveness ו־readiness; `/health` הקיים אינו מוכיח חיבור למסד.
-- [ ] לממש categories/catalog/product, חיפוש, סינון, מיון ועימוד ב־Routes/Controllers/Services.
-- [ ] להחזיר רק נתונים פעילים ומותרים; שדות פנימיים ופרטי מנהלים אינם ציבוריים.
-- [ ] להחזיר תמונה ראשית וגלריה לפי וריאציה עם fallback למוצר ו־URL תקף.
-- [ ] להוסיף ניהול קטלוג ומדיה ל־API עם אימות Admin ורישום פעולות.
+- [x] להשלים Config validation, שגיאות אחידות, request ID, לוגים מסוננים, CORS ומגבלות בקשות. [תשתית](zis-api/src/middleware/error-handler.ts)
+- [x] להפריד liveness ו־readiness; `/health` הקיים אינו מוכיח חיבור למסד. [Health](zis-api/src/routes/health.routes.ts)
+- [x] לממש categories/catalog/product, חיפוש, סינון, מיון ועימוד ב־Routes/Controllers/Services. [Catalog](zis-api/src/catalog)
+- [x] להחזיר רק נתונים פעילים ומותרים; שדות פנימיים ופרטי מנהלים אינם ציבוריים. [Repository](zis-api/src/catalog/postgres-catalog.repository.ts)
+- [x] להחזיר תמונה ראשית וגלריה לפי וריאציה עם fallback למוצר ו־URL תקף. [Service](zis-api/src/catalog/catalog.service.ts)
+- [x] להשלים ניהול קטלוג ומדיה ל־API עם אימות Admin ורישום פעולות; יצירת Product/Variant, metadata לתמונות, עדכון/ארכוב ו־Audit קיימים. [Admin catalog](zis-api/src/routes/admin-catalog.routes.ts) · [Media upload](zis-api/src/routes/admin-media.routes.ts)
 
 **תנאי סיום:** API מחזיר DB ותמונות שימושיות; שינוי נתונים משתקף בשליפה ומוסתר/מחוק אינו דולף. בדיקות והרשאות מתאימות עוברות.
 

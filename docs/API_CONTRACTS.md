@@ -20,9 +20,11 @@
 | `GET /catalog` | ציבורי | `CatalogResponse`, עם `categorySlug`, `search`, `sort`, `direction`, `page`, `pageSize` |
 | `GET /catalog/:productId` | ציבורי | `CatalogProduct` פעיל בלבד |
 | `GET /faq` | ציבורי | רשומות `active` לפי `sortOrder` |
-| `POST /admin/media/upload` | Admin | העלאה חדשה וקבלת URL חתום קצר־תוקף |
+| `POST /admin/media/upload` | Admin | גוף בינארי; `X-Media-Bucket`, `X-File-Name`, `Content-Type`; העלאה חדשה וקבלת URL חתום קצר־תוקף |
 | `POST /admin/products/:id/images` | Admin | יצירת metadata לאחר העלאה מאומתת |
-| `PATCH /admin/product-images/:id` | Admin | alt, סדר, סוג, החלפה או ארכוב לוגי |
+| `PATCH /admin/product-images/:id` | Admin | alt, סדר, סוג או ארכוב לוגי; החלפה מתבצעת בהעלאה חדשה ואז עדכון metadata |
+| `POST /admin/products` | Admin | יצירת מוצר במצב טיוטה ורישום Audit |
+| `POST /admin/products/:id/variants` | Admin | יצירת וריאציה ומלאי התחלתי ורישום Audit |
 | `GET /event-gallery` | ציבורי | תמונות אירועים שפורסמו בלבד |
 
 תמונת מוצר כוללת `imageId`, `url`, `altText`, `imageType` ו־`sortOrder`. URL מדיה נוצר מחדש על ידי השרת; הוא אינו אסמכתה קבועה. העלאה מותרת רק ל־JPEG/PNG/WebP עד 5 MiB. קובץ חדש נבדק ונרשם לפני הסרת הקודם.

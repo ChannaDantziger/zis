@@ -84,3 +84,18 @@ export interface AvailabilityResponse {
     shortageSets: number;
   }>;
 }
+
+export interface StoreStatusResponse {
+  storeOpen: boolean;
+  lockMode: 'open' | 'closed' | 'scheduled';
+  lockMessage: string | null;
+  timezone: string;
+  sameDayCutoffTime: string;
+}
+
+export interface ShippingZoneResponse {
+  shippingZoneId: string;
+  name: string;
+  city: string;
+  neighborhood: string | null;
+}

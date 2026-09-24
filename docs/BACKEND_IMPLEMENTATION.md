@@ -10,7 +10,7 @@
 | [server](../zis-api/src/server.ts) | bootstrap מותנה ב־PostgreSQL/Supabase |
 | [app](../zis-api/src/app.ts) | Express, JSON, Health והזרקת נתיב Admin |
 | [server-config](../zis-api/src/config/server-config.ts) | הפרדת כתובת פיתוח/ייצור |
-| [health](../zis-api/src/routes/health.routes.ts) | GET /health בלבד |
+| [health](../zis-api/src/routes/health.routes.ts) | /health, /health/live ו־/health/ready |
 | [Supabase client](../zis-api/src/auth/supabase.client.ts) | client שרת ללא Session דפדפן |
 | [Auth resolver](../zis-api/src/auth/supabase-auth.resolver.ts) | Bearer token ומשתמש Admin פעיל |
 | [Admin route](../zis-api/src/routes/admin-inventory.routes.ts) | POST /admin/inventory/:productVariantId/adjust |
@@ -20,17 +20,22 @@
 | [Pool](../zis-api/src/infrastructure/postgres.ts) | Pool/SqlClientFactory אמיתיים בקוד |
 | [Contracts](../zis-api/src/contracts/index.ts) | טיפוסים, עימוד, שגיאות, מדיה, קטלוג, משלוח, Quote, זמינות והזמנה |
 | [Storage service](../zis-api/src/storage/storage.service.ts) | העלאה, Signed URL והסרה עם מגבלות MIME וגודל |
+| [Catalog](../zis-api/src/catalog) | שליפת קטגוריות, קטלוג ומוצר עם חיפוש/עימוד ותמונות |
+| [HTTP middleware](../zis-api/src/middleware) | request ID, CORS, rate limit ושגיאות אחידות |
+| [Quote foundation](../zis-api/src/commerce/quote.service.ts) | חוקי תאריך ותמחור Quote טהורים ללא Reservation |
+| [Commerce routes](../zis-api/src/routes/commerce.routes.ts) | Store status, אזורי משלוח, זמינות ו־Quote; ממתין להזרקת DB/לוח חגים |
 | [Domain status](../zis-api/src/domain/order-status.ts) | eligibility להכנה ומדיניות ביטול חלקית |
 
 ## גבולות המימוש
 
 - ללא תלויות מוזרקות ב־createApp נתיב המלאי אינו נחשף. ב־server נוצרות התלויות רק כשיש הגדרות מתאימות.
 - בפיתוח נבחר DATABASE_URL_TRN; בייצור DATABASE_URL. אין טעינה אוטומטית של קובץ סביבה בקוד שנבדק.
-- בריאות השרת אינה readiness למסד; חסרים /health/live ו־/health/ready.
+- `/health` ו־`/health/live` הם liveness; `/health/ready` בודק את התלויות שהוזרקו, כולל PostgreSQL בשרת מלא.
 - Repository נועל Variant עם FOR UPDATE ומשתמש BEGIN/COMMIT/ROLLBACK.
 - עדכון available_sets והיסטוריית before/after נעשים באותה טרנזקציה.
 - Auth משתמש ב־getUser ומוודא admin_users פעיל; בדיקות HTTP משתמשות בספק מדומה.
-- אין עדיין Routes/Controllers/Services מלאים ל־Catalog, Images, Shipping, Orders, Payments, Refund, PDF או Admin UI; חוזי P1 ושירות Storage מוכנים לחיבור בשלבים הבאים.
+- קיימים Routes/Controllers/Services לקטלוג ציבורי, העלאת מדיה וניהול metadata בסיסי עם Audit; עדיין חסרים Shipping, Orders, Payments, Refund, PDF ו־Admin UI.
+- מנועי תאריך ו־Quote קיימים כקוד טהור אך טרם מחוברים ל־DB/Routes, כדי לא לקבע מחירי משלוח או לוח חגים ללא נתוני עסק מאומתים.
 - applyPaidSale אינו בודק בעצמו תשלום שמור; נדרש תזמור מהימן ומניעת כפילויות.
 - שגיאות וולידציה, Audit, הרשאות/קשרי DB וביטולים דורשים השלמה ב־O05–O13.
 

@@ -3,6 +3,13 @@
 [אינדקס](PLAN_INDEX.md) · [תוכנית](IMPLEMENTATION_PLAN.md) · [סקירה](docs/SYSTEM_AUDIT.md).
 עודכן: 24.09.2026. ראיות הקוד והבדיקות להלן מתאריך 18.09 אלא אם צוין אחרת.
 
+## P7 — תחילת מימוש הדשבורד — 24.09.2026
+
+- נוספה שכבת קריאה ראשונה לדשבורד התפעולי: `GET /admin/dashboard`, `GET /admin/orders` ו־`GET /admin/production`.
+- ה־API מחובר ל־PostgreSQL ול־Supabase Admin resolver, ומחזיר ספירות סטטוסים, משימות פתוחות, הזמנות לפי יום, סטטוסים מותרים בהמשך וסיכום ייצור להזמנות ששולמו.
+- נוספו בדיקות יחידה לאימות תאריך, מיון ושאילתת ההזמנות.
+- עדיין לא מומשו מסכי `admin-mobile`, פעולות שינוי סטטוס, PDF, Push, הרשאות תפקיד מדויקות או בדיקת DB חי. לכן O18/O23 נשארים פתוחים.
+
 ## P1 — נתונים, מדיה וחוזים — 24.09.2026
 
 - נוסף חוזה TypeScript לקטלוג, מדיה, משלוח, זמינות, Quote, יצירת הזמנה, אישור אורח, עימוד ושגיאות: [API_CONTRACTS](docs/API_CONTRACTS.md) ו־[contracts](zis-api/src/contracts/index.ts).
@@ -10,6 +17,21 @@
 - תוקן Seed הערים ללא פסיק עודף ונוספה ייחודיות שמכסה `neighborhood=NULL`. נוספו בדיקות DB מתוכננות לקשר Product/Variant/Image, תמונה ראשית חיה ומדיניות פרסום. אין אישור שהמיגרציות הופעלו.
 - נקבע אישור אורח באמצעות אסימון אקראי קצר־תוקף שנשמר כ־hash; מספר הזמנה לבדו אינו הרשאה. נוספו [מחולל ו־hash](zis-api/src/security/confirmation-token.ts) וטבלת `order_confirmation_tokens` ללא RLS ציבורי. משך התוקף עדיין Config ולא החלטה עסקית קשיחה.
 - `npm.cmd run typecheck` עבר. `npm.cmd test` לא נטען עקב `uv_os_get_passwd / ENOMEM`; אין תוצאת pass. `psql` אינו מותקן, ולכן SQL/RLS ו־Storage טרם נבדקו מול DB.
+
+## P2 — תשתית שרת וקטלוג — 24.09.2026
+
+- נוספו request ID, שגיאות אחידות ללא דליפת פרטים, CORS לפי רשימת Origins, rate limit בזיכרון ו־production config validation.
+- נוספו `/health/live` ו־`/health/ready`; readiness בודק `select 1` כאשר שרת מחובר ל־PostgreSQL. `/health` נשמר כתאימות ומחזיר liveness.
+- נוספו `GET /categories`, `GET /catalog` ו־`GET /catalog/:productId` במבנה Routes/Controller/Service/Repository. החיפוש, הסינון, המיון והעימוד פרמטריים ומוגבלים.
+- השליפה מסננת `active` ו־`is_deleted=false`, אינה מחזירה `storage_path`, ומייצרת Signed URLs. תמונות וריאציה נופלות חזרה לתמונות המוצר.
+- נוסף `POST /admin/media/upload` עם Bearer Admin, MIME וגודל גוף בינארי. נוספו גם יצירת Product/Variant, רישום metadata לתמונה, ארכוב/עדכון תמונה ו־Audit טרנזקציוני.
+- Typecheck ו־build עברו. בדיקות runtime עדיין חסומות באותה שגיאת `uv_os_get_passwd / ENOMEM`, ו־DB חי לא אומת.
+
+## P5 — תשתית משלוח ו־Quote — 24.09.2026
+
+- נוסף מנוע טהור לחוקי תאריך ב־`Asia/Jerusalem`: טווח הזמנה, ימי עבודה, cutoff, חג/סגירה וחנות פתוחה. הוא מקבל את לוח החגים מבחוץ ואינו ממציא תאריכים.
+- נוסף מנוע Quote שמחשב מינימום Product, זמינות Variant, מחיר חבילה וכלל משלוח יקר ביותר במקרה חפיפה. הוא אינו שומר Quote ואינו מבצע Reservation.
+- נוספו Routes/Controller ל־`/store-status`, `/shipping/zones`, `/availability` ו־`/quote`, וכן Repository PostgreSQL. ההזרקה לשרת הראשי ממתינה ל־DB פיתוח ול־HolidayCalendar מאומת, כדי לא להפעיל Quote בלי חגים/מחירי משלוח אמיתיים. [Commerce routes](zis-api/src/routes/commerce.routes.ts)
 
 ## תצוגת `Lis-standalone` — 24.09.2026
 
@@ -48,7 +70,7 @@
 
 ## מה קיים בקוד
 
-- Express/TypeScript, יצירת app, שרת ו־GET /health.
+- Express/TypeScript, יצירת app, שרת, liveness/readiness ו־GET /health.
 - חיבור PostgreSQL Pool ו־Supabase client; bootstrap מותנה בהגדרות.
 - אימות Bearer token ומשתמש Admin פעיל.
 - POST /admin/inventory/:productVariantId/adjust עם Controller/Service/Repository.
@@ -80,10 +102,10 @@
 
 ## מה עדיין לא מומש
 
-Storefront/Admin כיישומים נפרדים, Catalog/Images API, Storage מנוהל, Checkout, Orders, תשלום, חשבוניות/PDF, הקצאת ייצור שבועית, תפעול הזמנה, Push בפועל, Docker/CI ושחזור.
+Storefront/Admin כיישומים נפרדים, ניהול metadata של Catalog/Images, Shipping, Checkout, Orders, תשלום, חשבוניות/PDF, הקצאת ייצור שבועית, תפעול הזמנה, Push בפועל, Docker/CI ושחזור.
 
 התנהגות חוסר מאושר בקוד סותרת את התכנון; ביטול ואידמפוטנטיות דורשים תיקון. פירוט וראיות ב־[OPEN_ISSUES](OPEN_ISSUES.md).
 
 ## המשך
 
-P0/P1 תחילה, תוך הכנת P3 לפי המקור החזותי הנבחר. אחר כך קטלוג ושליפות P2/P4, ולא מעבר ישיר ממלאי לסליקה. מסמנים משימה בתוכנית כגמורה רק עם קישור למימוש ולבדיקה.
+P1 הושלם ברמת חוזים/טיוטות, ו־P2 הושלם חלקית ברמת קוד. לפני סימון אבני הדרך כגמורות נדרשות הרצת DB/Storage ובדיקות runtime. לאחר אימות P2 ממשיכים ל־P3/P4, ולא מעבר ישיר ממלאי לסליקה.
