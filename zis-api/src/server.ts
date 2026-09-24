@@ -14,6 +14,8 @@ import { createPostgresAdminCatalogRepository } from './catalog/postgres-admin-c
 import { createAdminCatalogService } from './catalog/admin-catalog.service.js';
 import { createPostgresDashboardRepository } from './dashboard/postgres-dashboard.repository.js';
 import { createDashboardService } from './dashboard/dashboard.service.js';
+import { createPostgresOrderStatusRepository } from './operations/postgres-order-status.repository.js';
+import { createOrderStatusService } from './operations/order-status.service.js';
 
 const port = Number(process.env.PORT ?? DEFAULT_PORT);
 const serverConfig = readServerConfig();
@@ -37,6 +39,7 @@ const app = hasServerDependencies
       const catalogRepository = createPostgresCatalogRepository(createPostgresClientFactory(pool));
       const adminCatalogRepository = createPostgresAdminCatalogRepository(createPostgresClientFactory(pool));
       const dashboardRepository = createPostgresDashboardRepository(createPostgresClientFactory(pool));
+      const orderStatusRepository = createPostgresOrderStatusRepository(createPostgresClientFactory(pool));
       const catalogService = createCatalogService(
         catalogRepository,
         (bucket, storagePath) => storage.createSignedUrl(bucket, storagePath).then((result) => result.url),
@@ -48,6 +51,7 @@ const app = hasServerDependencies
         storageService: storage,
         adminCatalogService: createAdminCatalogService(adminCatalogRepository),
         dashboardService: createDashboardService(dashboardRepository),
+        orderStatusService: createOrderStatusService(orderStatusRepository),
         allowedOrigins: serverConfig.allowedOrigins,
         readinessChecks: {
           postgres: async () => {

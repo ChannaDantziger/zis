@@ -19,6 +19,8 @@ import { createAdminDashboardRouter } from './routes/admin-dashboard.routes.js';
 import type { DashboardService } from './dashboard/dashboard.types.js';
 import type { CommerceService } from './commerce/commerce.types.js';
 import { createCommerceRouter } from './routes/commerce.routes.js';
+import { createAdminOrderStatusRouter } from './routes/admin-order-status.routes.js';
+import type { OrderStatusService } from './operations/order-status.types.js';
 
 export interface AppDependencies {
   inventoryService?: InventoryService;
@@ -30,6 +32,7 @@ export interface AppDependencies {
   adminCatalogService?: AdminCatalogService;
   dashboardService?: DashboardService;
   commerceService?: CommerceService;
+  orderStatusService?: OrderStatusService;
 }
 
 export function createApp(dependencies: AppDependencies = {}) {
@@ -58,6 +61,9 @@ export function createApp(dependencies: AppDependencies = {}) {
   }
   if (dependencies.dashboardService && dependencies.resolveAdminUserId) {
     app.use(createAdminDashboardRouter(dependencies.dashboardService, dependencies.resolveAdminUserId));
+  }
+  if (dependencies.orderStatusService && dependencies.resolveAdminUserId) {
+    app.use(createAdminOrderStatusRouter(dependencies.orderStatusService, dependencies.resolveAdminUserId));
   }
   if (dependencies.commerceService) {
     app.use(createCommerceRouter(dependencies.commerceService));

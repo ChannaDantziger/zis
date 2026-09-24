@@ -39,7 +39,7 @@ export function createSupabaseAuthResolver(
 
     const { data: adminUser, error: adminError } = await supabase
       .from('admin_users')
-      .select('admin_user_id, status')
+      .select('admin_user_id, status, role')
       .eq('admin_user_id', user.id)
       .maybeSingle();
 
@@ -47,6 +47,6 @@ export function createSupabaseAuthResolver(
       return { status: 'forbidden' };
     }
 
-    return { status: 'authenticated', adminUserId: adminUser.admin_user_id };
+    return { status: 'authenticated', adminUserId: adminUser.admin_user_id, role: adminUser.role };
   };
 }

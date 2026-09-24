@@ -7,9 +7,11 @@ interface InventoryAdjustmentBody {
 }
 
 export type AdminUserResolution =
-  | { status: 'authenticated'; adminUserId: string }
+  | { status: 'authenticated'; adminUserId: string; role?: AdminUserRole }
   | { status: 'unauthenticated' }
   | { status: 'forbidden' };
+
+export type AdminUserRole = 'operations_manager' | 'delivery_driver';
 
 export type AdminUserResolver = (request: Request) => Promise<AdminUserResolution>;
 

@@ -61,6 +61,17 @@
 
 ## קודי שגיאה מחייבים
 
+## Admin תפעולי
+
+| שיטה ונתיב | הרשאה | חוזה |
+|---|---|---|
+| `GET /admin/dashboard?date=YYYY-MM-DD` | Admin פעיל | סיכום יום, משימות פתוחות, הזמנות הבאות וסיכום ייצור |
+| `GET /admin/orders?deliveryDate=YYYY-MM-DD` | Admin פעיל | שורות הזמנה, סינון/מיון, `allowedNextStatuses` ו־`version` |
+| `GET /admin/production?date=YYYY-MM-DD` | Admin פעיל | קיבוץ Sets לפי מוצר/וריאציה להזמנות ששולמו |
+| `POST /admin/orders/bulk-status` | Admin פעיל | `{ items: [{ orderId, version }], targetStatus }`; מחזיר תוצאה נפרדת לכל הזמנה |
+
+שינוי מרוכז מותר רק קדימה: `ordered` ששולמה → `in_preparation` → `packed` → `in_transit` → `delivered` → `approved`. השרת בודק גרסה, תשלום, תפקיד ומעבר חוקי; הצלחות נרשמות ב־`order_status_history`, והזמנות שנכשלו אינן מונעות הצלחה של אחרות באותה בקשה.
+
 | HTTP | `code` | שימוש |
 |---:|---|---|
 | 400 | `VALIDATION_ERROR` | גוף, UUID, תאריך, כמות או עימוד לא תקינים |

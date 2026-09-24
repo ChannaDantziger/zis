@@ -53,9 +53,9 @@ async function listOrdersWithClient(client: SqlClient, query: AdminOrdersQuery, 
     `select o.order_id as "orderId", o.order_number as "orderNumber", o.status, o.total::text,
             coalesce(o.delivery_address->>'city', '') as location, coalesce(o.delivery_address->>'city', '') as city,
             o.delivery_date as "deliveryDate", min(oi.product_variant_id) as "productVariantId",
-            string_agg(distinct oi.product_name_snapshot || ' · ' || oi.variant_name_snapshot, ', ' order by oi.product_name_snapshot) as "itemSummary",
+            string_agg(distinct oi.product_name_snapshot || ' · ' || oi.variant_name_snapshot, ', ' order by (oi.product_name_snapshot || ' · ' || oi.variant_name_snapshot)) as "itemSummary",
             exists (select 1 from public.admin_tasks task where task.order_id = o.order_id and task.status = 'open') as "hasOpenTask",
-            o.updated_at::text as version
+            extract(epoch from o.updated_at)::text as version
        from public.orders o join public.order_items oi on oi.order_id = o.order_id
       where ${filters.join(' and ')}
       group by o.order_id
@@ -75,7 +75,7 @@ async function getProductionWithClient(client: SqlClient, date: string): Promise
     `select oi.product_variant_id as "productVariantId", oi.product_name_snapshot as "productName",
             oi.variant_name_snapshot as "variantName", null::text as "imagePath",
             sum(oi.quantity_sets)::int as "requiredSets", count(distinct o.order_id)::int as "orderCount",
-            exists (select 1 from public.admin_tasks task where task.order_id = o.order_id and task.status = 'open') as "hasOpenTask"
+            bool_or(exists (select 1 from public.admin_tasks task where task.order_id = o.order_id and task.status = 'open')) as "hasOpenTask"
        from public.orders o join public.order_items oi on oi.order_id = o.order_id
       where o.delivery_date = $1 and o.payment_status = 'paid' and o.status in ('ordered', 'in_preparation')
       group by oi.product_variant_id, oi.product_name_snapshot, oi.variant_name_snapshot

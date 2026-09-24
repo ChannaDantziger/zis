@@ -1,0 +1,6 @@
+body { margin: 0; background: #f7f2e9; }
+.app-header { background: #fffaf2; border-bottom-color: #e7ded0; }
+.grow { flex: 1; min-width: 0; }
+.list-row { padding: 8px 0; border-bottom: 1px solid #eee6db; }
+.action-bar { position: sticky; bottom: 12px; z-index: 2; background: #fffaf2; }
+@media (max-width: 576px) { .mantine-AppShell-main { padding: 16px 12px; } }
