@@ -2,7 +2,7 @@
 
 [אינדקס](../PLAN_INDEX.md) · [תיעוד Backend](../docs/BACKEND_IMPLEMENTATION.md).
 
-שרת Express/TypeScript חלקי. קיימים GET /health ו־POST /admin/inventory/:productVariantId/adjust; נתיב Admin מופעל רק כאשר מוזרקות התלויות המתאימות.
+שרת Express/TypeScript חלקי. קיימים GET /health ו־POST /admin/inventory/:productVariantId/adjust; חוזי P1 ושירות Storage קיימים בקוד, אך Routes הקטלוג/מדיה/משלוח/הזמנה עדיין יתווספו ב־P2/P5.
 
 ## פיתוח
 

@@ -1,7 +1,7 @@
 # תיעוד מימוש Backend — מצב חלקי
 
 [אינדקס](../PLAN_INDEX.md) · [תיעוד מימוש](../DOCS_INDEX.md) · [פערים](../OPEN_ISSUES.md).
-אומת בקריאת קוד ב־18.09.2026; אין כאן אישור לחיבור DB חי.
+אומת בקריאת קוד ובדיקות TypeScript ב־24.09.2026; אין כאן אישור לחיבור DB או Supabase חי.
 
 ## רכיבים קיימים
 
@@ -18,6 +18,8 @@
 | [Inventory service](../zis-api/src/inventory/inventory.service.ts) | עדכון, מכירה, חוסר והחזר |
 | [Repository](../zis-api/src/inventory/postgres-inventory.repository.ts) | שאילתות SQL פרמטריות וטרנזקציה |
 | [Pool](../zis-api/src/infrastructure/postgres.ts) | Pool/SqlClientFactory אמיתיים בקוד |
+| [Contracts](../zis-api/src/contracts/index.ts) | טיפוסים, עימוד, שגיאות, מדיה, קטלוג, משלוח, Quote, זמינות והזמנה |
+| [Storage service](../zis-api/src/storage/storage.service.ts) | העלאה, Signed URL והסרה עם מגבלות MIME וגודל |
 | [Domain status](../zis-api/src/domain/order-status.ts) | eligibility להכנה ומדיניות ביטול חלקית |
 
 ## גבולות המימוש
@@ -28,13 +30,13 @@
 - Repository נועל Variant עם FOR UPDATE ומשתמש BEGIN/COMMIT/ROLLBACK.
 - עדכון available_sets והיסטוריית before/after נעשים באותה טרנזקציה.
 - Auth משתמש ב־getUser ומוודא admin_users פעיל; בדיקות HTTP משתמשות בספק מדומה.
-- אין עדיין Catalog, Images, Shipping, Orders, Payments, Refund, PDF או Admin UI.
+- אין עדיין Routes/Controllers/Services מלאים ל־Catalog, Images, Shipping, Orders, Payments, Refund, PDF או Admin UI; חוזי P1 ושירות Storage מוכנים לחיבור בשלבים הבאים.
 - applyPaidSale אינו בודק בעצמו תשלום שמור; נדרש תזמור מהימן ומניעת כפילויות.
 - שגיאות וולידציה, Audit, הרשאות/קשרי DB וביטולים דורשים השלמה ב־O05–O13.
 
 ## בדיקות והפעלה
 
 [פקודות ההרצה](../zis-api/README.md) ו־[תוצאות עדכניות](../IMPLEMENTATION_PROGRESS.md).
-Typecheck עבר בסקירה; npm test נעצר בשגיאת מערכת לפני טעינת tests. קובץ Integration קיים אך לא הורץ מול DB בסקירה ויש לתקן את ה־fixture לפני הפעלה.
+Typecheck עבר ב־24.09.2026. `npm test` נעצר לפני טעינת tests בשגיאת מערכת `uv_os_get_passwd / ENOMEM`; אין להסיק מכך pass. אין `psql` בסביבת העבודה, ולכן SQL ו־RLS טרם אומתו מול DB. קובץ Integration קיים אך לא הורץ מול DB ויש לתקן את ה־fixture לפני הפעלה.
 
 אין לסמן שה־Backend “מוכן לייצור” על בסיס שלד זה. סדר ההשלמה ב־[תוכנית](../IMPLEMENTATION_PLAN.md).

@@ -116,6 +116,10 @@
 | `admin_user_id` | מזהה Admin | בעל המכשיר |
 | `push_provider` | ספק Push | Firebase, Expo או אחר |
 | `push_token` | אסימון Push | יעד ההתראה |
+
+## משימות תפעול — מתוכנן ל־P7
+
+`admin_notifications` ו־Push מדווחים על אירוע, אבל אינם מספיקים לניהול עבודה: משימה פתוחה נדרשת כדי להציג “דורש טיפול” גם כאשר ההודעה כבר נקראה או שה־Push נכשל. `admin_tasks` המתוכננת מחזיקה מקור (`system`/`manual`), עדיפות, מצב, מועד אופציונלי וקשר להזמנה; פירוט השדות והמניעה מכפילויות ב־[סכמת Admin](docs/schema/INVENTORY_ADMIN.md) וב־[אפיון הניהול הנייד](docs/planning/ADMIN_MOBILE_SPEC.md).
 | `is_active` | פעיל | האם ניתן לשלוח |
 | `last_seen_at` | נראה לאחרונה | פעילות אחרונה |
 

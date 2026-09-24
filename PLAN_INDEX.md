@@ -1,6 +1,6 @@
 # אינדקס מרכזי — ZIS
 
-עודכן ב־23.09.2026. זהו שער הכניסה לכל מסמכי העבודה במאגר.
+עודכן ב־24.09.2026. זהו שער הכניסה לכל מסמכי העבודה במאגר.
 כל קישור מציין מה קוראים ולשם מה; תיקיות שטרם קיימות מסומנות כתכנון בלבד.
 
 ## מתחילים כאן
@@ -46,7 +46,9 @@
 | [DECISION_EXPLANATIONS](docs/planning/DECISION_EXPLANATIONS.md) | הסבר פשוט לסעיפים 1–13, הוראות מ־22.09 והבחירות שנותרו | החלטות והצעות נפרדות |
 | [OPERATIONS_EXCEPTIONS](docs/planning/OPERATIONS_EXCEPTIONS.md) | כל תרחישי חוסר, חלופה, ביטול לאחר אריזה וטיפול בכסף | מפרט והכרעות שנותרו |
 | [ADMIN_MOBILE_SPEC](docs/planning/ADMIN_MOBILE_SPEC.md) | שלושת מסכי הליבה בניהול נייד: מסלול היום, הזמנות וייצור | מפרט יעד והחלטות 24.09 |
+| [OPERATIONS_DELIVERY_PLAN](docs/planning/OPERATIONS_DELIVERY_PLAN.md) | תאריכי אספקה, סגירת חנות, סטטוסים, מסמכי PDF, התראות, הרשאות ועצי בדיקה | מפרט ותור עבודה 24.09 |
 | [VISUAL_REVIEW](docs/planning/VISUAL_REVIEW.md) | תצוגת זיס, צילומי דפדפן, תיקונים והמלצות לפני פיצול לרכיבים | סקירה חזותית |
+| [STORE_CONTENT_AND_GALLERY](docs/planning/STORE_CONTENT_AND_GALLERY.md) | מקור הנתונים, תצוגת חמש תמונות אירועים, כרטיסים וכתובת משלוח | החלטות ומבחני קבלה 24.09 |
 | [Preview README](prototypes/zis-review/README.md) | הפעלת עותק הבדיקה, מקורות, יצירה מחדש ומגבלות | אב־טיפוס |
 | [OPEN_ISSUES](OPEN_ISSUES.md) | פערים, סתירות ותנאי סגירה | פתוח |
 | [OWNER_ACTIONS](OWNER_ACTIONS.md) | תוכן, החלטות, חשבונות והשקה | משימות שלך |
@@ -64,8 +66,11 @@
 | [BACKEND_ARCHITECTURE](BACKEND_ARCHITECTURE.md) | עקרונות Backend וקישורים לתחומים |
 | [BACKEND_COMMERCE](BACKEND_COMMERCE.md) | מוצרים, Cart, הזמנות, תשלום, מלאי ומשלוח |
 | [BACKEND_OPERATIONS](BACKEND_OPERATIONS.md) | אבטחה, הרשאות, ניטור ואמינות |
+| [API_CONTRACTS](docs/API_CONTRACTS.md) | חוזי API P1: קטלוג, מדיה, משלוח, Quote, הזמנה ושגיאות |
 | [ERD_SCHEMA](ERD_SCHEMA.md) | עקרונות, תרשים ראשוני וקישורים לפירוט שפוצל |
 | [CATALOG schema](docs/schema/CATALOG.md) | קטגוריות, מוצרים, וריאציות ותמונות |
+| [EVENT_GALLERY schema](docs/schema/EVENT_GALLERY.md) | טבלת ניהול נפרדת לתמונות אירועים ו־Storage |
+| [STORAGE schema](docs/schema/STORAGE.md) | Buckets, העלאה, URL חתום, מגבלות והרשאות |
 | [SHIPPING schema](docs/schema/SHIPPING.md) | משלוחים, כללים, הגדרות וסגירות |
 | [ORDERS schema](docs/schema/ORDERS.md) | הזמנות, פריטים, סטטוסים, תשלומים וחשבוניות |
 | [INVENTORY_ADMIN schema](docs/schema/INVENTORY_ADMIN.md) | תנועות מלאי, מנהלים ו־Audit |
@@ -83,7 +88,7 @@
 | [BACKEND_IMPLEMENTATION](docs/BACKEND_IMPLEMENTATION.md) | רכיבי API, מגבלות וחיבור מותנה למסד |
 | [INVENTORY_AND_STATUS](docs/INVENTORY_AND_STATUS.md) | ההתנהגות הנוכחית של מלאי וסטטוסים |
 | [zis-api README](zis-api/README.md) | פקודות הרצה וגבולות השרת |
-| [zis-db README](zis-db/README.md) | כל ארבע המיגרציות וסדר אימות |
+| [zis-db README](zis-db/README.md) | שבע מיגרציות forward-only וסדר אימות; מצב ההרצה החי לא אומת |
 | [scripts README](scripts/README.md) | הכנת קבצים ובדיקת התיעוד |
 | [.codex README](.codex/README.md) | תיאור פרופיל הרשאות מקומי |
 
@@ -100,9 +105,8 @@
 
 | מקור | מה נמצא בו / איך משתמשים |
 |---|---|
-| [Lis Patisserie.html](<C:/Users/123/Documents/חנה/פרוייקטים/ליס/Lis Patisserie.html>) | אב־טיפוס ארוז, נתוני Demo והזמנה מדומה |
-| [Lis-standalone.html](<C:/Users/123/Documents/חנה/פרוייקטים/ליס/Lis-standalone.html>) | גרסה נוספת; יש לבחור מקור חזותי לפני שכתוב |
-| [001](zis-db/migrations/001_initial_zis_schema.sql), [002](zis-db/migrations/002_seed_base_data.sql), [003](zis-db/migrations/003_business_decisions.sql), [004](zis-db/migrations/004_inventory_history_without_delta.sql) | SQL; מצב ופערים ב־zis-db README |
+| [source-standalone.html](prototypes/zis-review/source-standalone.html) | עותק במאגר של מקור התצוגה היחיד שנבחר ב־24.09; קובץ המקור החיצוני לא נערך |
+| [001](zis-db/migrations/001_initial_zis_schema.sql), [002](zis-db/migrations/002_seed_base_data.sql), [003](zis-db/migrations/003_business_decisions.sql), [004](zis-db/migrations/004_inventory_history_without_delta.sql), [005](zis-db/migrations/005_event_gallery_images.sql), [006](zis-db/migrations/006_operations_delivery_and_admin.sql), [007](zis-db/migrations/007_p1_storage_and_confirmation.sql) | SQL; כל המיגרציות דורשות אימות ledger ו־DB פיתוח לפני הרצה |
 | [package.json](zis-api/package.json) | תלויות וסקריפטים ל־API |
 | [prepare-file-for-llm](scripts/prepare-file-for-llm.ps1) | הכנת עותק בטוח; קוראים רק PreparedPath |
 | [check-docs](scripts/check-docs.ps1) | בדיקת אורכים, קישורים וכיסוי כל MD באינדקס |

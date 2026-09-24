@@ -61,3 +61,39 @@
 
 - `idx_audit_entity_time` על `(entity_type, entity_id, created_at DESC)`.
 - `idx_audit_user_time` על `(admin_user_id, created_at DESC)`.
+
+### `admin_tasks` — מתוכנן ל־P7
+
+משימות תפעול ידניות ומשימות מערכת שדורשות סגירה מפורשת. הודעת Push או `admin_notification` אינן מחליפות משימה פתוחה.
+
+| שדה | סוג | חובה | הסבר |
+|---|---|---:|---|
+| `admin_task_id` | `uuid` | כן | Primary Key |
+| `source` | `text` | כן | `system` או `manual` |
+| `source_event_key` | `text` | לא | מזהה אירוע יציב למשימת מערכת; מונע כפילויות |
+| `title` | `text` | כן | כותרת הפעולה |
+| `description` | `text` | לא | פירוט בטוח לתפעול |
+| `priority` | `text` | כן | `critical`, `high`, `normal` |
+| `status` | `text` | כן | `open`, `done` או `dismissed` |
+| `due_at` | `timestamptz` | לא | מועד טיפול, אם קיים |
+| `order_id` | `uuid` | לא | FK להזמנה הקשורה, אם קיימת |
+| `created_by` | `uuid` | לא | Admin יוצר או מערכת |
+| `resolved_by` | `uuid` | לא | מי סגר/ביטל |
+| `resolved_at` | `timestamptz` | לא | זמן סגירה/ביטול |
+| `created_at` | `timestamptz` | כן | זמן יצירה |
+| `updated_at` | `timestamptz` | כן | זמן עדכון |
+
+אילוצים ואינדקסים מתוכננים:
+
+- `CHECK` על `source`, `priority` ו־`status` לפי הערכים שלעיל.
+- מפתח ייחודי חלקי על `source_event_key` כאשר מקור המשימה הוא `system` והמשימה פתוחה.
+- אינדקס על `(status, priority, due_at)` לרשימת “דורש טיפול” ועל `(order_id)` למשימות הזמנה.
+- סגירה, ביטול ושינוי עדיפות נרשמים גם ב־`admin_audit_log`.
+- ביצירת משימה ידנית ממשק המשתמש דורש רק `title`; השרת משלים `source = manual`, `priority = normal` ו־`status = open`. `due_at` נשאר null ואין שדה חזרתיות במהדורה הראשונה.
+
+## עדכון הרשאות והתראות — 24.09.2026
+
+- `admin_users.role` מתוכנן כ־`operations_manager` או `delivery_driver`. הראשון בלבד משנה תאריך, סוגר חנות, מבטל ומבצע החזר מלא; השני מסמן הזמנה כ־`delivered` רק ברשימת האספקות המותרת לו.
+- `admin_notification_preferences` שומר לכל מנהל שתי בחירות: Push להזמנה חדשה ו־Push למשימה חדשה. ברירת המחדל מופעלת, אך כיבוי למנהל יחיד אינו מוחק את `admin_notifications` או `admin_tasks`.
+- `admin_notifications` מורחב לסוגים `new_order` ו־`late_paid_order`. משימת מערכת משתמשת ב־`source_event_key` ייחודי כל עוד היא פתוחה, כדי ש־Webhook/retry לא ייצרו כפילות.
+- `admin_tasks`, העדפות, Push devices והתראות מקבלים RLS ללא גישה ציבורית. ה־Admin API הוא נקודת הגישה ובודק תפקיד פעיל; אין להסתמך על רכיב מוסתר.

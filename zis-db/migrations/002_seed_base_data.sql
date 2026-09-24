@@ -15,7 +15,7 @@ select city, city
 from unnest(array[
   'ירושלים',
   'ביתר',
-  'בית שמש',
-  
+  'בית שמש'
 ]) as cities(city)
-on conflict (city, neighborhood) do nothing;
+where btrim(city) <> ''
+on conflict do nothing;

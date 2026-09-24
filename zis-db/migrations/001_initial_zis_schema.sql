@@ -72,7 +72,7 @@ create table public.shipping_zones (
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (city, neighborhood)
+  check (btrim(city) <> '')
 );
 
 create table public.shipping_methods (
@@ -227,6 +227,24 @@ create table public.admin_audit_log (
   created_at timestamptz not null default now()
 );
 
+create or replace function public.is_active_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.admin_users
+    where admin_user_id = auth.uid()
+      and status = 'active'
+  );
+$$;
+
+revoke all on function public.is_active_admin() from public;
+grant execute on function public.is_active_admin() to authenticated;
+
 create unique index ux_product_one_default_variant on public.product_variants(product_id) where is_default;
 create unique index ux_product_primary_image on public.product_images(product_id) where product_variant_id is null and image_type = 'primary';
 create unique index ux_variant_primary_image on public.product_images(product_variant_id) where product_variant_id is not null and image_type = 'primary';
@@ -239,6 +257,8 @@ create index idx_variants_product_status on public.product_variants(product_id, 
 create index idx_variants_low_stock on public.product_variants(stock_sets);
 create index idx_product_images_display on public.product_images(product_id, product_variant_id, sort_order);
 create index idx_shipping_zones_lookup on public.shipping_zones(city, neighborhood, is_active);
+create unique index ux_shipping_zone_city_neighborhood
+  on public.shipping_zones (city, coalesce(neighborhood, ''));
 create index idx_shipping_rules_calculation on public.shipping_rules(shipping_zone_id, shipping_method_id, is_active, size_from_sets, size_to_sets);
 create index idx_store_closures_time on public.store_closures(starts_at, ends_at, is_active);
 create index idx_orders_status_created on public.orders(status, created_at desc);

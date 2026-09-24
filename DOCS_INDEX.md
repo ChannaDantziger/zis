@@ -10,6 +10,8 @@
 | [התקדמות](IMPLEMENTATION_PROGRESS.md) | מצב נוכחי ותוצאות בדיקה | מעודכן לסקירה |
 | [תצוגת זיס](prototypes/zis-review/README.md) | הפעלת עותק HTML, לוגו ותיקוני מובייל שנבדקו ב־23.09 | אב־טיפוס בלבד; לא חנות מחוברת |
 | [Backend](docs/BACKEND_IMPLEMENTATION.md) | שלד שרת, אימות ושירות מלאי | חלקי |
+| [API Contracts](docs/API_CONTRACTS.md) | חוזי P1 לקטלוג, מדיה, משלוח, Quote, זמינות ואישור אורח | חוזה מוכן; Routes חלקיים |
+| [Storage](docs/schema/STORAGE.md) | Buckets, העלאה, Signed URL והרשאות | קוד ומיגרציה; לא אומת חי |
 | [מלאי וסטטוסים](docs/INVENTORY_AND_STATUS.md) | התנהגות שירות קיימת ופערים | חלקי |
 | [API README](zis-api/README.md) | הרצה מקומית | קיים |
 | [Database README](zis-db/README.md) | ארבע מיגרציות ומגבלות | לא אומת במסד חי |

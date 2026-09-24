@@ -150,6 +150,26 @@ create table if not exists public.admin_notifications (
   updated_at timestamptz not null default now()
 );
 
+create trigger trg_system_defaults_updated_at
+  before update on public.system_defaults
+  for each row execute function public.set_updated_at();
+
+create trigger trg_variant_weekly_capacity_updated_at
+  before update on public.variant_weekly_capacity
+  for each row execute function public.set_updated_at();
+
+create trigger trg_production_allocations_updated_at
+  before update on public.production_allocations
+  for each row execute function public.set_updated_at();
+
+create trigger trg_admin_push_devices_updated_at
+  before update on public.admin_push_devices
+  for each row execute function public.set_updated_at();
+
+create trigger trg_admin_notifications_updated_at
+  before update on public.admin_notifications
+  for each row execute function public.set_updated_at();
+
 create index if not exists idx_variant_weekly_capacity_lookup
   on public.variant_weekly_capacity(product_variant_id, week_start_date, is_active);
 
@@ -157,6 +177,30 @@ create index if not exists idx_production_allocations_week
   on public.production_allocations(product_variant_id, delivery_date, status);
 
 alter table public.system_defaults enable row level security;
+alter table public.variant_weekly_capacity enable row level security;
+alter table public.production_allocations enable row level security;
+alter table public.admin_push_devices enable row level security;
+alter table public.admin_notifications enable row level security;
+
+create policy admin_system_defaults on public.system_defaults
+  for all to authenticated using (public.is_active_admin())
+  with check (public.is_active_admin());
+
+create policy admin_variant_weekly_capacity on public.variant_weekly_capacity
+  for all to authenticated using (public.is_active_admin())
+  with check (public.is_active_admin());
+
+create policy admin_production_allocations on public.production_allocations
+  for all to authenticated using (public.is_active_admin())
+  with check (public.is_active_admin());
+
+create policy admin_push_devices on public.admin_push_devices
+  for all to authenticated using (public.is_active_admin())
+  with check (public.is_active_admin());
+
+create policy admin_notifications on public.admin_notifications
+  for all to authenticated using (public.is_active_admin())
+  with check (public.is_active_admin());
 
 -- Public catalog policies must exclude logically deleted records.
 drop policy if exists public_catalog_categories on public.categories;
@@ -191,6 +235,72 @@ create policy public_catalog_images on public.product_images for select using (
     )
   )
 );
+
+drop index if exists public.ux_product_primary_image;
+drop index if exists public.ux_variant_primary_image;
+create unique index ux_product_one_live_primary_image
+  on public.product_images(product_id)
+  where product_variant_id is null and image_type = 'primary' and is_deleted = false;
+create unique index ux_variant_one_live_primary_image
+  on public.product_images(product_variant_id)
+  where product_variant_id is not null and image_type = 'primary' and is_deleted = false;
+
+create or replace function public.validate_product_image_relationship()
+returns trigger
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  if new.product_variant_id is not null and not exists (
+    select 1
+    from public.product_variants variant
+    where variant.product_variant_id = new.product_variant_id
+      and variant.product_id = new.product_id
+  ) then
+    raise exception 'product image variant must belong to product';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_validate_product_image_relationship on public.product_images;
+create trigger trg_validate_product_image_relationship
+  before insert or update on public.product_images
+  for each row execute function public.validate_product_image_relationship();
+
+create or replace function public.validate_published_product()
+returns trigger
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  if new.status = 'active' and (
+    new.is_deleted
+    or not exists (
+      select 1 from public.categories category
+      where category.category_id = new.category_id
+        and category.status = 'active'
+        and category.is_deleted = false
+    )
+    or not exists (
+      select 1 from public.product_variants variant
+      where variant.product_id = new.product_id
+        and variant.status = 'active'
+        and variant.is_deleted = false
+    )
+  ) then
+    raise exception 'active product requires an active category and active variant';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_validate_published_product on public.products;
+create trigger trg_validate_published_product
+  before insert or update on public.products
+  for each row execute function public.validate_published_product();
 
 -- Future tables intentionally not created yet:
 -- faq_entries, integration_jobs, inventory_reservations,

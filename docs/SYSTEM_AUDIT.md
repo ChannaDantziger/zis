@@ -38,8 +38,8 @@
 
 | מקור | גודל בסקירה | מבנה |
 |---|---:|---|
-| [Lis Patisserie.html](<C:/Users/123/Documents/חנה/פרוייקטים/ליס/Lis Patisserie.html>) | 5,973,813 bytes | 180 שורות מעטפת, manifest/template ונכסים מקודדים |
-| [Lis-standalone.html](<C:/Users/123/Documents/חנה/פרוייקטים/ליס/Lis-standalone.html>) | 6,061,205 bytes | אותו סוג אריזה; אין הוכחה ששתי הגרסאות זהות |
+| `Lis Patisserie.html` | 5,973,813 bytes בסקירת 18.09 | 180 שורות מעטפת, manifest/template ונכסים מקודדים; המקור אינו זמין עוד בנתיב החיצוני שנרשם ב־24.09 |
+| [source-standalone.html](../prototypes/zis-review/source-standalone.html) | 6,061,205 bytes | עותק המקור שנשמר במאגר; אין הוכחה ששתי הגרסאות החיצוניות זהות |
 
 מספר השורות של המעטפת אינו מעיד על מודולריות: שורות ארוכות מכילות קוד/נכסים שלמים. אין לראות ב־180 שורות עמידה במהות כלל הפיצול.
 

@@ -100,3 +100,14 @@
 
 - `CHECK (ends_at > starts_at)`.
 - אינדקס `idx_store_closures_time` על `(starts_at, ends_at, is_active)`.
+
+## עדכון תפעול ואספקה — 24.09.2026
+
+הסעיפים הבאים מתוכננים במיגרציית [006](../../zis-db/migrations/006_operations_delivery_and_admin.sql), קדימה בלבד לאחר אימות היסטוריית DB:
+
+- `shipping_zones.dispatch_time time` נשמר כהכנה להרחבה עתידית. במהדורה הנוכחית נדרשת זמינות עיר בלבד; שעת יציאה נפרדת לעיר אינה מופעלת ואינה תנאי להפעלה.
+- `store_settings.store_open` ו־`lock_message` הם מקור אמת לסגירה כללית. `GET /store-status` מחזיר אותם, הלקוח משבית "הוסף לסל", והשרת דוחה quote/Order גם אם נשלחה קריאה ישירה.
+- זמינות תאריך מחושבת בשרת לפי `business_timezone`, `max_advance_days`, `same_day_cutoff_time`, עיר פעילה וחג/ערב חג בישראל. הספרייה המומלצת היא `@hebcal/core` עם `il: true`; התלות והחישוב בשרת, לא ברכיב לוח התאריכים.
+- אין חלונות אישיים למהדורה זו. תאריך היום מושבת אחרי ה־cutoff; התאריך שנבחר נשמר ב־`orders.delivery_date`. שם אולם אופציונלי נשמר בהזמנה, לא באזור המשלוח.
+
+ראו את [תוכנית התפעול](../planning/OPERATIONS_DELIVERY_PLAN.md) לחוזי API, ניסוח הלקוח ועצי בדיקה.

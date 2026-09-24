@@ -94,10 +94,10 @@ packages/
 | רכיב באב־טיפוס | יעד במבנה החדש |
 |---|---|
 | `Header`, `Footer`, `MobileTabBar` | `shared/components` או `app` לפי שימוש |
-| `Hero`, `CatalogStrip`, `Brands`, `Stories`, `Trust`, `FAQ`, `Contact` | `features/catalog` ו־`pages/HomePage` |
+| `Hero`, `FAQ` | `pages/HomePage`; אזורי Demo כפולים/לא מאושרים הוסרו מהתצוגה |
 | `ProductsGrid` | `features/catalog` |
 | `Packages` | בשלב ראשון Feature נפרד לקריאה בלבד; הרכבת חבילות תגיע בעתיד |
-| `Gallery` | `features/product-gallery` |
+| `Gallery` בדף הבית | `features/event-gallery`, בניהול ובטבלה נפרדים מתמונות מוצר |
 | `CartProvider`, `CartDrawer` | `stores/cart.store.ts` ו־`features/cart` |
 | `CheckoutModal`, `MobileSteps` | `features/checkout` ו־`pages/CheckoutPage` |
 | `ConfirmationPane` | `features/order-confirmation` |
@@ -105,7 +105,7 @@ packages/
 | `localStorage` של העגלה | יישאר רק לשחזור עגלה מקומית, לא לשמירת הזמנה או מלאי |
 | `TweaksPanel` | יוסר מ־Production או יישמר ככלי פיתוח נפרד |
 
-## גלריית תמונות — שלב לאחר השלמת האב־טיפוס
+## גלריות תמונות — דרישת ליבה ל־P3/P4
 
 לאחר שהאב־טיפוס יושלם וייוצב לפי כללי ה־Frontend, Mantine וה־Design System, יבוצעו תוספות הגלריה הבאות:
 
@@ -114,7 +114,7 @@ packages/
 - לחיצה על תמונה תפתח `Lightbox` או `Modal` גדול מעל המסך.
 - בתוך ה־Lightbox ניתן יהיה לעבור לתמונה הקודמת והבאה, לסגור ולראות את התמונה הנבחרת.
 - הדפדוף יתמוך במקלדת: `Escape`, חצים ימינה/שמאלה ו־Focus ברור.
-- הגלריה תיטען מ־`product_images` לפי `sort_order`, עם תמונה ראשית ותמונות נוספות למוצר או לווריאציה.
+- גלריית הבית תציג תמונות אירועים בלבד מ־`event_gallery_images` לפי `sort_order`: חמש תמונות אחידות בשורה במסך ממוצע, תמונה גדולה ודפדוף עם תמונות ממוזערות מתחת. גלריית דף המוצר תיטען בנפרד מ־`product_images`.
 - כאשר אין תמונות נוספות, התמונה הראשית עדיין תיפתח ב־Lightbox ללא חיצי דפדוף.
 - מסך ה־Admin יאפשר העלאה, החלפה, שינוי סדר, סימון תמונה ראשית והזנת `alt_text`.
 
@@ -140,11 +140,12 @@ packages/
 - `/inventory` — מלאי פרטי בלבד.
 - במסך עריכת מוצר יוצגו `set_size` ו־`default_min_sets` ברמת המוצר; הווריאציות יוצגו כרשימה או כרטיסיות לפי המוצר, עם דפדוף ביניהן.
 - בחירת עיר משלוח תיטען מה־API ומהטבלה `shipping_zones`, ללא רשימת ערים קשיחה בקוד.
-- ערכי הפתיחה לפי החלטת 22.09: ירושלים, ביתר ובית שמש, עם הוספת ערים בניהול. מסכי הניהול יאפשרו שינוי שעת חיתוך (בתחילה 09:00), בחירת מדיניות חוסר ואישור זמינות מילוי שבועי לפי וריאציה.
+- ערכי הפתיחה הם ירושלים, ביתר ובית שמש, עם הוספת ערים בניהול. במהדורה הנוכחית מנהלים זמינות עיר ושעת חיתוך כללית מתוך DB; שעת יציאה נפרדת לעיר נדחתה. סגירת חנות והעדפות התראות נשלטות בניהול.
 - `/orders` — רשימת הזמנות.
 - `/orders/:orderId` — פרטי הזמנה וביטול.
 - `/production` — מה צריך לייצר היום, מאוגד לפי מוצר ווריאציה.
 - `/shipping` — אזורים וכללי משלוח.
+- `/faq` — ניהול שאלות ותשובות פעילות, סדר, טיוטות וארכוב.
 - `/store-settings` — פתיחה, סגירה ונעילה.
 - `/audit-log` — לוג פעולות.
 
@@ -192,6 +193,7 @@ packages/
 - `useAdminDashboardQuery`.
 - `useAdminOrdersQuery` ו־`useBulkOrderStatusMutation`.
 - `useProductionQuery` ו־`useAdminTasksQuery`.
+- `useFaqQuery` ו־`useAdminFaqQuery`.
 
 אין לקרוא ל־`fetch` ישירות מתוך רכיב תצוגה.
 
