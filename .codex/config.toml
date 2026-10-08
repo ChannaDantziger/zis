@@ -1,0 +1,17 @@
+# Project-local Codex permissions.
+# Select this profile in Codex permissions, or restart the task after changing it.
+
+default_permissions = "zis-workspace"
+
+[permissions.zis-workspace]
+extends = ":workspace"
+description = "ZIS workspace with environment files blocked from local commands"
+
+[permissions.zis-workspace.filesystem]
+glob_scan_max_depth = 4
+
+[permissions.zis-workspace.filesystem.":workspace_roots"]
+"." = "write"
+"**/*.env" = "deny"
+"**/*.env.*" = "deny"
+"zis-api/.env.example" = "read"
