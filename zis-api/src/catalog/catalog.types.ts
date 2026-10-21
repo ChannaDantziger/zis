@@ -28,7 +28,9 @@ export interface CatalogProductRecord {
   name: string;
   description: string | null;
   setSize: number;
-  minimumSets: number;
+  pricePerSet: string;
+  availableSets: number;
+  displayOrder: number;
   images: CatalogImageRecord[];
   variants: CatalogVariantRecord[];
 }

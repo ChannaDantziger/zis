@@ -8,7 +8,10 @@
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "tsx --test src/**/*.test.ts",
+    "check:db-migrations": "node scripts/check-migration-ledger.mjs",
+    "check:manual-schema": "node scripts/check-manual-schema.mjs",
+    "apply:manual-migrations": "node scripts/apply-manual-migrations.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

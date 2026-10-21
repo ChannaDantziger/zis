@@ -39,7 +39,9 @@ export interface CatalogProduct {
   name: string;
   description: string | null;
   setSize: number;
-  minimumSets: number;
+  pricePerSet: string;
+  availableSets: number;
+  displayOrder: number;
   primaryImage: CatalogImage | null;
   gallery: CatalogImage[];
   variants: CatalogVariant[];

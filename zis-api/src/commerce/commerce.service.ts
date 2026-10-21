@@ -7,6 +7,7 @@ export function createCommerceService(repository: CommerceRepository): CommerceS
   return {
     getStoreStatus: () => repository.getStoreStatus(),
     listShippingZones: () => repository.listShippingZones(),
+    listShippingMethods: () => repository.listShippingMethods(),
     getAvailability: (input: AvailabilityRequest) => repository.getAvailability(input),
     calculateQuote: (input: ShippingQuoteInput, now?: Date) => quoteService.calculate(input, now),
   };

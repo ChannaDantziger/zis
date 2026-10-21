@@ -6,6 +6,8 @@ export interface ServerEnvironment {
   SUPABASE_SERVICE_ROLE_KEY?: string;
   SUPABASE_SECRET_KEY?: string;
   CORS_ALLOWED_ORIGINS?: string;
+  ORDER_CONFIRMATION_TOKEN_TTL_SECONDS?: string;
+  ORDER_CONFIRMATION_TOKEN_SECRET?: string;
 }
 
 export interface ServerConfig {
@@ -14,6 +16,8 @@ export interface ServerConfig {
   supabaseServiceRoleKey?: string;
   databaseSource?: 'DATABASE_URL' | 'DATABASE_URL_TRN';
   allowedOrigins: string[];
+  orderConfirmationTokenTtlSeconds?: number;
+  orderConfirmationTokenSecret?: string;
 }
 
 /**
@@ -23,7 +27,8 @@ export interface ServerConfig {
  * production connection from a local development process.
  */
 export function readServerConfig(environment: ServerEnvironment = process.env): ServerConfig {
-  const allowedOrigins = parseAllowedOrigins(environment.CORS_ALLOWED_ORIGINS);
+  const orderConfirmation = parseOrderConfirmationConfig(environment);
+  const allowedOrigins = parseAllowedOrigins(environment.CORS_ALLOWED_ORIGINS, environment.NODE_ENV);
   if (environment.NODE_ENV === 'production' && environment.DATABASE_URL) {
     return {
       databaseUrl: environment.DATABASE_URL,
@@ -31,6 +36,7 @@ export function readServerConfig(environment: ServerEnvironment = process.env): 
       supabaseUrl: environment.SUPABASE_URL,
       supabaseServiceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY ?? environment.SUPABASE_SECRET_KEY,
       allowedOrigins,
+      ...orderConfirmation,
     };
   }
 
@@ -41,6 +47,7 @@ export function readServerConfig(environment: ServerEnvironment = process.env): 
       supabaseUrl: environment.SUPABASE_URL,
       supabaseServiceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY ?? environment.SUPABASE_SECRET_KEY,
       allowedOrigins,
+      ...orderConfirmation,
     };
   }
 
@@ -48,6 +55,7 @@ export function readServerConfig(environment: ServerEnvironment = process.env): 
     supabaseUrl: environment.SUPABASE_URL,
     supabaseServiceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY ?? environment.SUPABASE_SECRET_KEY,
     allowedOrigins,
+    ...orderConfirmation,
   };
 }
 
@@ -68,9 +76,19 @@ export function validateServerConfig(config: ServerConfig, environment: ServerEn
   return errors;
 }
 
-function parseAllowedOrigins(value: string | undefined): string[] {
-  return (value ?? '')
+function parseAllowedOrigins(value: string | undefined, nodeEnvironment: string | undefined): string[] {
+  const configuredOrigins = (value ?? '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+  if (configuredOrigins.length > 0 || nodeEnvironment === 'production') return configuredOrigins;
+  return ['http://localhost:5173', 'http://127.0.0.1:5173'];
+}
+
+function parseOrderConfirmationConfig(environment: ServerEnvironment) {
+  const rawTtl = environment.ORDER_CONFIRMATION_TOKEN_TTL_SECONDS;
+  const secret = environment.ORDER_CONFIRMATION_TOKEN_SECRET;
+  const ttl = rawTtl && /^\d+$/.test(rawTtl) ? Number(rawTtl) : NaN;
+  if (!Number.isSafeInteger(ttl) || ttl < 1 || ttl > 2_147_483_647 || !secret || secret.length < 32) return {};
+  return { orderConfirmationTokenTtlSeconds: ttl, orderConfirmationTokenSecret: secret };
 }

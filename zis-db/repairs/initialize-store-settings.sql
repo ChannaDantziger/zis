@@ -1,0 +1,3 @@
+-- Superseded by ../migrations/009_initialize_store_settings.sql.
+-- The canonical data repair is now migration 009; this historical path is retained.
+-- No SQL is executed by this file. Review and apply 009 separately.

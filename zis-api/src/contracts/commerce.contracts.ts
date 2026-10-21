@@ -9,7 +9,8 @@ export interface DeliveryAddress {
 }
 
 export interface CartItemInput {
-  productVariantId: string;
+  productId: string;
+  productVariantId?: string | null;
   quantitySets: number;
 }
 
@@ -27,6 +28,7 @@ export interface QuotePreview {
   subtotal: string;
   shippingTotal: string;
   taxTotal: string;
+  taxRate?: string;
   total: string;
   currency: 'ILS';
   availability: 'available' | 'unavailable';
@@ -91,6 +93,7 @@ export interface StoreStatusResponse {
   lockMessage: string | null;
   timezone: string;
   sameDayCutoffTime: string;
+  dispatchTime: string | null;
 }
 
 export interface ShippingZoneResponse {
@@ -99,3 +102,5 @@ export interface ShippingZoneResponse {
   city: string;
   neighborhood: string | null;
 }
+
+export interface ShippingMethodResponse { shippingMethodId: string; name: string; code: string; }

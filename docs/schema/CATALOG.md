@@ -1,5 +1,5 @@
-> מפרט תכנון, לא אישור לסכמה חיה. [מפת ERD](../../ERD_SCHEMA.md) · [אינדקס](../../PLAN_INDEX.md) · [פערים](../../OPEN_ISSUES.md).
-> יש לקרוא יחד עם [עדכוני הסכמה](POLICIES_AND_UPDATES.md) ו־[מודל המלאי](../../INVENTORY_MODEL.md); שדות 003/004 אינם משוכפלים בכל טבלה.
+> מפרט תכנון, לא אישור לסכמה חיה. דרישות עדכניות: [תוכנית תיקון קטלוג](../OPEN_ISSUES.md#תוכנית-תיקון-קטלוג-ומדיה-14.10.2026). [מפת ERD](../ERD_SCHEMA.md) · [אינדקס](../PLAN_INDEX.md) · [פערים](../OPEN_ISSUES.md).
+> יש לקרוא יחד עם [עדכוני הסכמה](POLICIES_AND_UPDATES.md) ו־[מודל המלאי](../INVENTORY_MODEL.md); שדות 003/004 אינם משוכפלים בכל טבלה.
 
 ## טבלאות ליבה
 
@@ -26,7 +26,7 @@
 
 ### `products`
 
-ישות המוצר העסקית; גודל ה־Set ומינימום ההזמנה נשמרים כאן. המחיר והמלאי נשמרים בווריאציה.
+ישות המוצר העסקית. מיגרציה 011 מוסיפה תמיכה במוצר פשוט ללא וריאציות, מחיר ומלאי ברמת מוצר, וסדר תצוגה. ניסיון החלה ב־Production נכשל עקב שם עמודה ישן; קובץ המקור תוקן, ויש לבדוק מצב DB חלקי לפני ניסיון חוזר. לפי החלטת 11.10 אין מינימום כמות למוצר; המינימום היחיד הוא סכום המוצרים.
 
 | שדה | סוג | חובה | הסבר |
 |---|---|---:|---|
@@ -36,7 +36,10 @@
 | `description` | `text` | לא | תיאור המוצר |
 | `status` | `text` | כן | `draft`, `active`, `hidden`, `sold_out`, `archived` |
 | `set_size` | `integer` | כן | מספר היחידות הפיזיות בכל Set של מוצר זה |
-| `default_min_sets` | `integer` | כן | מינימום Sets ברמת מוצר |
+| `price_per_item` | `numeric(12,2)` | לא | מחיר ליחידה למוצר פשוט ללא וריאציות |
+| `available_items` | `integer` | כן | מלאי יחידות למוצר פשוט ללא וריאציות |
+| `product_code` | `text` | לא | קוד פנימי למוצר פשוט |
+| `display_order` | `integer` | כן | סדר תצוגה; UI מציע קפיצות 10 אך מאפשר הזנה ידנית |
 | `created_at` | `timestamptz` | כן | זמן יצירה |
 | `updated_at` | `timestamptz` | כן | זמן עדכון |
 | `archived_at` | `timestamptz` | לא | זמן ארכוב |
@@ -45,7 +48,9 @@
 
 - `FOREIGN KEY (category_id) REFERENCES categories(category_id)`.
 - `CHECK (set_size >= 1)`.
-- `CHECK (default_min_sets >= 1)`.
+- `CHECK (price_per_item >= 0)` כאשר הוגדר מחיר מוצר פשוט.
+- `CHECK (available_items >= 0)` ו־`CHECK (display_order >= 0)`.
+- טריגר פרסום דורש קטגוריה פעילה ותמונת מוצר ראשית; מוצר פשוט דורש מחיר ומלאי, ומוצר מורכב דורש וריאציה פעילה ותמונה לכל וריאציה פעילה.
 - `CHECK (status IN ('draft', 'active', 'hidden', 'sold_out', 'archived'))`.
 - אינדקס `idx_products_category_status` על `(category_id, status)`.
 - אינדקס `idx_products_active` על `(status, category_id)` עם Partial Index ל־`status = 'active'`.

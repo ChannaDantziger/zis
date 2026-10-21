@@ -3,8 +3,8 @@ import { ApiError } from '../http/api-error.js';
 import { assertDeliveryDateAllowed, type DeliveryPolicy } from './delivery-policy.js';
 
 export interface QuoteVariantContext {
-  productVariantId: string;
-  productMinimumSets: number;
+  productId: string;
+  productVariantId: string | null;
   pricePerSet: string;
   availableSets: number;
   active: boolean;
@@ -22,8 +22,9 @@ export interface ShippingRuleContext {
 
 export interface QuoteContext {
   deliveryPolicy: DeliveryPolicy;
-  minimumOrderTotal: string;
+  minimumProductSubtotal: string;
   currency: 'ILS';
+  taxRate: string;
   shippingRules: ShippingRuleContext[];
   variants: QuoteVariantContext[];
 }
@@ -46,9 +47,10 @@ export function createQuoteService(repository: QuoteRepository): QuoteService {
       const subtotalCents = lines.reduce((sum, line) => sum + moneyToCents(line.variant.pricePerSet) * line.quantitySets, 0);
       const shippingTotalCents = calculateShipping(input, context.shippingRules, totalSets);
       const totalCents = subtotalCents + shippingTotalCents;
-      const minimumCents = moneyToCents(context.minimumOrderTotal);
-      if (totalCents < minimumCents) {
-        throw new ApiError(422, 'BUSINESS_RULE_VIOLATION', 'Order total is below the store minimum');
+      if (!Number.isSafeInteger(totalCents) || totalCents > 999999999999) throw new ApiError(422,'BUSINESS_RULE_VIOLATION','Order amount exceeds the supported range');
+      const minimumCents = moneyToCents(context.minimumProductSubtotal);
+      if (subtotalCents < minimumCents) {
+        throw new ApiError(422, 'MINIMUM_ORDER_NOT_MET', 'Product subtotal is below the store minimum');
       }
 
       return {
@@ -56,7 +58,8 @@ export function createQuoteService(repository: QuoteRepository): QuoteService {
         deliveryDate: input.deliveryDate,
         subtotal: centsToMoney(subtotalCents),
         shippingTotal: centsToMoney(shippingTotalCents),
-        taxTotal: '0.00',
+        taxTotal: inclusiveTax(totalCents,context.taxRate),
+        taxRate: context.taxRate,
         total: centsToMoney(totalCents),
         currency: context.currency,
         availability: 'available',
@@ -71,16 +74,17 @@ function validateItems(items: CartItemInput[], variants: QuoteVariantContext[]) 
   if (!Array.isArray(items) || items.length === 0) {
     throw new ApiError(400, 'VALIDATION_ERROR', 'At least one item is required');
   }
+  const seen=new Set<string>();
   return items.map((item) => {
-    if (!Number.isInteger(item.quantitySets) || item.quantitySets < 1) {
+    const key = item.productVariantId ?? item.productId;
+    if (seen.has(key)) throw new ApiError(400,'VALIDATION_ERROR','Duplicate product item');
+    seen.add(key);
+    if (!Number.isSafeInteger(item.quantitySets) || item.quantitySets < 1) {
       throw new ApiError(400, 'VALIDATION_ERROR', 'quantitySets must be a positive integer');
     }
-    const variant = variants.find((candidate) => candidate.productVariantId === item.productVariantId);
+    const variant = variants.find((candidate) => candidate.productId === item.productId && candidate.productVariantId === (item.productVariantId ?? null));
     if (!variant || !variant.active) {
       throw new ApiError(422, 'BUSINESS_RULE_VIOLATION', 'Product variant is unavailable');
-    }
-    if (item.quantitySets < variant.productMinimumSets) {
-      throw new ApiError(422, 'BUSINESS_RULE_VIOLATION', 'Product minimum quantity was not met');
     }
     if (item.quantitySets > variant.availableSets) {
       throw new ApiError(422, 'BUSINESS_RULE_VIOLATION', 'Requested quantity is not available');
@@ -108,4 +112,11 @@ function moneyToCents(value: string): number {
 
 function centsToMoney(value: number): string {
   return (value / 100).toFixed(2);
+}
+
+function inclusiveTax(totalCents:number,rate:string):string {
+  if (!/^\d{1,3}(\.\d{1,2})?$/.test(rate)) throw new ApiError(503,'COMMERCE_TAX_NOT_CONFIGURED','Tax rate is not configured');
+  const basisPoints=BigInt(moneyToCents(rate));const denominator=10000n+basisPoints;
+  const tax=(BigInt(totalCents)*basisPoints+denominator/2n)/denominator;
+  return centsToMoney(Number(tax));
 }

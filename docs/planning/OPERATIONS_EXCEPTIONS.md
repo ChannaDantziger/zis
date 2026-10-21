@@ -1,6 +1,6 @@
 # חוסר, החלפה וביטול — טיפול מלא בחריגים
 
-[אינדקס](../../PLAN_INDEX.md) · [החלטות](DECISIONS.md) · [הסבר פשוט](DECISION_EXPLANATIONS.md) · [נושאים פתוחים](../../OPEN_ISSUES.md).
+[אינדקס](../PLAN_INDEX.md) · [החלטות](DECISIONS.md) · [הסבר פשוט](DECISION_EXPLANATIONS.md) · [נושאים פתוחים](../OPEN_ISSUES.md).
 עודכן: 22.09.2026. זהו מפרט מתוכנן ל־P1/P5/P6/P7, לא תיאור של קוד שכבר עובד.
 
 ## הוראות שאושרו

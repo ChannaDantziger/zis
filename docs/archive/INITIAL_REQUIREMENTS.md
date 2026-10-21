@@ -1,4 +1,4 @@
-> ארכיון תכנון שנשמר ב־18.09.2026 כדי לא לאבד דרישות. אינו הוראת ביצוע נוכחית; סתירות והחלטות פתוחות מפורטות ב־[נושאים פתוחים](../../OPEN_ISSUES.md). סדר העבודה המחייב ב־[תוכנית העבודה](../../IMPLEMENTATION_PLAN.md). [אינדקס](../../PLAN_INDEX.md).
+> ארכיון תכנון שנשמר ב־18.09.2026 כדי לא לאבד דרישות. אינו הוראת ביצוע נוכחית; סתירות והחלטות פתוחות מפורטות ב־[נושאים פתוחים](../OPEN_ISSUES.md). סדר העבודה המחייב ב־[תוכנית העבודה](../IMPLEMENTATION_PLAN.md). [אינדקס](../PLAN_INDEX.md).
 
 # ZIS — חנות מוצרי Sets
 
@@ -8,23 +8,23 @@
 
 הפרויקט קיים וכולל אב־טיפוס פעיל של חוויית החנות ב־React/HTML. בשלב הנוכחי האב־טיפוס כולל קטלוג, מוצרים, עגלה וזרימת Checkout ברמת ממשק בלבד. עדיין אין Backend, מסד נתונים, Admin, סליקה או יצירת הזמנה אמיתית.
 
-מסמך התכנון לשלב הבא נמצא ב־[NEXT_PHASE_PLAN.md](../../NEXT_PHASE_PLAN.md).
+מסמך התכנון לשלב הבא נמצא ב־[NEXT_PHASE_PLAN.md](../NEXT_PHASE_PLAN.md).
 
-מסמך ה־ERD וסכמת בסיס הנתונים נמצא ב־[ERD_SCHEMA.md](../../ERD_SCHEMA.md), והוא מרכז את הטבלאות, הקשרים, האילוצים והאינדקסים הנדרשים.
+מסמך ה־ERD וסכמת בסיס הנתונים נמצא ב־[ERD_SCHEMA.md](../ERD_SCHEMA.md), והוא מרכז את הטבלאות, הקשרים, האילוצים והאינדקסים הנדרשים.
 
-השוואת ה־ERD מול האפיון נמצאת ב־[ERD_COMPARISON.md](../../ERD_COMPARISON.md), כולל טבלת הבדלים והחלטות שעדיין נדרשות.
+השוואת ה־ERD מול האפיון נמצאת ב־[ERD_COMPARISON.md](../ERD_COMPARISON.md), כולל טבלת הבדלים והחלטות שעדיין נדרשות.
 
-תכנון ארכיטקטורת ה־Backend נמצא ב־[BACKEND_ARCHITECTURE.md](../../BACKEND_ARCHITECTURE.md), כולל מודולים, זרימות, API, אבטחה וטרנזקציות.
+תכנון ארכיטקטורת ה־Backend נמצא ב־[BACKEND_ARCHITECTURE.md](../BACKEND_ARCHITECTURE.md), כולל מודולים, זרימות, API, אבטחה וטרנזקציות.
 
-תכנון ארכיטקטורת ה־Frontend נמצא ב־[FRONTEND_ARCHITECTURE.md](../../FRONTEND_ARCHITECTURE.md), כולל Storefront, Admin Mobile-first, מסכים, מצב ו־API Client.
+תכנון ארכיטקטורת ה־Frontend נמצא ב־[FRONTEND_ARCHITECTURE.md](../FRONTEND_ARCHITECTURE.md), כולל Storefront, Admin Mobile-first, מסכים, מצב ו־API Client.
 
 חלוקת הפרויקטים היא: `zis-db` למסד הנתונים והמיגרציות, `zis-api` ל־Backend, ו־`zis` ל־Frontend.
 
 לאחר השלמת האב־טיפוס לפי כללי ה־Frontend וה־Design System יבוצעו תוספות הגלריה: תמונות אחידות, פתיחה מוגדלת ודפדוף בין התמונות.
 
-האינדקס המרכזי של כל מסמכי התכנון וסדר המימוש נמצא ב־[PLAN_INDEX.md](../../PLAN_INDEX.md).
+האינדקס המרכזי של כל מסמכי התכנון וסדר המימוש נמצא ב־[PLAN_INDEX.md](../PLAN_INDEX.md).
 
-לפתיחת צ׳ט חדש עם כל ההקשר וההחלטות, יש להשתמש ב־[START_NEW_CHAT.md](../../START_NEW_CHAT.md).
+לפתיחת צ׳ט חדש עם כל ההקשר וההחלטות, יש להשתמש ב־[START_NEW_CHAT.md](../START_NEW_CHAT.md).
 
 ## מטרת המערכת
 

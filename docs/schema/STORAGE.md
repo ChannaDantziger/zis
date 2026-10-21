@@ -1,6 +1,6 @@
 # Storage — מדיה
 
-[אינדקס](../../PLAN_INDEX.md) · [חוזי API](../API_CONTRACTS.md) · [גלריית אירועים](EVENT_GALLERY.md).
+[אינדקס](../PLAN_INDEX.md) · [חוזי API](../API_CONTRACTS.md) · [גלריית אירועים](EVENT_GALLERY.md).
 
 ## Buckets
 
@@ -26,4 +26,4 @@
 - תמונת מוצר ציבורית דורשת מוצר פעיל, וריאציה תואמת אם קיימת, `is_deleted=false` ותמונה שנבחרה לפרסום.
 - גלריית אירועים נפרדת מתמונות מוצר; רק `is_published=true` ו־`is_deleted=false` נשלפות.
 - העלאה, החלפה, שינוי סדר, פרסום וארכוב נרשמים ב־`admin_audit_log` דרך השירות המאומת.
-- SQL ההקמה נמצא ב־`zis-db/migrations/007_p1_storage_and_confirmation.sql`; אין לטעון שההרשאות נבדקו מול Supabase חי עד שיש ראיית הרצה בסביבת פיתוח.
+- SQL ההקמה נמצא ב־`zis-db/migrations/007_p1_storage_and_confirmation.sql`; חיבור Production נבדק דרך Login, אך הרשאות Storage דורשות ראיית בדיקה ייעודית בקריאה/פעולה מבוקרת.

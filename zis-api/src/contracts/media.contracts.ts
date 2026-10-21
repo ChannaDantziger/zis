@@ -24,14 +24,11 @@ export interface ProductImageAdminInput {
   productVariantId?: string | null;
   storagePath: string;
   altText: string;
-  imageType: 'primary' | 'gallery';
   sortOrder: number;
 }
 
 export interface EventGalleryImageAdminInput {
   storagePath: string;
-  altText: string;
-  caption?: string | null;
   sortOrder: number;
   isPublished: boolean;
 }

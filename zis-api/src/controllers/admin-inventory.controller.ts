@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { ApiError } from '../http/api-error.js';
 import type { InventoryService } from '../inventory/inventory.service.js';
 
 interface InventoryAdjustmentBody {
@@ -17,7 +18,7 @@ export type AdminUserResolver = (request: Request) => Promise<AdminUserResolutio
 
 export function createAdminInventoryController(service: InventoryService, resolveAdminUserId: AdminUserResolver) {
   return async function adjustInventory(request: Request, response: Response): Promise<void> {
-    const body = request.body as InventoryAdjustmentBody;
+    const body = (request.body ?? {}) as InventoryAdjustmentBody;
     const adminResolution = await resolveAdminUserId(request);
     const deltaSets = body.deltaSets;
     const reason = body.reason;
@@ -29,12 +30,12 @@ export function createAdminInventoryController(service: InventoryService, resolv
       return;
     }
 
-    if (adminResolution.status === 'forbidden') {
-      response.status(403).json({ error: 'Active admin access required' });
+    if (adminResolution.status === 'forbidden' || adminResolution.role !== 'operations_manager') {
+      response.status(403).json({ error: 'Operations manager access required' });
       return;
     }
 
-    if (!productVariantId || typeof deltaSets !== 'number' || typeof reason !== 'string') {
+    if (!productVariantId || typeof deltaSets !== 'number' || !Number.isSafeInteger(deltaSets) || deltaSets === 0 || typeof reason !== 'string' || !reason.trim()) {
       response.status(400).json({ error: 'admin identity, deltaSets and reason are required' });
       return;
     }
@@ -46,9 +47,13 @@ export function createAdminInventoryController(service: InventoryService, resolv
         reason,
         adminUserId: adminResolution.adminUserId,
       });
+      response.setHeader('Cache-Control', 'no-store');
       response.status(200).json(result);
     } catch (error) {
-      response.status(400).json({ error: error instanceof Error ? error.message : 'Inventory update failed' });
+      if (error instanceof Error && error.message === 'Inventory cannot become negative') {
+        throw new ApiError(400, 'INSUFFICIENT_INVENTORY', 'Inventory cannot become negative');
+      }
+      throw error;
     }
   };
 }

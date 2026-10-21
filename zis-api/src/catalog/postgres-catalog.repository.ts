@@ -24,7 +24,9 @@ interface ProductRow {
   name: string;
   description: string | null;
   set_size: number;
-  default_min_sets: number;
+  price_per_item: string;
+  available_items: number;
+  display_order: number;
 }
 
 interface VariantRow {
@@ -51,9 +53,9 @@ interface ImageRow {
 }
 
 const SORT_SQL: Record<NonNullable<CatalogQuery['sort']>, string> = {
-  display: 'c.sort_order, p.name, p.product_id',
+  display: 'c.sort_order, p.display_order, p.name, p.product_id',
   name: 'p.name, p.product_id',
-  price: 'min(v.price_per_set), p.name, p.product_id',
+  price: 'coalesce(min(v.price_per_set), p.price_per_item), p.name, p.product_id',
 };
 
 export function createPostgresCatalogRepository(factory: SqlClientFactory): CatalogRepository {
@@ -87,22 +89,32 @@ async function listProducts(factory: SqlClientFactory, query: CatalogQuery): Pro
       `select count(distinct p.product_id)::int as total_items
          from public.products p
          join public.categories c on c.category_id = p.category_id
-         left join public.product_variants v
+        left join public.product_variants v
            on v.product_id = p.product_id and v.status = 'active' and v.is_deleted = false
-        where ${whereSql}`,
+        where ${whereSql}
+          and exists(select 1 from public.product_images i where i.product_id=p.product_id and i.product_variant_id is null and i.image_type='primary' and not i.is_deleted)
+          and (not exists(select 1 from public.product_variants any_variant where any_variant.product_id=p.product_id and not any_variant.is_deleted)
+            or (exists(select 1 from public.product_variants active_variant where active_variant.product_id=p.product_id and active_variant.status='active' and not active_variant.is_deleted)
+              and not exists(select 1 from public.product_variants active_variant where active_variant.product_id=p.product_id and active_variant.status='active' and not active_variant.is_deleted
+                and not exists(select 1 from public.product_images vi where vi.product_variant_id=active_variant.product_variant_id and vi.image_type='primary' and not vi.is_deleted))))`,
       values,
     );
     const offset = (query.page - 1) * query.pageSize;
     const productsResult = await client.query<ProductRow>(
       `select p.product_id, p.category_id, c.name as category_name, c.slug as category_slug,
-              p.name, p.description, p.set_size, p.default_min_sets
+              p.name, p.description, p.set_size, p.price_per_item, p.available_items, p.display_order
          from public.products p
          join public.categories c on c.category_id = p.category_id
          left join public.product_variants v
            on v.product_id = p.product_id and v.status = 'active' and v.is_deleted = false
         where ${whereSql}
+          and exists(select 1 from public.product_images i where i.product_id=p.product_id and i.product_variant_id is null and i.image_type='primary' and not i.is_deleted)
+          and (not exists(select 1 from public.product_variants any_variant where any_variant.product_id=p.product_id and not any_variant.is_deleted)
+            or (exists(select 1 from public.product_variants active_variant where active_variant.product_id=p.product_id and active_variant.status='active' and not active_variant.is_deleted)
+              and not exists(select 1 from public.product_variants active_variant where active_variant.product_id=p.product_id and active_variant.status='active' and not active_variant.is_deleted
+                and not exists(select 1 from public.product_images vi where vi.product_variant_id=active_variant.product_variant_id and vi.image_type='primary' and not vi.is_deleted))))
         group by p.product_id, p.category_id, c.name, c.slug, p.name, p.description,
-                 p.set_size, p.default_min_sets, c.sort_order
+                 p.set_size, p.price_per_item, p.available_items, p.display_order, c.sort_order
         order by ${SORT_SQL[query.sort ?? 'display']} ${query.direction === 'desc' ? 'desc' : 'asc'}
         limit $${values.length + 1} offset $${values.length + 2}`,
       [...values, query.pageSize, offset],
@@ -119,12 +131,17 @@ async function getProduct(factory: SqlClientFactory, productId: string): Promise
   try {
     const result = await client.query<ProductRow>(
       `select p.product_id, p.category_id, c.name as category_name, c.slug as category_slug,
-              p.name, p.description, p.set_size, p.default_min_sets
+              p.name, p.description, p.set_size, p.price_per_item, p.available_items, p.display_order
          from public.products p
          join public.categories c on c.category_id = p.category_id
         where p.product_id = $1
           and p.status = 'active' and p.is_deleted = false
-          and c.status = 'active' and c.is_deleted = false`,
+          and c.status = 'active' and c.is_deleted = false
+          and exists(select 1 from public.product_images i where i.product_id=p.product_id and i.product_variant_id is null and i.image_type='primary' and not i.is_deleted)
+          and (not exists(select 1 from public.product_variants any_variant where any_variant.product_id=p.product_id and not any_variant.is_deleted)
+            or (exists(select 1 from public.product_variants active_variant where active_variant.product_id=p.product_id and active_variant.status='active' and not active_variant.is_deleted)
+              and not exists(select 1 from public.product_variants active_variant where active_variant.product_id=p.product_id and active_variant.status='active' and not active_variant.is_deleted
+                and not exists(select 1 from public.product_images vi where vi.product_variant_id=active_variant.product_variant_id and vi.image_type='primary' and not vi.is_deleted))))`,
       [productId],
     );
     const records = await attachDetails(client, result.rows, result.rowCount ?? 0);
@@ -179,7 +196,9 @@ function mapProduct(row: ProductRow, variants: VariantRow[], images: ImageRow[])
     name: row.name,
     description: row.description,
     setSize: row.set_size,
-    minimumSets: row.default_min_sets,
+    pricePerSet: row.price_per_item,
+    availableSets: row.available_items,
+    displayOrder: row.display_order,
     images: productImages,
     variants: productVariants,
   };

@@ -31,8 +31,8 @@ test('inventory service updates a real Development PostgreSQL database transacti
       [categoryId, 'Integration Test Category', `integration-${categoryId}`],
     );
     await pool.query(
-      `insert into public.products (product_id, category_id, name, set_size, default_min_sets)
-       values ($1, $2, $3, 1, 1)`,
+      `insert into public.products (product_id, category_id, name, set_size)
+       values ($1, $2, $3, 1)`,
       [productId, categoryId, 'Integration Test Product'],
     );
     await pool.query(

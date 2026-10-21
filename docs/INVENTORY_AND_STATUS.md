@@ -1,6 +1,6 @@
 # מלאי וסטטוסים — התנהגות הקוד הקיים
 
-[אינדקס](../PLAN_INDEX.md) · [מודל יעד](../INVENTORY_MODEL.md) · [פערים](../OPEN_ISSUES.md).
+[אינדקס](PLAN_INDEX.md) · [מודל יעד](INVENTORY_MODEL.md) · [פערים](OPEN_ISSUES.md).
 אומת בקריאת קוד ב־18.09.2026; התיאור מבדיל מימוש ממדיניות עסקית שטרם הותאמה.
 
 ## מלאי
@@ -47,4 +47,4 @@
 
 [Service](../zis-api/src/inventory/inventory.service.ts), [types](../zis-api/src/inventory/inventory.types.ts), [repository](../zis-api/src/inventory/postgres-inventory.repository.ts), [status](../zis-api/src/domain/order-status.ts), [003](../zis-db/migrations/003_business_decisions.sql), [004](../zis-db/migrations/004_inventory_history_without_delta.sql).
 
-בדיקות ומצב חיבור: [התקדמות](../IMPLEMENTATION_PROGRESS.md). אין הוכחה בסקירה לטרנזקציה שהורצה מול DB חי.
+בדיקות ומצב חיבור: [התקדמות](IMPLEMENTATION_PROGRESS.md). אין הוכחה בסקירה לטרנזקציה שהורצה מול DB חי.

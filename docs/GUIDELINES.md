@@ -1,7 +1,7 @@
 # הנחיות הפיתוח של הפרויקט
 
 עותק מקומי של guidelines.md מתאריך 18.09.2026, ללא שינוי הכללים. המקור החיצוני: [guidelines.md](C:/Users/123/Documents/ChatGPT/guidelines.md).
-[אינדקס](../PLAN_INDEX.md) · [כללי המאגר](../AGENTS.md).
+[אינדקס](PLAN_INDEX.md) · [כללי המאגר](../AGENTS.md).
 
 # Frontend notes:
 

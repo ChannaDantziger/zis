@@ -7,6 +7,7 @@ export function createCommerceController(service: CommerceService) {
   return {
     getStoreStatus: async (_request: Request, response: Response) => response.status(200).json(await service.getStoreStatus()),
     listShippingZones: async (_request: Request, response: Response) => response.status(200).json({ data: await service.listShippingZones() }),
+    listShippingMethods: async (_request: Request, response: Response) => response.status(200).json({ data: await service.listShippingMethods() }),
     getAvailability: async (request: Request, response: Response) => response.status(200).json(await service.getAvailability(readAvailabilityInput(request.body))),
     calculateQuote: async (request: Request, response: Response) => response.status(200).json(await service.calculateQuote(readQuoteInput(request.body))),
   };
@@ -24,7 +25,7 @@ function readQuoteInput(value: unknown): ShippingQuoteInput {
     shippingZoneId: readText(body.shippingZoneId, 'shippingZoneId'),
     shippingMethodId: readText(body.shippingMethodId, 'shippingMethodId'),
     items: readItems(body.items),
-    isUrgent: body.isUrgent === undefined ? false : readBoolean(body.isUrgent, 'isUrgent'),
+    isUrgent: body.isUrgent === undefined || body.isUrgent === false ? false : rejectUrgent(),
   };
 }
 
@@ -36,7 +37,7 @@ function readItems(value: unknown): CartItemInput[] {
     if (typeof quantitySets !== 'number' || !Number.isInteger(quantitySets) || quantitySets < 1) {
       throw new ApiError(400, 'VALIDATION_ERROR', 'quantitySets must be a positive integer');
     }
-    return { productVariantId: readText(record.productVariantId, 'productVariantId'), quantitySets };
+    return { productId: readText(record.productId, 'productId'), productVariantId: record.productVariantId == null ? null : readText(record.productVariantId, 'productVariantId'), quantitySets };
   });
 }
 
@@ -54,3 +55,5 @@ function readBoolean(value: unknown, field: string): boolean {
   if (typeof value !== 'boolean') throw new ApiError(400, 'VALIDATION_ERROR', `${field} must be boolean`);
   return value;
 }
+
+function rejectUrgent(): never { throw new ApiError(400,'VALIDATION_ERROR','Urgent shipping is not available for public orders'); }

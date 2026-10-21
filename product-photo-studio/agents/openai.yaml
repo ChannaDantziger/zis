@@ -1,0 +1,4 @@
+interface:
+  display_name: "Product Photo Studio"
+  short_description: "Make honest, natural photos for your store."
+  default_prompt: "Use $product-photo-studio to prepare an honest, natural listing photo and save the final image."

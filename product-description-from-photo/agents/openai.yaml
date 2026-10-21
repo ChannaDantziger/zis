@@ -1,0 +1,4 @@
+interface:
+  display_name: "Product Description from Photo"
+  short_description: "Write simple product descriptions from photos."
+  default_prompt: "Use $product-description-from-photo to write a clear, appetizing product description from this photo. Ask for the product name and any important missing details; don't guess ingredients or measurements."

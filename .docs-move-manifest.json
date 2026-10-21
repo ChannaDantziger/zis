@@ -1,0 +1,706 @@
+[
+  {
+    "Source": "FRONTEND_BUILD_PLAN.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\FRONTEND_BUILD_PLAN.md\\FRONTEND_BUILD_PLAN.md"
+  },
+  {
+    "Source": "FRONTEND_ARCHITECTURE.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\FRONTEND_ARCHITECTURE.md\\FRONTEND_ARCHITECTURE.md"
+  },
+  {
+    "Source": "ERD_SCHEMA.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\ERD_SCHEMA.md\\ERD_SCHEMA.md"
+  },
+  {
+    "Source": "ERD_COMPARISON.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\ERD_COMPARISON.md\\ERD_COMPARISON.md"
+  },
+  {
+    "Source": "DOCS_INDEX.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\DOCS_INDEX.md\\DOCS_INDEX.md"
+  },
+  {
+    "Source": "zis-db\\README.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-db_README.md\\README.md"
+  },
+  {
+    "Source": "docs\\SYSTEM_AUDIT.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_SYSTEM_AUDIT.md\\SYSTEM_AUDIT.md"
+  },
+  {
+    "Source": "docs\\schema\\STORAGE.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_schema_STORAGE.md\\STORAGE.md"
+  },
+  {
+    "Source": "docs\\schema\\SHIPPING.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_schema_SHIPPING.md\\SHIPPING.md"
+  },
+  {
+    "Source": "docs\\schema\\POLICIES_AND_UPDATES.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_schema_POLICIES_AND_UPDATES.md\\POLICIES_AND_UPDATES.md"
+  },
+  {
+    "Source": "docs\\schema\\ORDERS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_schema_ORDERS.md\\ORDERS.md"
+  },
+  {
+    "Source": "docs\\schema\\INVENTORY_ADMIN.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_schema_INVENTORY_ADMIN.md\\INVENTORY_ADMIN.md"
+  },
+  {
+    "Source": "docs\\schema\\EVENT_GALLERY.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_schema_EVENT_GALLERY.md\\EVENT_GALLERY.md"
+  },
+  {
+    "Source": "docs\\schema\\CATALOG.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_schema_CATALOG.md\\CATALOG.md"
+  },
+  {
+    "Source": "zis-api\\tsconfig.json",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_tsconfig.json\\tsconfig.json"
+  },
+  {
+    "Source": "docs\\planning\\VISUAL_REVIEW.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_planning_VISUAL_REVIEW.md\\VISUAL_REVIEW.md"
+  },
+  {
+    "Source": "docs\\planning\\STORE_CONTENT_AND_GALLERY.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_planning_STORE_CONTENT_AND_GALLERY.md\\STORE_CONTENT_AND_GALLERY.md"
+  },
+  {
+    "Source": "docs\\planning\\STOREFRONT_REQUIREMENTS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_planning_STOREFRONT_REQUIREMENTS.md\\STOREFRONT_REQUIREMENTS.md"
+  },
+  {
+    "Source": "docs\\planning\\OPERATIONS_EXCEPTIONS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_planning_OPERATIONS_EXCEPTIONS.md\\OPERATIONS_EXCEPTIONS.md"
+  },
+  {
+    "Source": "docs\\planning\\OPERATIONS_DELIVERY_PLAN.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_planning_OPERATIONS_DELIVERY_PLAN.md\\OPERATIONS_DELIVERY_PLAN.md"
+  },
+  {
+    "Source": "docs\\planning\\FRONTEND_ACCEPTANCE.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_planning_FRONTEND_ACCEPTANCE.md\\FRONTEND_ACCEPTANCE.md"
+  },
+  {
+    "Source": "docs\\planning\\DELIVERY_AND_DOCUMENTATION.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_planning_DELIVERY_AND_DOCUMENTATION.md\\DELIVERY_AND_DOCUMENTATION.md"
+  },
+  {
+    "Source": "docs\\planning\\DECISION_EXPLANATIONS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_planning_DECISION_EXPLANATIONS.md\\DECISION_EXPLANATIONS.md"
+  },
+  {
+    "Source": "docs\\planning\\DECISIONS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_planning_DECISIONS.md\\DECISIONS.md"
+  },
+  {
+    "Source": "docs\\planning\\ADMIN_MOBILE_SPEC.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_planning_ADMIN_MOBILE_SPEC.md\\ADMIN_MOBILE_SPEC.md"
+  },
+  {
+    "Source": "docs\\LIVE_CONNECTION_RUNBOOK.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_LIVE_CONNECTION_RUNBOOK.md\\LIVE_CONNECTION_RUNBOOK.md"
+  },
+  {
+    "Source": "docs\\INVENTORY_AND_STATUS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_INVENTORY_AND_STATUS.md\\INVENTORY_AND_STATUS.md"
+  },
+  {
+    "Source": "docs\\GUIDELINES.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_GUIDELINES.md\\GUIDELINES.md"
+  },
+  {
+    "Source": "docs\\BACKEND_IMPLEMENTATION.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_BACKEND_IMPLEMENTATION.md\\BACKEND_IMPLEMENTATION.md"
+  },
+  {
+    "Source": "PLAN_INDEX.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\PLAN_INDEX.md\\PLAN_INDEX.md"
+  },
+  {
+    "Source": "OWNER_ACTIONS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\OWNER_ACTIONS.md\\OWNER_ACTIONS.md"
+  },
+  {
+    "Source": "OPEN_ISSUES.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\OPEN_ISSUES.md\\OPEN_ISSUES.md"
+  },
+  {
+    "Source": "NEXT_PHASE_PLAN.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\NEXT_PHASE_PLAN.md\\NEXT_PHASE_PLAN.md"
+  },
+  {
+    "Source": "INVENTORY_MODEL.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\INVENTORY_MODEL.md\\INVENTORY_MODEL.md"
+  },
+  {
+    "Source": "IMPLEMENTATION_PROGRESS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\IMPLEMENTATION_PROGRESS.md\\IMPLEMENTATION_PROGRESS.md"
+  },
+  {
+    "Source": "IMPLEMENTATION_PLAN.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\IMPLEMENTATION_PLAN.md\\IMPLEMENTATION_PLAN.md"
+  },
+  {
+    "Source": "START_NEW_CHAT.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\START_NEW_CHAT.md\\START_NEW_CHAT.md"
+  },
+  {
+    "Source": "README.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\README.md\\README.md"
+  },
+  {
+    "Source": "zis-api\\src\\app.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_app.ts\\app.ts"
+  },
+  {
+    "Source": "scripts\\review-zis-preview.mjs",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\scripts_review-zis-preview.mjs\\review-zis-preview.mjs"
+  },
+  {
+    "Source": "scripts\\README.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\scripts_README.md\\README.md"
+  },
+  {
+    "Source": "scripts\\prepare-file-for-llm.ps1",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\scripts_prepare-file-for-llm.ps1\\prepare-file-for-llm.ps1"
+  },
+  {
+    "Source": "scripts\\check-docs.ps1",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\scripts_check-docs.ps1\\check-docs.ps1"
+  },
+  {
+    "Source": "scripts\\build-zis-preview.py",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\scripts_build-zis-preview.py\\build-zis-preview.py"
+  },
+  {
+    "Source": "zis-api\\scripts\\check-migration-ledger.mjs",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_scripts_check-migration-ledger.mjs\\check-migration-ledger.mjs"
+  },
+  {
+    "Source": "zis-api\\scripts\\check-manual-schema.mjs",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_scripts_check-manual-schema.mjs\\check-manual-schema.mjs"
+  },
+  {
+    "Source": "zis-api\\scripts\\apply-manual-migrations.mjs",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_scripts_apply-manual-migrations.mjs\\apply-manual-migrations.mjs"
+  },
+  {
+    "Source": "zis-api\\README.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_README.md\\README.md"
+  },
+  {
+    "Source": "zis-api\\package.json",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_package.json\\package.json"
+  },
+  {
+    "Source": "zis-api\\src\\tasks\\tasks.types.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_tasks_tasks.types.ts\\tasks.types.ts"
+  },
+  {
+    "Source": "zis-api\\src\\tasks\\tasks.service.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_tasks_tasks.service.ts\\tasks.service.ts"
+  },
+  {
+    "Source": "zis-api\\src\\tasks\\postgres-tasks.repository.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_tasks_postgres-tasks.repository.ts\\postgres-tasks.repository.ts"
+  },
+  {
+    "Source": "zis-api\\src\\tasks\\postgres-tasks.repository.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_tasks_postgres-tasks.repository.test.ts\\postgres-tasks.repository.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\health\\readiness.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_health_readiness.ts\\readiness.ts"
+  },
+  {
+    "Source": "zis-api\\src\\health\\readiness.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_health_readiness.test.ts\\readiness.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\constants\\http.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_constants_http.ts\\http.ts"
+  },
+  {
+    "Source": "zis-api\\src\\storage\\storage.service.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_storage_storage.service.ts\\storage.service.ts"
+  },
+  {
+    "Source": "zis-api\\src\\storage\\storage.service.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_storage_storage.service.test.ts\\storage.service.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\server.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_server.ts\\server.ts"
+  },
+  {
+    "Source": "BACKEND_COMMERCE.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\BACKEND_COMMERCE.md\\BACKEND_COMMERCE.md"
+  },
+  {
+    "Source": "BACKEND_ARCHITECTURE.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\BACKEND_ARCHITECTURE.md\\BACKEND_ARCHITECTURE.md"
+  },
+  {
+    "Source": "zis-api\\src\\domain\\order-status.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_domain_order-status.ts\\order-status.ts"
+  },
+  {
+    "Source": "zis-api\\src\\security\\confirmation-token.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_security_confirmation-token.ts\\confirmation-token.ts"
+  },
+  {
+    "Source": "zis-api\\src\\domain\\order-status.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_domain_order-status.test.ts\\order-status.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\security\\confirmation-token.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_security_confirmation-token.test.ts\\confirmation-token.test.ts"
+  },
+  {
+    "Source": "docs\\ADMIN_TASKS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_ADMIN_TASKS.md\\ADMIN_TASKS.md"
+  },
+  {
+    "Source": "docs\\ADMIN_COMMERCE_SETTINGS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_ADMIN_COMMERCE_SETTINGS.md\\ADMIN_COMMERCE_SETTINGS.md"
+  },
+  {
+    "Source": "BACKEND_OPERATIONS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\BACKEND_OPERATIONS.md\\BACKEND_OPERATIONS.md"
+  },
+  {
+    "Source": "docs\\ADMIN_VERIFICATION.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_ADMIN_VERIFICATION.md\\ADMIN_VERIFICATION.md"
+  },
+  {
+    "Source": "docs\\API_CONTRACTS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_API_CONTRACTS.md\\API_CONTRACTS.md"
+  },
+  {
+    "Source": "docs\\archive\\INITIAL_ROADMAP.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_archive_INITIAL_ROADMAP.md\\INITIAL_ROADMAP.md"
+  },
+  {
+    "Source": "docs\\archive\\INITIAL_REQUIREMENTS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_archive_INITIAL_REQUIREMENTS.md\\INITIAL_REQUIREMENTS.md"
+  },
+  {
+    "Source": "docs\\archive\\INITIAL_DELIVERY_PLAN.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_archive_INITIAL_DELIVERY_PLAN.md\\INITIAL_DELIVERY_PLAN.md"
+  },
+  {
+    "Source": "docs\\archive\\INITIAL_DATA_PLAN.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\docs_archive_INITIAL_DATA_PLAN.md\\INITIAL_DATA_PLAN.md"
+  },
+  {
+    "Source": "prototypes\\zis-review\\README.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\prototypes_zis-review_README.md\\README.md"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\health.routes.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_health.routes.ts\\health.routes.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\commerce.routes.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_commerce.routes.ts\\commerce.routes.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\catalog.routes.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_catalog.routes.ts\\catalog.routes.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\auth.routes.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_auth.routes.ts\\auth.routes.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\admin-tasks.routes.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_admin-tasks.routes.ts\\admin-tasks.routes.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\admin-tasks.http.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_admin-tasks.http.test.ts\\admin-tasks.http.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\admin-order-status.routes.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_admin-order-status.routes.ts\\admin-order-status.routes.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\admin-order-details.http.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_admin-order-details.http.test.ts\\admin-order-details.http.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\admin-media.routes.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_admin-media.routes.ts\\admin-media.routes.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\admin-inventory.routes.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_admin-inventory.routes.ts\\admin-inventory.routes.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\admin-inventory.http.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_admin-inventory.http.test.ts\\admin-inventory.http.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\admin-dashboard.routes.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_admin-dashboard.routes.ts\\admin-dashboard.routes.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\admin-commerce-settings.routes.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_admin-commerce-settings.routes.ts\\admin-commerce-settings.routes.ts"
+  },
+  {
+    "Source": "zis-api\\src\\routes\\admin-catalog.routes.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_routes_admin-catalog.routes.ts\\admin-catalog.routes.ts"
+  },
+  {
+    "Source": "apps\\admin-mobile\\vite.config.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_vite.config.ts\\vite.config.ts"
+  },
+  {
+    "Source": "apps\\admin-mobile\\tsconfig.json",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_tsconfig.json\\tsconfig.json"
+  },
+  {
+    "Source": "zis-api\\src\\operations\\postgres-order-status.repository.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_operations_postgres-order-status.repository.ts\\postgres-order-status.repository.ts"
+  },
+  {
+    "Source": "zis-api\\src\\operations\\postgres-commerce-settings.repository.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_operations_postgres-commerce-settings.repository.ts\\postgres-commerce-settings.repository.ts"
+  },
+  {
+    "Source": "zis-api\\src\\operations\\order-status.types.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_operations_order-status.types.ts\\order-status.types.ts"
+  },
+  {
+    "Source": "zis-api\\src\\operations\\order-status.service.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_operations_order-status.service.ts\\order-status.service.ts"
+  },
+  {
+    "Source": "zis-api\\src\\operations\\order-status.service.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_operations_order-status.service.test.ts\\order-status.service.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\operations\\commerce-settings.types.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_operations_commerce-settings.types.ts\\commerce-settings.types.ts"
+  },
+  {
+    "Source": "zis-api\\src\\operations\\commerce-settings.service.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_operations_commerce-settings.service.ts\\commerce-settings.service.ts"
+  },
+  {
+    "Source": "zis-api\\src\\catalog\\postgres-catalog.repository.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_catalog_postgres-catalog.repository.ts\\postgres-catalog.repository.ts"
+  },
+  {
+    "Source": "zis-api\\src\\catalog\\postgres-admin-catalog.repository.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_catalog_postgres-admin-catalog.repository.ts\\postgres-admin-catalog.repository.ts"
+  },
+  {
+    "Source": "zis-api\\src\\catalog\\catalog.types.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_catalog_catalog.types.ts\\catalog.types.ts"
+  },
+  {
+    "Source": "zis-api\\src\\catalog\\catalog.service.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_catalog_catalog.service.ts\\catalog.service.ts"
+  },
+  {
+    "Source": "zis-api\\src\\catalog\\catalog.service.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_catalog_catalog.service.test.ts\\catalog.service.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\catalog\\admin-catalog.types.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_catalog_admin-catalog.types.ts\\admin-catalog.types.ts"
+  },
+  {
+    "Source": "zis-api\\src\\catalog\\admin-catalog.service.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_catalog_admin-catalog.service.ts\\admin-catalog.service.ts"
+  },
+  {
+    "Source": "zis-api\\src\\commerce\\quote.service.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_commerce_quote.service.ts\\quote.service.ts"
+  },
+  {
+    "Source": "zis-api\\src\\commerce\\quote.service.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_commerce_quote.service.test.ts\\quote.service.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\commerce\\postgres-commerce.repository.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_commerce_postgres-commerce.repository.ts\\postgres-commerce.repository.ts"
+  },
+  {
+    "Source": "zis-api\\src\\commerce\\delivery-policy.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_commerce_delivery-policy.ts\\delivery-policy.ts"
+  },
+  {
+    "Source": "zis-api\\src\\commerce\\delivery-policy.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_commerce_delivery-policy.test.ts\\delivery-policy.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\commerce\\commerce.types.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_commerce_commerce.types.ts\\commerce.types.ts"
+  },
+  {
+    "Source": "zis-api\\src\\commerce\\commerce.service.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_commerce_commerce.service.ts\\commerce.service.ts"
+  },
+  {
+    "Source": "zis-api\\src\\middleware\\request-context.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_middleware_request-context.ts\\request-context.ts"
+  },
+  {
+    "Source": "zis-api\\src\\middleware\\rate-limit.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_middleware_rate-limit.ts\\rate-limit.ts"
+  },
+  {
+    "Source": "zis-api\\src\\middleware\\error-handler.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_middleware_error-handler.ts\\error-handler.ts"
+  },
+  {
+    "Source": "zis-api\\src\\middleware\\cors.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_middleware_cors.ts\\cors.ts"
+  },
+  {
+    "Source": "zis-api\\src\\dashboard\\postgres-order-details.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_dashboard_postgres-order-details.ts\\postgres-order-details.ts"
+  },
+  {
+    "Source": "zis-api\\src\\dashboard\\postgres-dashboard.repository.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_dashboard_postgres-dashboard.repository.ts\\postgres-dashboard.repository.ts"
+  },
+  {
+    "Source": "zis-api\\src\\dashboard\\postgres-dashboard.repository.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_dashboard_postgres-dashboard.repository.test.ts\\postgres-dashboard.repository.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\dashboard\\order-transitions.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_dashboard_order-transitions.ts\\order-transitions.ts"
+  },
+  {
+    "Source": "zis-api\\src\\dashboard\\dashboard.types.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_dashboard_dashboard.types.ts\\dashboard.types.ts"
+  },
+  {
+    "Source": "zis-api\\src\\dashboard\\dashboard.service.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_dashboard_dashboard.service.ts\\dashboard.service.ts"
+  },
+  {
+    "Source": "zis-api\\src\\dashboard\\dashboard.service.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_dashboard_dashboard.service.test.ts\\dashboard.service.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\auth\\supabase.client.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_auth_supabase.client.ts\\supabase.client.ts"
+  },
+  {
+    "Source": "zis-api\\src\\auth\\supabase-auth.resolver.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_auth_supabase-auth.resolver.ts\\supabase-auth.resolver.ts"
+  },
+  {
+    "Source": "zis-api\\src\\auth\\auth.controller.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_auth_auth.controller.ts\\auth.controller.ts"
+  },
+  {
+    "Source": "zis-api\\src\\contracts\\validation.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_contracts_validation.ts\\validation.ts"
+  },
+  {
+    "Source": "zis-api\\src\\contracts\\validation.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_contracts_validation.test.ts\\validation.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\contracts\\media.contracts.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_contracts_media.contracts.ts\\media.contracts.ts"
+  },
+  {
+    "Source": "zis-api\\src\\contracts\\index.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_contracts_index.ts\\index.ts"
+  },
+  {
+    "Source": "zis-api\\src\\contracts\\common.contracts.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_contracts_common.contracts.ts\\common.contracts.ts"
+  },
+  {
+    "Source": "zis-api\\src\\contracts\\commerce.contracts.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_contracts_commerce.contracts.ts\\commerce.contracts.ts"
+  },
+  {
+    "Source": "zis-api\\src\\contracts\\catalog.contracts.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_contracts_catalog.contracts.ts\\catalog.contracts.ts"
+  },
+  {
+    "Source": "zis-api\\src\\inventory\\postgres-inventory.repository.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_inventory_postgres-inventory.repository.ts\\postgres-inventory.repository.ts"
+  },
+  {
+    "Source": "zis-api\\src\\inventory\\inventory.types.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_inventory_inventory.types.ts\\inventory.types.ts"
+  },
+  {
+    "Source": "zis-api\\src\\inventory\\inventory.service.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_inventory_inventory.service.ts\\inventory.service.ts"
+  },
+  {
+    "Source": "zis-api\\src\\inventory\\inventory.service.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_inventory_inventory.service.test.ts\\inventory.service.test.ts"
+  },
+  {
+    "Source": "prototypes\\zis-review\\screenshots\\zis-standalone-checks.json",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\prototypes_zis-review_screenshots_zis-standalone-checks.json\\zis-standalone-checks.json"
+  },
+  {
+    "Source": "zis-api\\src\\infrastructure\\postgres.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_infrastructure_postgres.ts\\postgres.ts"
+  },
+  {
+    "Source": "AGENTS.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\AGENTS.md\\AGENTS.md"
+  },
+  {
+    "Source": "apps\\admin-mobile\\package.json",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_package.json\\package.json"
+  },
+  {
+    "Source": "zis-api\\src\\integration\\inventory.integration.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_integration_inventory.integration.test.ts\\inventory.integration.test.ts"
+  },
+  {
+    "Source": "zis-api\\src\\controllers\\admin-catalog.controller.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_controllers_admin-catalog.controller.ts\\admin-catalog.controller.ts"
+  },
+  {
+    "Source": "zis-api\\src\\controllers\\admin-commerce-settings.controller.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_controllers_admin-commerce-settings.controller.ts\\admin-commerce-settings.controller.ts"
+  },
+  {
+    "Source": "zis-api\\src\\http\\api-error.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_http_api-error.ts\\api-error.ts"
+  },
+  {
+    "Source": "zis-api\\src\\controllers\\health.controller.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_controllers_health.controller.ts\\health.controller.ts"
+  },
+  {
+    "Source": "zis-api\\src\\controllers\\commerce.controller.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_controllers_commerce.controller.ts\\commerce.controller.ts"
+  },
+  {
+    "Source": "zis-api\\src\\controllers\\catalog.controller.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_controllers_catalog.controller.ts\\catalog.controller.ts"
+  },
+  {
+    "Source": "zis-api\\src\\controllers\\admin-tasks.controller.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_controllers_admin-tasks.controller.ts\\admin-tasks.controller.ts"
+  },
+  {
+    "Source": "zis-api\\src\\controllers\\admin-order-status.controller.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_controllers_admin-order-status.controller.ts\\admin-order-status.controller.ts"
+  },
+  {
+    "Source": "zis-api\\src\\controllers\\admin-media.controller.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_controllers_admin-media.controller.ts\\admin-media.controller.ts"
+  },
+  {
+    "Source": "zis-api\\src\\controllers\\admin-inventory.controller.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_controllers_admin-inventory.controller.ts\\admin-inventory.controller.ts"
+  },
+  {
+    "Source": "zis-api\\src\\controllers\\admin-dashboard.controller.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_controllers_admin-dashboard.controller.ts\\admin-dashboard.controller.ts"
+  },
+  {
+    "Source": ".codex\\README.md",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\.codex_README.md\\README.md"
+  },
+  {
+    "Source": ".codex\\config.toml",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\.codex_config.toml\\config.toml"
+  },
+  {
+    "Source": "zis-api\\src\\config\\server-config.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_config_server-config.ts\\server-config.ts"
+  },
+  {
+    "Source": "zis-api\\src\\config\\server-config.test.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\zis-api_src_config_server-config.test.ts\\server-config.test.ts"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\vite-env.d.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_vite-env.d.ts\\vite-env.d.ts"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\main.tsx",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_main.tsx\\main.tsx"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\entities\\admin.types.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_entities_admin.types.ts\\admin.types.ts"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\app\\App.tsx",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_app_App.tsx\\App.tsx"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\stores\\admin-ui.store.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_stores_admin-ui.store.ts\\admin-ui.store.ts"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\stores\\admin-session.store.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_stores_admin-session.store.ts\\admin-session.store.ts"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\pages\\TasksPage.tsx",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_pages_TasksPage.tsx\\TasksPage.tsx"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\pages\\SettingsPage.tsx",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_pages_SettingsPage.tsx\\SettingsPage.tsx"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\pages\\ProductionPage.tsx",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_pages_ProductionPage.tsx\\ProductionPage.tsx"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\pages\\OrdersPage.tsx",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_pages_OrdersPage.tsx\\OrdersPage.tsx"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\pages\\OrderDetailsPage.tsx",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_pages_OrderDetailsPage.tsx\\OrderDetailsPage.tsx"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\pages\\LoginPage.tsx",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_pages_LoginPage.tsx\\LoginPage.tsx"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\pages\\DashboardPage.tsx",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_pages_DashboardPage.tsx\\DashboardPage.tsx"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\shared\\components\\StateMessage.tsx",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_shared_components_StateMessage.tsx\\StateMessage.tsx"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\shared\\components\\OrderStatusBadge.tsx",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_shared_components_OrderStatusBadge.tsx\\OrderStatusBadge.tsx"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\shared\\components\\ManualTaskForm.tsx",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_shared_components_ManualTaskForm.tsx\\ManualTaskForm.tsx"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\shared\\api\\tasks-api.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_shared_api_tasks-api.ts\\tasks-api.ts"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\shared\\api\\http-client.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_shared_api_http-client.ts\\http-client.ts"
+  },
+  {
+    "Source": "apps\\admin-mobile\\src\\shared\\api\\business-date.ts",
+    "PreparedPath": "C:\\Users\\123\\AppData\\Local\\Packages\\sandbox.{fb47c983-c119-4a33-9806-6ff119572f95}\\AC\\Temp\\zis-docs-move\\apps_admin-mobile_src_shared_api_business-date.ts\\business-date.ts"
+  }
+]

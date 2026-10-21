@@ -1,0 +1,41 @@
+---
+name: product-photo-studio
+description: Make honest, faithful food and product listing photos with restrained cleanup, save final image files in a "תמונות מעוצבות" folder, and optionally create a separate dimensions graphic.
+metadata:
+  short-description: Food and product photos for online stores
+---
+
+# Product Photo Studio
+
+Use this skill when the user supplies food or product photos for an online shop. The result should help customers understand what they will actually receive, with restrained presentation edits rather than aspirational advertising polish. Identify whether the subject is food or a non-food product and use the corresponding direction below.
+
+## Workflow
+
+1. Inspect all supplied images. Identify which show the same product, their angles, focus, lighting, visible details, and any existing labels or scale references.
+2. First check whether the image contains several copies or several different types/variants. If there are several copies of the same item and the user wants one listing image, select one clear representative and make that the sole subject; remove or crop out the duplicate copies without changing the selected item's features. If there are different products, flavors, colors, models, or other meaningful variants, ask which one to prepare before editing. Do not choose a variant on the user's behalf. If the user asks for a set covering several variants, prepare one image per requested variant.
+3. If a clearly best source angle can produce the requested image, proceed. If two or more materially different angles could make good primary images, show or describe the choices and ask which angle to use before generating. When the user asks for a set, make a useful varied set without asking about each view.
+4. Frame the complete subject with a safe background margin. Never let the product, dish, packaging, or any attached part touch or cross the canvas edge. Scale the subject down within the frame (do not alter its real proportions) to leave at least about 5% of the canvas dimension as visible background on every side, roughly equivalent to 1 cm in a typical web display. Add more margin if the target site's thumbnail or layout crops images. For irregular shapes, check the nearest extremity on every side, including handles, stems, lids, and protrusions. Default to a neutral, lightly warm white background only when background cleanup is requested or clearly needed. Keep the warmth subtle. Preserve natural ambient light and realistic shadows; do not make lighting dramatically brighter or more luxurious than the source. Follow any aspect ratio or screen size the user specifies.
+5. For food, aim for a clear, appetizing but ordinary-faithful menu photo, not a glossy advertisement. Preserve the actual portion size, shape, doneness, color, texture, ingredients, garnish, serving vessel, and plating shown. Do not add ingredients, garnish, steam, sauces, enlarge portions, smooth irregularities, intensify gloss, or make colors more vivid. Apply only mild exposure, white balance, focus, and crop corrections that do not change how the meal would appear when served.
+6. For non-food products, preserve actual size relationships, shape, color, material, construction, finish, wear, and distinctive details. Estimate the item's original color even when the source lighting or white balance is poor, using neutral areas, known material cues, and any additional views supplied. Correct the lighting and white balance around the item so its color looks true; do not recolor the item to match a warm/cool cast in the source or the background. If the original color cannot be inferred reliably from the available image(s), ask for another photo or the user's color description instead of guessing. Limit edits to modest exposure, white balance, crop, focus, and requested background cleanup. Do not make the item look newer, larger, shinier, more complete, or higher quality than the reference. Keep sale-relevant flaws visible.
+7. For food and products alike, treat the subject's original color as a sale-relevant fact. Correct a lighting cast only when the evidence supports the correction. Preserve genuine color variation and avoid global color changes that make the item inaccurate.
+8. Use the least transformative method that can meet the request. Before returning, compare the result against the source for portion/product scale, original color, completeness, texture, sale-relevant details, and the safe margin on all four sides. If generation materially changes these or leaves the subject cropped, discard that result and make a more conservative edit. If a faithful edit is not possible, explain the limitation and do not present the altered image as a trustworthy listing photo. Tell the user briefly what presentation edits were made.
+9. For multiple outputs, use distinct real views present in the references; do not invent hidden sides or details. Keep the same honest presentation level and background treatment throughout.
+10. If the user requests a dimensions graphic, ask which uploaded image to annotate and request exact measurements in centimeters (length × width × height, diameter, and depth when relevant). Do not infer dimensions from pixels, perspective, or other objects. Clarify which measurement maps to which visible edge when needed.
+11. Create the dimensions graphic as a separate listing image, using the selected product view. Add thin, legible measurement lines/arrows with restrained labels in cm, aligned to the corresponding dimensions. Keep lines outside the subject silhouette where practical. Preserve the exact user-provided numbers and inspect every label; if lettering or placement is wrong, correct it before returning the image. Never imply a scale that the reference does not establish.
+12. Use the image generation/editing capability for actual image work. Return the generated images in the conversation and label primary, alternate-angle, and dimensions images clearly. Briefly note any unavoidable uncertainty about faithful reconstruction or measurement placement.
+13. At the end of the process, save the exact final image file shown to the user in the conversation in a folder named `תמונות מעוצבות` under the current project/workspace root. The saved file must be the same final output, byte-for-byte when available; do not create a new render, alternate, or modified copy for saving. Create the folder if needed. Keep source images untouched; save only final selected outputs, not drafts. Use descriptive filenames and do not overwrite existing files; add a short suffix when a name already exists. After saving, verify the saved file is the displayed final output and report a clickable link to it. If the displayed image cannot be accessed as a file or there is no writable workspace path, explain that clearly; do not save a substitute or claim that saving succeeded.
+
+## Dimension image decisions
+
+- If dimensions were not supplied, ask for them; never make up values.
+- If several photos are available, ask which one to annotate, offering a recommended view when it clearly shows the measured edges.
+- If measurements are supplied but the view cannot represent every dimension, preserve the requested image selection and explain the limitation before proceeding if it could mislead buyers.
+- Prefer a dedicated dimensions image over placing measurements on every product photo.
+
+## Refining the result
+
+- Make revisions from the user's feedback one or two changes at a time, keeping already approved features fixed.
+- Translate vague feedback into a concrete edit and confirm briefly when needed: for example, “warmer background” means a slight cream tint while preserving natural food colors.
+- Useful controls include warmth of the white background, camera angle, crop/negative space, brightness, shadow strength, texture sharpness, and styling restraint.
+- Do not repeatedly regenerate the whole image when a localized edit can preserve the accepted result. If the image tool cannot reliably keep the rest unchanged, explain that and make the smallest practical revision.
+- If the user says the result looks too professional or unrealistic, reduce polish: restore source-like lighting, color, texture, crop, and visible imperfections; do not add a cinematic or commercial finish.

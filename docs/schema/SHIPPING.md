@@ -1,11 +1,11 @@
-> מפרט תכנון, לא אישור לסכמה חיה. [מפת ERD](../../ERD_SCHEMA.md) · [אינדקס](../../PLAN_INDEX.md) · [פערים](../../OPEN_ISSUES.md).
-> יש לקרוא יחד עם [עדכוני הסכמה](POLICIES_AND_UPDATES.md) ו־[מודל המלאי](../../INVENTORY_MODEL.md); שדות 003/004 אינם משוכפלים בכל טבלה.
+> מפרט תכנון, לא אישור לסכמה חיה. [מפת ERD](../ERD_SCHEMA.md) · [אינדקס](../PLAN_INDEX.md) · [פערים](../OPEN_ISSUES.md).
+> יש לקרוא יחד עם [עדכוני הסכמה](POLICIES_AND_UPDATES.md) ו־[מודל המלאי](../INVENTORY_MODEL.md); שדות 003/004 אינם משוכפלים בכל טבלה.
 
 ## טבלאות משלוחים והגדרות חנות
 
 ### `shipping_zones`
 
-אזורי משלוח. לפי הוראת בעלת האתר מ־22.09.2026, בתחילה ירושלים, ביתר ובית שמש, עם אפשרות הוספת ערים בניהול. הרשימה נשמרת ב־DB ומשמשת לבחירה; מחיר וחלונות משלוח טעונים השלמה. תיקוני Seed/ייחודיות טרם מומשו.
+אזורי משלוח. לפי הוראת בעלת האתר מ־22.09.2026, בתחילה ירושלים, ביתר ובית שמש, עם אפשרות הוספת ערים בניהול. הרשימה, פעילות האזור ושעת היציאה האזורית נשמרות ב־DB; מחירי משלוח מנוהלים ב־`shipping_rules`. ערכים עסקיים בפועל עדיין טעונים הזנה ואימות.
 
 | שדה | סוג | חובה | הסבר |
 |---|---|---:|---|
@@ -14,6 +14,7 @@
 | `city` | `text` | כן | עיר |
 | `neighborhood` | `text` | לא | שכונה, אם רלוונטי |
 | `is_active` | `boolean` | כן | האם ניתן לבחור באזור |
+| `dispatch_time` | `time` | לא | override אזורי אופציונלי; ברירת המחדל היא `system_defaults.dispatch_time` |
 | `created_at` | `timestamptz` | כן | זמן יצירה |
 | `updated_at` | `timestamptz` | כן | זמן עדכון |
 
@@ -77,7 +78,7 @@
 | `store_open` | `boolean` | כן | מצב פתיחה כללי |
 | `lock_mode` | `text` | כן | `open`, `closed`, `scheduled` |
 | `lock_message` | `text` | לא | הודעה ללקוח |
-| `minimum_order_total` | `numeric(12,2)` | כן | מינימום סכום להזמנה |
+| `minimum_product_subtotal` | `numeric(12,2)` | כן | מינימום סכום מוצרים להזמנה, ללא דמי משלוח; שם קודם `minimum_order_total` |
 | `max_advance_days` | `integer` | לא | כמה ימים קדימה ניתן להזמין |
 | `updated_by` | `uuid` | לא | FK ל־`admin_users.admin_user_id` |
 | `updated_at` | `timestamptz` | כן | זמן עדכון |
@@ -101,13 +102,14 @@
 - `CHECK (ends_at > starts_at)`.
 - אינדקס `idx_store_closures_time` על `(starts_at, ends_at, is_active)`.
 
-## עדכון תפעול ואספקה — 24.09.2026
+## עדכון תפעול ואספקה — 05.10.2026
 
-הסעיפים הבאים מתוכננים במיגרציית [006](../../zis-db/migrations/006_operations_delivery_and_admin.sql), קדימה בלבד לאחר אימות היסטוריית DB:
+הסעיפים הבאים ממומשים בקוד ובמיגרציית [008](../../zis-db/migrations/008_admin_commerce_settings.sql), אך דורשים אימות היסטוריית DB לפני הרצה:
 
-- `shipping_zones.dispatch_time time` נשמר כהכנה להרחבה עתידית. במהדורה הנוכחית נדרשת זמינות עיר בלבד; שעת יציאה נפרדת לעיר אינה מופעלת ואינה תנאי להפעלה.
+- `system_defaults.dispatch_time` הוא שעת היציאה הכללית הניתנת לעריכה. `shipping_zones.dispatch_time time` הוא override אזורי אופציונלי; הוא אינו תנאי להפעלת עיר.
+- `shipping_rules` הוא מקור מחירי המשלוח. אזור ללא כלל פעיל תואם נדחה ב־Quote; אין הנחת משלוח חינם implicit.
 - `store_settings.store_open` ו־`lock_message` הם מקור אמת לסגירה כללית. `GET /store-status` מחזיר אותם, הלקוח משבית "הוסף לסל", והשרת דוחה quote/Order גם אם נשלחה קריאה ישירה.
-- זמינות תאריך מחושבת בשרת לפי `business_timezone`, `max_advance_days`, `same_day_cutoff_time`, עיר פעילה וחג/ערב חג בישראל. הספרייה המומלצת היא `@hebcal/core` עם `il: true`; התלות והחישוב בשרת, לא ברכיב לוח התאריכים.
+- זמינות תאריך מחושבת בשרת לפי `business_timezone`, `max_advance_days`, `same_day_cutoff_time`, עיר פעילה וסגירות `store_closures`. לוח חגים אינו מופעל בשלב זה.
 - אין חלונות אישיים למהדורה זו. תאריך היום מושבת אחרי ה־cutoff; התאריך שנבחר נשמר ב־`orders.delivery_date`. שם אולם אופציונלי נשמר בהזמנה, לא באזור המשלוח.
 
 ראו את [תוכנית התפעול](../planning/OPERATIONS_DELIVERY_PLAN.md) לחוזי API, ניסוח הלקוח ועצי בדיקה.

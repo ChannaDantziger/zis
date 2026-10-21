@@ -11,7 +11,7 @@ import type { StorageService } from '../storage/storage.service.js';
 export function createAdminMediaRouter(storage: StorageService, resolveAdminUserId: AdminUserResolver): Router {
   const router = Router();
   router.post(
-    '/admin/media/upload',
+    ['/admin/media/upload', '/admin/event-gallery/media/upload'],
     express.raw({ type: [...ALLOWED_MEDIA_TYPES], limit: MAX_MEDIA_BYTES }),
     createAdminMediaController(storage, resolveAdminUserId),
   );

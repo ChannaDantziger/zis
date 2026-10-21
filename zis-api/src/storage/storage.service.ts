@@ -1,3 +1,4 @@
+import { validateImageSignature } from './image-signature.js';
 import { randomUUID } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
@@ -74,6 +75,8 @@ function validateUpload(input: MediaUploadInput, content: Buffer): void {
   if (content.length !== input.byteLength || content.length > MAX_MEDIA_BYTES || content.length === 0) {
     throw new Error('Media file size is invalid');
   }
+
+  validateImageSignature(input.contentType, content);
 
   if (!input.fileName.trim()) {
     throw new Error('Media file name is required');

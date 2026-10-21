@@ -16,6 +16,7 @@ export const errorHandler: ErrorRequestHandler = (error, request, response, _nex
       requestId,
       method: request.method,
       path: request.path,
+      diagnosticCode: safeDiagnosticCode(error),
       code: apiError.code,
       message: apiError.message,
     }));
@@ -49,4 +50,38 @@ function toApiError(error: unknown): ApiError {
 
 function isJsonSyntaxError(error: unknown): error is SyntaxError & { status: number } {
   return error instanceof SyntaxError && 'status' in error && error.status === 400;
+}
+
+// Allow only known infrastructure codes; never log raw messages, SQL or connection details.
+const INFRASTRUCTURE_CODES = new Set([
+  'STORE_SETTINGS_NOT_CONFIGURED',
+  'ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN',
+  'ENETUNREACH', 'EHOSTUNREACH', 'EACCES', 'ERR_TLS_CERT_ALTNAME_INVALID',
+  'SELF_SIGNED_CERT_IN_CHAIN', 'DEPTH_ZERO_SELF_SIGNED_CERT',
+  'UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'CERT_HAS_EXPIRED',
+  '08000', '08001', '08003', '08006', '28P01', '28000', '42501',
+  '42P01', '42703', '42883', '42803', '42P10', '42601', '53300', '57P03',
+]);
+
+const MAX_ERROR_DEPTH = 3;
+const MAX_AGGREGATE_ERRORS = 5;
+
+function safeDiagnosticCode(error: unknown): string {
+  return findDiagnosticCode(error, MAX_ERROR_DEPTH) ?? 'UNCLASSIFIED';
+}
+
+function findDiagnosticCode(error: unknown, depth: number): string | undefined {
+  if (!error || typeof error !== 'object' || depth === 0) return undefined;
+  if ('code' in error && typeof error.code === 'string' && INFRASTRUCTURE_CODES.has(error.code)) return error.code;
+  if ('cause' in error) {
+    const code = findDiagnosticCode(error.cause, depth - 1);
+    if (code) return code;
+  }
+  if (error instanceof AggregateError) {
+    for (const child of error.errors.slice(0, MAX_AGGREGATE_ERRORS)) {
+      const code = findDiagnosticCode(child, depth - 1);
+      if (code) return code;
+    }
+  }
+  return undefined;
 }

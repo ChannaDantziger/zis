@@ -17,7 +17,7 @@ record per input file; attach only the returned `PreparedPath`.
 
 Run `./scripts/check-docs.ps1` from the repository, or invoke it by absolute path.
 It checks all maintained Markdown files (including hidden documentation), the
-320-line maximum, local file-link targets, and coverage in [PLAN_INDEX](../PLAN_INDEX.md).
+320-line maximum, local file-link targets, and coverage in [PLAN_INDEX](../docs/PLAN_INDEX.md).
 It excludes dependencies, build output, Git internals and environment files.
 It reads only prepared copies. HTTP URLs and heading anchors are not checked.
 Files with identical basenames are prepared and read sequentially because the

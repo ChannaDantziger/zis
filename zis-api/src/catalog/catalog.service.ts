@@ -23,8 +23,7 @@ export function createCatalogService(repository: CatalogRepository, resolveMedia
 async function mapProduct(record: CatalogProductRecord, resolveMediaUrl: CatalogMediaUrlResolver): Promise<CatalogProduct> {
   const productImages = await mapImages(record.images, resolveMediaUrl);
   const variants = await Promise.all(record.variants.map(async (variant) => {
-    const ownImages = variant.images.length > 0 ? variant.images : record.images;
-    const images = await mapImages(ownImages, resolveMediaUrl);
+    const images = await mapImages(variant.images, resolveMediaUrl);
     return {
       productVariantId: variant.productVariantId,
       name: variant.name,
@@ -33,21 +32,21 @@ async function mapProduct(record: CatalogProductRecord, resolveMediaUrl: Catalog
       availableSets: variant.availableSets,
       isDefault: variant.isDefault,
       attributes: variant.attributes,
-      primaryImage: images.find((image) => image.imageType === 'primary') ?? images[0] ?? null,
+      primaryImage: images.find((image) => image.imageType === 'primary') ?? null,
       gallery: images,
     } satisfies CatalogVariant;
   }));
-  const defaultVariant = variants.find((variant) => variant.isDefault) ?? variants[0];
-
   return {
     productId: record.productId,
     category: record.category,
     name: record.name,
     description: record.description,
     setSize: record.setSize,
-    minimumSets: record.minimumSets,
-    primaryImage: productImages.find((image) => image.imageType === 'primary') ?? defaultVariant?.primaryImage ?? null,
-    gallery: productImages.length > 0 ? productImages : defaultVariant?.gallery ?? [],
+    pricePerSet: record.pricePerSet,
+    availableSets: record.availableSets,
+    displayOrder: record.displayOrder,
+    primaryImage: productImages.find((image) => image.imageType === 'primary') ?? null,
+    gallery: productImages,
     variants,
   };
 }

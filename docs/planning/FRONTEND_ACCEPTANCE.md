@@ -1,6 +1,6 @@
 # בדיקות קבלה וגבולות שלב Frontend
 
-[תוכנית Frontend](../../FRONTEND_BUILD_PLAN.md) · [תוכנית כוללת](../../IMPLEMENTATION_PLAN.md) · [אינדקס](../../PLAN_INDEX.md).
+[תוכנית Frontend](../FRONTEND_BUILD_PLAN.md) · [תוכנית כוללת](../IMPLEMENTATION_PLAN.md) · [אינדקס](../PLAN_INDEX.md).
 
 > המפרט הבא מתייחס לאבן דרך של ממשק בלבד; סליקה, טיפול בכשל כספי ותפעול מחויבים לפני השקת חנות. סדר השלבים בתוכנית הכוללת גובר על סדר היסטורי כאן.
 

@@ -1,0 +1,21 @@
+.production-print-sheet { color: var(--mantine-color-black); }
+@media print {
+  @page { size: A4 portrait; margin: 12mm; }
+  body:has(.production-print-page) { background: white; }
+  body:has(.production-print-page) .mantine-AppShell-header,
+  body:has(.production-print-page) .mantine-AppShell-navbar,
+  .production-print-controls { display: none !important; }
+  body:has(.production-print-page) .mantine-AppShell-main {
+    padding: 0 !important;
+    min-height: auto;
+  }
+  .production-print-page { max-width: none !important; margin: 0 !important; }
+  .production-print-sheet { border: 0; border-radius: 0; padding: 0; box-shadow: none; }
+  .production-print-table,
+  .production-print-table > div { overflow: visible !important; }
+  .production-print-table table { min-width: 0 !important; width: 100%; table-layout: fixed; }
+  .production-print-table th,
+  .production-print-table td { overflow-wrap: anywhere; }
+  .production-print-table thead { display: table-header-group; }
+  .production-print-table tr { break-inside: avoid; }
+}

@@ -1,6 +1,6 @@
 # סקירת התצוגה — `Lis-standalone`
 
-[אינדקס](../../PLAN_INDEX.md) · [כללי תוכן וגלריה](STORE_CONTENT_AND_GALLERY.md) · [הפעלת התצוגה](../../prototypes/zis-review/README.md).
+[אינדקס](../PLAN_INDEX.md) · [כללי תוכן וגלריה](STORE_CONTENT_AND_GALLERY.md) · [הפעלת התצוגה](../../prototypes/zis-review/README.md).
 נבדק ב־24.09.2026. מקור העיצוב היחיד הוא `Lis-standalone.html`. [HTML הבדיקה](../../prototypes/zis-review/index.html) הוא המחשה מקומית עם נתוני מקור ארוזים; הוא אינו חנות מחוברת ל־DB, Storage או סליקה.
 
 ## תוצאה חזותית
@@ -21,7 +21,7 @@
 
 ## מה עדיין נדרש לחנות פעילה
 
-- לפצל את העמוד לרכיבי React/TypeScript/Mantine לפי [הארכיטקטורה](../../FRONTEND_ARCHITECTURE.md). כל נתוני המוצרים, המחירים, הערים ותמונות המוצר/האירועים יבואו מ־API, DB ו־Storage; אין להעביר את מערכי ההמחשה לרכיבים חיים.
+- לפצל את העמוד לרכיבי React/TypeScript/Mantine לפי [הארכיטקטורה](../FRONTEND_ARCHITECTURE.md). כל נתוני המוצרים, המחירים, הערים ותמונות המוצר/האירועים יבואו מ־API, DB ו־Storage; אין להעביר את מערכי ההמחשה לרכיבים חיים.
 - להשלים API, ניהול העלאה/פרסום תמונות אירועים, מדיניות Storage והפעלת [מיגרציה 005](../../zis-db/migrations/005_event_gallery_images.sql). מצב ה־DB החי לא אומת.
 - להשלים מסלול קנייה אמיתי, כולל כתובת יעד למשלוח בקופה, בלי כתובת עסק ציבורית. בדיקת נגישות מלאה ו־E2E ייעשו לאחר הקמת החנות.
 

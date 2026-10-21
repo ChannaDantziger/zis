@@ -7,6 +7,7 @@ export function createCommerceRouter(service: CommerceService): Router {
   const controller = createCommerceController(service);
   router.get('/store-status', controller.getStoreStatus);
   router.get('/shipping/zones', controller.listShippingZones);
+  router.get('/shipping/methods', controller.listShippingMethods);
   router.post('/availability', controller.getAvailability);
   router.post('/quote', controller.calculateQuote);
   return router;

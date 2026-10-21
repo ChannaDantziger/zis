@@ -55,14 +55,14 @@ try {
                 } else {
                     $externalFileCount++
                 }
-                if ($relativePath -eq 'PLAN_INDEX.md') { [void]$indexedPaths.Add($resolved) }
+                if ($relativePath -eq 'docs\PLAN_INDEX.md') { [void]$indexedPaths.Add($resolved) }
             }
         }
     }
 
     foreach ($document in $documents) {
         if (-not $indexedPaths.Contains($document.Path)) {
-            $failures.Add("$($document.Relative): not linked from PLAN_INDEX.md")
+            $failures.Add("$($document.Relative): not linked from docs/PLAN_INDEX.md")
         }
     }
 

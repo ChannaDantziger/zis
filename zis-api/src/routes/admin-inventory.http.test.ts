@@ -25,7 +25,7 @@ function createSupabaseStub(): SupabaseClient {
               return {
                 async maybeSingle() {
                   if (adminUserId === 'admin-1') {
-                    return { data: { admin_user_id: 'admin-1', status: 'active' }, error: null };
+                    return { data: { admin_user_id: 'admin-1', status: 'active', role: 'operations_manager' }, error: null };
                   }
 
                   return { data: { admin_user_id: adminUserId, status: 'inactive' }, error: null };

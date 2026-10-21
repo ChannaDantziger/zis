@@ -1,20 +1,38 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
 
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = window.localStorage.getItem('zis_admin_access_token');
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init?.headers },
-  });
-  if (!response.ok) {
-    const payload = await response.json().catch(() => null) as { message?: string; error?: string } | null;
-    throw new Error(payload?.message ?? payload?.error ?? `הבקשה נכשלה (${response.status})`);
+  const token = adminSessionStore.accessToken;
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init?.headers },
+    });
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error('לא ניתן להתחבר לשרת. ודאי ששרת ה־API פעיל ושכתובת החיבור שלו מוגדרת נכון.');
+    }
+    throw error;
   }
-  return response.json() as Promise<T>;
+  if (path.startsWith('/admin/') && token !== adminSessionStore.accessToken) {
+    throw new Error('המשתמש התחלף. יש לרענן את המסך לפני המשך עבודה.');
+  }
+  if (!response.ok) {
+    if (response.status === 401 && path.startsWith('/admin/') && token === adminSessionStore.accessToken) {
+      adminSessionStore.clearSession();
+    }
+    const payload = await response.json().catch(() => null) as { message?: string; error?: { message?: string } | string } | null;
+    const serverMessage = typeof payload?.error === 'object' ? payload.error.message : payload?.error;
+    throw new Error(payload?.message ?? serverMessage ?? `הבקשה נכשלה (${response.status})`);
+  }
+  const payload = response.status === 204 || response.status === 205
+    ? undefined as T
+    : await response.json() as T;
+  if (path.startsWith('/admin/') && token !== adminSessionStore.accessToken) {
+    throw new Error('המשתמש התחלף. יש לרענן את המסך לפני המשך עבודה.');
+  }
+  return payload;
 }
 
-export function currentBusinessDate(): string {
-  const parts = new Intl.DateTimeFormat('en', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${values.year}-${values.month}-${values.day}`;
-}
+export { currentBusinessDate } from './business-date.js';
+import { adminSessionStore } from '../../stores/admin-session.store.js';

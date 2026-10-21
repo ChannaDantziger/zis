@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { ApiError } from '../http/api-error.js';
 import {
   ALLOWED_MEDIA_TYPES,
-  EVENT_GALLERY_BUCKET,
   MAX_MEDIA_BYTES,
   PRODUCT_MEDIA_BUCKET,
   type MediaBucket,
@@ -23,7 +22,9 @@ export function createAdminMediaController(
       throw new ApiError(403, 'ADMIN_ACCESS_REQUIRED', 'Active admin access required');
     }
 
-    const bucket = readBucket(request.header('X-Media-Bucket'));
+    if (adminResolution.role !== 'operations_manager') throw new ApiError(403, 'OPERATIONS_MANAGER_REQUIRED', 'Operations manager access required');
+    response.setHeader('Cache-Control', 'no-store');
+    const bucket = request.path.includes('event-gallery') ? 'zis-event-gallery' : PRODUCT_MEDIA_BUCKET;
     const contentType = request.header('Content-Type');
     const fileName = request.header('X-File-Name');
     const content = request.body;
@@ -42,13 +43,6 @@ export function createAdminMediaController(
     }, content);
     response.status(201).json(result);
   };
-}
-
-function readBucket(value: string | undefined): MediaBucket {
-  if (value === PRODUCT_MEDIA_BUCKET || value === EVENT_GALLERY_BUCKET) {
-    return value;
-  }
-  throw new ApiError(400, 'VALIDATION_ERROR', 'X-Media-Bucket is invalid');
 }
 
 function isAllowedContentType(value: string): value is (typeof ALLOWED_MEDIA_TYPES)[number] {

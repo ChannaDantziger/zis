@@ -1,4 +1,12 @@
 import { createApp } from './app.js';
+import { createOrderService } from './commerce/order.service.js';
+import { createPostgresOrderRepository } from './commerce/postgres-order.repository.js';
+import { createNotificationsService } from './notifications/notifications.service.js';
+import { createPostgresNotificationsRepository } from './notifications/postgres-notifications.repository.js';
+import { createInventoryAdminService } from './inventory-admin/inventory-admin.service.js';
+import { createPostgresInventoryAdminRepository } from './inventory-admin/postgres-inventory-admin.repository.js';
+import { createOperationsReportsService } from './operations-reports/operations-reports.service.js';
+import { createPostgresOperationsReportsRepository } from './operations-reports/postgres-operations-reports.repository.js';
 import { readServerConfig, validateServerConfig } from './config/server-config.js';
 import { createSupabaseServerClient } from './auth/supabase.client.js';
 import { createSupabaseAuthResolver } from './auth/supabase-auth.resolver.js';
@@ -16,6 +24,27 @@ import { createPostgresDashboardRepository } from './dashboard/postgres-dashboar
 import { createDashboardService } from './dashboard/dashboard.service.js';
 import { createPostgresOrderStatusRepository } from './operations/postgres-order-status.repository.js';
 import { createOrderStatusService } from './operations/order-status.service.js';
+import { createPostgresCommerceSettingsRepository } from './operations/postgres-commerce-settings.repository.js';
+import { createCommerceSettingsService } from './operations/commerce-settings.service.js';
+import { createPostgresCommerceRepository } from './commerce/postgres-commerce.repository.js';
+import { createCommerceService } from './commerce/commerce.service.js';
+import { createPostgresTasksRepository } from './tasks/postgres-tasks.repository.js';
+import { createTasksService } from './tasks/tasks.service.js';
+import { createPostgresEventGalleryRepository } from './event-gallery/postgres-event-gallery.repository.js';
+import { createEventGalleryService } from './event-gallery/event-gallery.service.js';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+
+const envFilePath = join(process.cwd(), '.env');
+if (existsSync(envFilePath) && typeof process.loadEnvFile === 'function') {
+  try {
+    process.loadEnvFile(envFilePath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw error;
+    }
+  }
+}
 
 const port = Number(process.env.PORT ?? DEFAULT_PORT);
 const serverConfig = readServerConfig();
@@ -31,6 +60,7 @@ const hasServerDependencies = Boolean(
 const app = hasServerDependencies
   ? (() => {
       const supabase = createSupabaseServerClient();
+      const authSupabase = createSupabaseServerClient();
       const pool = createPostgresPool({ connectionString: databaseUrl as string });
       const repository = createPostgresInventoryRepository(createPostgresClientFactory(pool));
       const inventoryService = createInventoryService(repository);
@@ -40,18 +70,37 @@ const app = hasServerDependencies
       const adminCatalogRepository = createPostgresAdminCatalogRepository(createPostgresClientFactory(pool));
       const dashboardRepository = createPostgresDashboardRepository(createPostgresClientFactory(pool));
       const orderStatusRepository = createPostgresOrderStatusRepository(createPostgresClientFactory(pool));
+      const commerceSettingsRepository = createPostgresCommerceSettingsRepository(createPostgresClientFactory(pool));
+      const commerceRepository = createPostgresCommerceRepository(createPostgresClientFactory(pool));
       const catalogService = createCatalogService(
         catalogRepository,
         (bucket, storagePath) => storage.createSignedUrl(bucket, storagePath).then((result) => result.url),
       );
       return createApp({
+        orderService: createOrderService(createPostgresOrderRepository(createPostgresClientFactory(pool)),
+          serverConfig.orderConfirmationTokenTtlSeconds && serverConfig.orderConfirmationTokenSecret ? {
+            confirmationTokenTtlSeconds: serverConfig.orderConfirmationTokenTtlSeconds,
+            confirmationTokenSecret: serverConfig.orderConfirmationTokenSecret,
+          } : undefined),
+        notificationsService: createNotificationsService(createPostgresNotificationsRepository(createPostgresClientFactory(pool))),
+        inventoryAdminService: createInventoryAdminService(createPostgresInventoryAdminRepository(createPostgresClientFactory(pool))),
+        operationsReportsService: createOperationsReportsService(createPostgresOperationsReportsRepository(createPostgresClientFactory(pool))),
+        tasksService: createTasksService(createPostgresTasksRepository(createPostgresClientFactory(pool))),
+        supabase,
+        authSupabase,
         inventoryService,
         resolveAdminUserId,
         catalogService,
+        eventGalleryService: createEventGalleryService(
+          createPostgresEventGalleryRepository(createPostgresClientFactory(pool)),
+          (bucket, storagePath) => storage.createSignedUrl(bucket, storagePath).then((result) => result.url),
+        ),
         storageService: storage,
         adminCatalogService: createAdminCatalogService(adminCatalogRepository),
         dashboardService: createDashboardService(dashboardRepository),
         orderStatusService: createOrderStatusService(orderStatusRepository),
+        commerceSettingsService: createCommerceSettingsService(commerceSettingsRepository),
+        commerceService: createCommerceService(commerceRepository),
         allowedOrigins: serverConfig.allowedOrigins,
         readinessChecks: {
           postgres: async () => {

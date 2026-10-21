@@ -1,0 +1,53 @@
+export interface CatalogCategory {
+  categoryId: string;
+  name: string;
+  slug: string;
+}
+
+export interface CatalogImage {
+  imageId: string;
+  url: string;
+  altText: string;
+  imageType: 'primary' | 'gallery';
+  sortOrder: number;
+}
+
+export interface CatalogVariant {
+  productVariantId: string;
+  name: string;
+  productCode: string;
+  pricePerSet: string;
+  availableSets: number;
+  isDefault: boolean;
+  attributes: Record<string, unknown> | null;
+  primaryImage: CatalogImage | null;
+  gallery: CatalogImage[];
+}
+
+export interface CatalogProduct {
+  productId: string;
+  category: CatalogCategory;
+  name: string;
+  description: string | null;
+  setSize: number;
+  pricePerSet: string;
+  availableSets: number;
+  displayOrder: number;
+  primaryImage: CatalogImage | null;
+  gallery: CatalogImage[];
+  variants: CatalogVariant[];
+}
+
+export interface CatalogQuery {
+  categorySlug?: string;
+  search?: string;
+  sort: 'display' | 'name' | 'price';
+  direction: 'asc' | 'desc';
+  page: number;
+  pageSize: number;
+}
+
+export interface CatalogResponse {
+  data: CatalogProduct[];
+  page: { page: number; pageSize: number; totalItems: number; totalPages: number };
+}

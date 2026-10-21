@@ -4,3 +4,7 @@ dist/
 .env.*
 !.env.example
 coverage/
+.codex-safe-context/
+*.tsbuildinfo
+.partial-node_modules/
+.verify-*

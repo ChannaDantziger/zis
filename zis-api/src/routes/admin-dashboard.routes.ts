@@ -8,6 +8,8 @@ export function createAdminDashboardRouter(service: DashboardService, resolveAdm
   const controller = createAdminDashboardController(service, resolveAdminUserId);
   router.get('/admin/dashboard', controller.dashboard);
   router.get('/admin/orders', controller.orders);
+  router.get('/admin/orders/page', controller.orderPage);
+  router.get('/admin/orders/:orderId', controller.orderDetails);
   router.get('/admin/production', controller.production);
   return router;
 }

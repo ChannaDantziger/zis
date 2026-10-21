@@ -1,6 +1,6 @@
 # תוכן החנות, תמונות וגלריית אירועים
 
-[אינדקס](../../PLAN_INDEX.md) · [דרישות חנות](STOREFRONT_REQUIREMENTS.md) · [תוכנית](../../IMPLEMENTATION_PLAN.md) · [סכמת גלריה](../schema/EVENT_GALLERY.md).
+[אינדקס](../PLAN_INDEX.md) · [דרישות חנות](STOREFRONT_REQUIREMENTS.md) · [תוכנית](../IMPLEMENTATION_PLAN.md) · [סכמת גלריה](../schema/EVENT_GALLERY.md).
 החלטות בעלת האתר מ־24.09.2026. זהו חוזה יעד ל־P1–P4/P7. [תצוגת הבדיקה](../../prototypes/zis-review/README.md) משתמשת בתמונות ונתוני המחשה מתוך `Lis-standalone.html`; עדיין אין חיבור מוכח ל־DB או ל־Storage חי.
 
 ## מקור תצוגה ותוכן
