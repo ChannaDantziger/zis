@@ -24,6 +24,8 @@
 | `POST /admin/products/:id/images` | Admin | יצירת metadata לאחר העלאה מאומתת |
 | `PATCH /admin/product-images/:id` | Admin | alt, סדר, סוג או ארכוב לוגי; החלפה מתבצעת בהעלאה חדשה ואז עדכון metadata |
 | `POST /admin/products` | Admin | יצירת מוצר במצב טיוטה ורישום Audit |
+| `GET /admin/products` | מנהלת תפעול | `page` ו־`categoryId` אופציונלי מסוג UUID; עמוד של 25 מוצרים, ספירה מסוננת וכל הקטגוריות. מימוש 21.10.2026 |
+| `PATCH /admin/products/:id` | מנהלת תפעול | עריכת מוצר עם גרסה; `pricePerSet` יכול להישאר `null` למוצר עם מחירי וריאציות. פרסום נבדק בשרת |
 | `POST /admin/products/:id/variants` | Admin | יצירת וריאציה ומלאי התחלתי ורישום Audit |
 | `GET /event-gallery` | ציבורי | תמונות אירועים שפורסמו בלבד |
 

@@ -31,10 +31,49 @@ test('catalog pagination rejects repeated, fractional and unbounded values', asy
   await f.controller.listProducts({ query: { page: '2' } } as never, f.response);
   assert.deepEqual(f.calls, [[2]]); assert.equal(f.headers['Cache-Control'], 'no-store');
 });
+
+test('category filter is validated before catalog data access', async () => {
+  const f = fixture();
+  for (const categoryId of ['', 'not-a-uuid', [id, id]]) {
+    await assert.rejects(() => f.controller.listProducts({ query: { categoryId } } as never, f.response));
+  }
+  assert.deepEqual(f.calls, []);
+  await f.controller.listProducts({ query: { page: '2', categoryId: id } } as never, f.response);
+  assert.deepEqual(f.calls, [[2, undefined, id]]);
+});
+
+test('category pagination applies the same scope to the count and the page in a read-only snapshot', async () => {
+  const statements: Array<{ sql: string; values?: unknown[] }> = [];
+  let released = false;
+  const client = { query: async (sql: string, values?: unknown[]) => {
+    statements.push({ sql, values });
+    return { rows: sql.includes('count(*)') ? [{ total: '31' }] : sql.includes('as product') ? [{ product: { productId: id, categoryId: id } }] : [] };
+  }, release: () => { released = true; } } as unknown as SqlClient;
+  const result = await createCatalogManagementRepository(async () => client).listProducts(2, undefined, id);
+  const count = statements.find((statement) => statement.sql.includes('count(*)'))!;
+  const products = statements.find((statement) => statement.sql.includes('as product'))!;
+  assert.deepEqual(count.values, [null, id]);
+  assert.match(count.sql, /category_id=\$2/);
+  assert.deepEqual(products.values, [25, 25, null, id]);
+  assert.match(products.sql, /p\.category_id=\$4/);
+  assert.equal(result.totalItems, 31); assert.equal(result.page, 2);
+  assert.match(statements[0]!.sql, /read only/); assert.equal(statements.at(-1)?.sql, 'commit');
+  assert.equal(released, true);
+});
 test('variant edits cannot overwrite inventory or internal product code', async () => {
   const f = fixture();
   await f.controller.updateVariant({ params: { productVariantId: id }, body: { name: ' שוקולד ', pricePerSet: '24.5', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'hidden', version, availableSets: 999, productCode: 'spoofed' } } as never, f.response);
   assert.deepEqual(f.calls, [[{ productVariantId: id, name: 'שוקולד', pricePerSet: '24.50', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'hidden', version }, id]]);
+});
+
+test('a product with variant pricing can keep its null product price during a regular edit', async () => {
+  const f = fixture();
+  await f.controller.updateProduct({ params: { productId: id }, body: {
+    categoryId: id, name: 'מארז טעמים', description: 'תיאור חדש', setSize: 4,
+    pricePerSet: null, availableSets: 0, displayOrder: 10, status: 'active', version,
+  } } as never, f.response);
+  const [input] = f.calls[0] as [{ pricePerSet: string | null; name: string }];
+  assert.equal(input.pricePerSet, null); assert.equal(input.name, 'מארז טעמים');
 });
 function databaseFixture(currentVersion: string) {
   const statements: Array<{ sql: string; values?: unknown[] }> = [];

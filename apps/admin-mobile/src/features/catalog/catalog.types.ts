@@ -7,7 +7,7 @@ export interface ManagedVariant {
 }
 export interface ManagedProduct {
   productId: string; categoryId: string; name: string; description: string | null;
-  setSize: number; pricePerSet: string; availableSets: number; displayOrder: number; status: ProductStatus; version: string;
+  setSize: number; pricePerSet: string | null; availableSets: number; displayOrder: number; status: ProductStatus; version: string;
   isVisible: boolean; visibilityReasons: string[]; variants: ManagedVariant[]; images: ManagedImage[];
 }
 export interface ManagedImage { imageId: string; productVariantId: string | null; storagePath: string; url?: string; altText: string; imageType: 'primary' | 'gallery'; sortOrder: number; version: string; }
@@ -19,14 +19,14 @@ export interface ManagedCatalog {
 export interface ManagedCategory { categoryId: string; name: string; sortOrder: number; status: 'active' | 'hidden'; }
 export interface UpdateProductInput {
   productId: string; categoryId: string; name: string; description: string | null;
-  setSize: number; pricePerSet: string; availableSets: number; displayOrder: number; status: ProductStatus; version: string;
+  setSize: number; pricePerSet: string | null; availableSets: number; displayOrder: number; status: ProductStatus; version: string;
 }
 export interface UpdateVariantInput {
   productVariantId: string; name: string; pricePerSet: string; lowStockThresholdSets: number;
   defaultProductionQuantitySets: number; status: VariantStatus; version: string;
 }
 export interface AdminCatalogManagement {
-  listProducts(page: number, productId?: string): Promise<ManagedCatalog>;
+  listProducts(page: number, productId?: string, categoryId?: string): Promise<ManagedCatalog>;
   updateProduct(input: UpdateProductInput, actor: string): Promise<{ productId: string }>;
   updateVariant(input: UpdateVariantInput, actor: string): Promise<{ productVariantId: string }>;
 }

@@ -1,24 +1,50 @@
 import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Alert, Badge, Button, Card, Group, Image, Modal, Pagination, Select, Stack, Text, TextInput, Title, NumberInput, Tooltip } from '@mantine/core';
+import { Alert, Button, Card, Group, Pagination, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { catalogStore as store } from '../features/catalog/catalog.store.js';
-import { CatalogProductEditor, productStatuses } from '../features/catalog/CatalogProductEditor.js';
+import { CatalogProductEditor } from '../features/catalog/CatalogProductEditor.js';
+import { CatalogBreadcrumbs, CatalogCategoryEditor } from '../features/catalog/CatalogCategoryEditor.js';
+import { CatalogProductCard } from '../features/catalog/CatalogProductCard.js';
 import { LoadingState } from '../shared/components/StateMessage.js';
+
 export const CatalogPage = observer(function CatalogPage() {
-  useEffect(() => { void store.load(); return () => store.close(); }, []);
-  return <Stack maw={1100} mx="auto">
-    <Group justify="space-between"><div><Title order={1}>מוצרים וקטגוריות</Title><Text c="dimmed">ניהול מוצרים, וריאציות, תמונות וקטגוריות</Text></div><Group><Button variant="light" disabled={store.loading || store.saving} onClick={() => { store.close(); void store.load(); }}>רענן</Button><Button variant="light" disabled={store.saving || !store.catalog} onClick={() => store.editCategory()}>קטגוריה חדשה</Button><Button disabled={store.saving || !store.catalog} onClick={() => store.newProduct()}>מוצר חדש</Button></Group></Group>
+  useEffect(() => { void store.load(); return () => { store.close(false); }; }, []);
+  const category = store.selectedCategory;
+  return <Stack maw={1100} mx="auto" gap="lg">
+    <CatalogBreadcrumbs />
+    <Group justify="space-between"><div>
+      <Title order={1}>{store.product ? (store.product.productId ? store.product.name : 'מוצר חדש') : category?.name ?? 'הקטלוג שלי'}</Title>
+      <Text c="dimmed">{store.product ? 'פרטי המוצר והתמונות שלו' : category ? 'המוצרים בקטגוריה זו' : 'בחרי קטגוריה כדי לראות ולהוסיף מוצרים'}</Text>
+    </div><Group>
+      {!store.product && <Button variant="subtle" disabled={store.loading || store.saving} onClick={() => void store.load()}>רענון</Button>}
+      {!store.product && (category ? <>
+        <Button variant="default" disabled={store.saving} onClick={() => store.editCategory(category)}>עריכת הקטגוריה</Button>
+        <Button disabled={store.loading || store.saving} onClick={() => store.newProduct()}>הוספת מוצר</Button>
+      </> : <Button disabled={store.loading || store.saving || !store.catalog} onClick={() => store.editCategory()}>הוספת קטגוריה</Button>)}
+    </Group></Group>
     {store.error && <Alert color="red" title="הפעולה נכשלה">{store.error}</Alert>}
     {store.success && <Alert color="green">{store.success}</Alert>}
-    {store.catalog && <Card withBorder radius="lg"><Group justify="space-between" mb="sm"><Text fw={700}>קטגוריות</Text><Text size="sm" c="dimmed">{store.catalog.categories.length} קטגוריות</Text></Group><Group gap="xs">{store.catalog.categories.map((category) => <Button key={category.categoryId} size="xs" variant="light" onClick={() => store.editCategory(category)}>{category.name}{category.status === 'hidden' ? ' · מוסתרת' : ''} · עריכה</Button>)}{store.catalog.categories.length === 0 && <Text size="sm" c="dimmed">עדיין אין קטגוריות. הוסיפי קטגוריה כדי לשייך אליה מוצרים.</Text>}</Group></Card>}
-    <Modal opened={!!store.category} onClose={() => store.close()} title={store.category?.categoryId ? 'עריכת קטגוריה' : 'קטגוריה חדשה'} centered><Stack><TextInput label="שם הקטגוריה" required maxLength={100} value={store.category?.name ?? ''} onChange={(e) => store.category && (store.category.name = e.currentTarget.value)} /><NumberInput label="סדר הצגה" min={0} value={store.category?.sortOrder ?? 0} onChange={(v) => store.category && (store.category.sortOrder = typeof v === 'number' ? v : 0)} /><Select label="מצב" data={[{ value: 'active', label: 'פעילה' }, { value: 'hidden', label: 'מוסתרת' }]} value={store.category?.status ?? 'active'} onChange={(v) => store.category && (store.category.status = v === 'hidden' ? 'hidden' : 'active')} /><Button loading={store.saving} disabled={!store.category?.name.trim()} onClick={() => void store.saveCategory()}>שמור קטגוריה</Button></Stack></Modal>
-    {store.loading && <LoadingState />}
-    <CatalogProductEditor />
-    {!store.loading && store.catalog?.data.length === 0 && <Text>אין מוצרים עדיין</Text>}
-    {store.catalog?.data.map((p) => { const primary = p.images.find((image) => !image.productVariantId && image.imageType === 'primary'); return <Card withBorder key={p.productId} style={!p.isVisible ? { borderColor: 'var(--mantine-color-red-6)', borderWidth: 2 } : undefined}><Group justify="space-between" wrap="nowrap"><Group wrap="nowrap">
-      {primary?.url && <Image src={primary.url} alt={primary.altText} w={64} h={64} fit="contain" radius="sm" />}
-      <div><Group><Text fw={700}>{p.name}</Text><Badge>{productStatuses.find((s) => s.value === p.status)?.label}</Badge><Tooltip label={<Stack gap={4}>{p.isVisible ? <Text size="sm">המוצר עומד בתנאי ההצגה באתר.</Text> : <><Text size="sm" fw={700}>הסיבות שהמוצר אינו מוצג:</Text>{(p.visibilityReasons.length ? p.visibilityReasons : ['לא ידועה סיבה; יש לרענן את הנתונים']).map((reason) => <Text key={reason} size="sm">• {reason}</Text>)}</>}</Stack>} multiline w={300} withArrow><Badge color={p.isVisible ? 'green' : 'red'} variant={p.isVisible ? 'light' : 'filled'} style={{ cursor: 'help' }}>{p.isVisible ? 'מוצג באתר' : 'לא מוצג באתר · פרטי הסיבה'}</Badge></Tooltip></Group><Text size="sm" c="dimmed">{p.variants.length ? `${p.variants.length} וריאציות · ${p.setSize} יחידות בסט` : `מוצר פשוט · ₪${p.pricePerSet} ליחידה · מלאי ${p.availableSets}`} · סדר {p.displayOrder}</Text></div>
-    </Group><Button variant="light" disabled={store.saving} onClick={() => store.editProduct(p)}>ערוך מוצר</Button></Group></Card>; })}
-    {store.catalog && <Group justify="space-between"><Text size="sm">{store.catalog.totalItems} מוצרים</Text><Pagination value={store.page} total={Math.max(1, Math.ceil(store.catalog.totalItems / store.catalog.pageSize))} disabled={store.loading || store.saving} onChange={(page) => { store.close(); void store.load(page); }} /></Group>}
+    <CatalogCategoryEditor />
+    {store.product ? <CatalogProductEditor /> : <>
+      {store.loading ? <LoadingState /> : !store.selectedCategoryId ? <>
+        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
+          {store.catalog?.categories.map((item) => <Card key={item.categoryId} withBorder radius="lg" component="button" type="button" ta="right"
+            disabled={store.saving} onClick={() => store.selectCategory(item.categoryId)}>
+            <Stack gap="xs"><Text fw={700} size="lg">{item.name}</Text>
+              <Text size="sm" c="dimmed">{item.status === 'hidden' ? 'מוסתרת באתר · כניסה למוצרים' : 'לצפייה במוצרים ולהוספת מוצר'}</Text>
+            </Stack>
+          </Card>)}
+        </SimpleGrid>
+        {store.catalog?.categories.length === 0 && <Text c="dimmed">מתחילים בהוספת קטגוריה. אחר כך אפשר להוסיף אליה מוצרים.</Text>}
+      </> : <>
+        {category?.status === 'hidden' && <Alert color="yellow">הקטגוריה מוסתרת ולכן המוצרים שלה אינם מוצגים באתר.</Alert>}
+        {store.catalog?.data.map((product) => <CatalogProductCard key={product.productId} product={product} />)}
+        {store.catalog?.data.length === 0 && <Card withBorder><Text>עדיין אין מוצרים בקטגוריה. לחצי על הוספת מוצר כדי להתחיל.</Text></Card>}
+        {store.catalog && <Group justify="space-between"><Text size="sm">{store.catalog.totalItems} מוצרים בקטגוריה</Text>
+          {store.catalog.totalItems > store.catalog.pageSize && <Pagination value={store.page} total={Math.max(1, Math.ceil(store.catalog.totalItems / store.catalog.pageSize))}
+            disabled={store.loading || store.saving} onChange={(page) => void store.load(page)} />}
+        </Group>}
+      </>}
+    </>}
   </Stack>;
 });

@@ -25,7 +25,7 @@ async function assertProductImageCoverage(client: SqlClient, productId: string) 
 
 export function createCatalogManagementRepository(factory: SqlClientFactory): AdminCatalogManagement {
   return {
-    listProducts: (page, productId) => list(factory, page, productId),
+    listProducts: (page, productId, categoryId) => list(factory, page, productId, categoryId),
     updateProduct: (input, actor) => withTransaction(factory, async (client) => {
       const before = await lock(client, 'products', 'product_id', input.productId, input.version);
       await client.query(`update public.products set category_id=$2, name=$3, description=$4,
@@ -50,11 +50,11 @@ export function createCatalogManagementRepository(factory: SqlClientFactory): Ad
   };
 }
 
-async function list(factory: SqlClientFactory, page: number, productId?: string): Promise<ManagedCatalog> {
+async function list(factory: SqlClientFactory, page: number, productId?: string, categoryId?: string): Promise<ManagedCatalog> {
   const client = await factory();
   try {
     await client.query('begin isolation level repeatable read read only');
-    const count = await client.query<{ total: string }>('select count(*)::text as total from public.products');
+    const count = await client.query<{ total: string }>('select count(*)::text as total from public.products where ($1::uuid is null or product_id=$1) and ($2::uuid is null or category_id=$2)', [productId ?? null, categoryId ?? null]);
     const categories = await client.query<{ categoryId: string; name: string; sortOrder: number; status: 'active' | 'hidden' }>('select category_id as "categoryId", name, sort_order as "sortOrder", status from public.categories order by sort_order, name');
     const products = await client.query<{ product: ManagedProduct }>(`select jsonb_build_object(
       'productId',p.product_id,'categoryId',p.category_id,'name',p.name,'description',p.description,
@@ -83,7 +83,8 @@ async function list(factory: SqlClientFactory, page: number, productId?: string)
           order by v.is_default desc,v.name,v.product_variant_id)
         from public.product_variants v where v.product_id=p.product_id),'[]'::jsonb), 'images',coalesce((select jsonb_agg(jsonb_build_object('imageId',i.product_image_id, 'productVariantId',i.product_variant_id, 'storagePath',i.storage_path, 'altText',i.alt_text, 'imageType',i.image_type, 'sortOrder',i.sort_order,'version',extract(epoch from i.updated_at)::text) order by i.sort_order,i.product_image_id) from public.product_images i where i.product_id=p.product_id and not i.is_deleted),'[]'::jsonb)) as product
       from public.products p left join public.categories c on c.category_id=p.category_id
-      where ($3::uuid is null or p.product_id=$3) order by p.display_order,p.name,p.product_id limit $1 offset $2`, [PAGE_SIZE, (page-1)*PAGE_SIZE, productId ?? null]);
+      where ($3::uuid is null or p.product_id=$3) and ($4::uuid is null or p.category_id=$4)
+      order by p.display_order,p.name,p.product_id limit $1 offset $2`, [PAGE_SIZE, (page-1)*PAGE_SIZE, productId ?? null, categoryId ?? null]);
     await client.query('commit');
     return { data: products.rows.map((row) => row.product), categories: categories.rows, page, pageSize: PAGE_SIZE, totalItems: Number(count.rows[0]?.total ?? 0) };
   } catch (error) { await client.query('rollback'); throw error; }

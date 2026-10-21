@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import { Alert, Badge, Button, Checkbox, Group, Image, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Accordion, Alert, Badge, Button, Checkbox, Group, Image, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
 import { IconArrowRight, IconPrinter, IconRefresh } from '@tabler/icons-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { OperationReport, OperationReportKind, OperationReportOrder } from '../entities/operations-reports.types.js';
@@ -57,17 +57,23 @@ const OperationsReportPage = observer(function OperationsReportPage({ kind }: { 
       <Button component={Link} to="/orders" variant="subtle" leftSection={<IconArrowRight size={16} />}>חזרה להזמנות</Button>
       <Group>
         <Button variant="default" loading={query.isFetching} leftSection={<IconRefresh size={16} />} onClick={() => query.refetch()}>רענון</Button>
+        {ui.selected.size > 0 && <Button disabled={ui.selected.size > MAX_SELECTION || query.isFetching} onClick={() => updateFilters(date, city, [...ui.selected].join(','))}>הכנת {ui.selected.size} הזמנות להדפסה</Button>}
         <Button disabled={!query.isSuccess || query.isFetching || ui.selected.size > 0} leftSection={<IconPrinter size={16} />} onClick={() => window.print()}>הדפסה / שמירה כ־PDF</Button>
       </Group>
     </Group>
     <Group className="operations-report-controls" align="end">
       <TextInput type="date" label={dateLabel} value={date} onChange={(event) => updateFilters(event.currentTarget.value, city)} />
+      {(city || selectedIds) && <Button variant="light" onClick={() => updateFilters(date, '')}>ניקוי הסינון והצגת כל ההזמנות</Button>}
+      {city && <Badge>עיר: {city}</Badge>}{selectedIds && <Badge>מוצגות ההזמנות שנבחרו בלבד</Badge>}
+    </Group>
+    <Accordion className="operations-report-controls" variant="contained"><Accordion.Item value="filters"><Accordion.Control>סינון והדפסה של חלק מההזמנות</Accordion.Control><Accordion.Panel>
+    <Group align="end">
       <TextInput label="סינון לפי עיר" value={ui.city} maxLength={120} onChange={(event) => ui.setCity(event.currentTarget.value)} />
       <Button variant="default" onClick={() => updateFilters(date, ui.city)}>סינון</Button>
-      <Button disabled={!ui.selected.size || ui.selected.size > MAX_SELECTION || query.isFetching} onClick={() => updateFilters(date, city, [...ui.selected].join(','))}>הצגת הנבחרות ({ui.selected.size})</Button>
       {selectedIds && <Button variant="subtle" onClick={() => updateFilters(date, city)}>כל ההזמנות המתאימות</Button>}
     </Group>
-    <Text className="operations-report-controls" size="sm" c="dimmed">בחרי עד {MAX_SELECTION} הזמנות ולחצי על הצגת הנבחרות לפני הדפסה חלקית. שמירה כ־PDF זמינה בחלון ההדפסה.</Text>
+    </Accordion.Panel></Accordion.Item></Accordion>
+    <Text className="operations-report-controls" size="sm" c="dimmed">להדפסה חלקית, סמני עד {MAX_SELECTION} הזמנות ולחצי למעלה על הכנת ההזמנות להדפסה.</Text>
     {query.isPending ? <LoadingState /> : query.isError ? <ErrorState message={query.error.message} /> : report && <>
       <div className="operations-report-heading"><Title order={1}>{title}</Title><Text>{dateLabel}: {report.date}</Text>
         <Text size="sm">נשלף: {formatTime(report.generatedAt)} · {report.orders.length} הזמנות</Text>

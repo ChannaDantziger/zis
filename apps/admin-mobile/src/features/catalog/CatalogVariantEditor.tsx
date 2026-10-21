@@ -11,7 +11,7 @@ export const CatalogVariantEditor = observer(function CatalogVariantEditor() {
     <Title order={3}>{isNew ? 'וריאציה חדשה' : 'עריכת וריאציה'}</Title>
     <SimpleGrid cols={{ base: 1, sm: 2 }}>
       <TextInput disabled={store.saving || store.variantNeedsRefresh} required label="שם וריאציה" value={form.name} onChange={(e) => store.setVariant('name', e.currentTarget.value)} />
-      <TextInput required label="קוד מוצר" disabled={!isNew || store.saving || store.variantNeedsRefresh} value={form.productCode} onChange={(e) => store.setVariant('productCode', e.currentTarget.value)} />
+      {isNew ? <TextInput required label="קוד מוצר" disabled={store.saving || store.variantNeedsRefresh} value={form.productCode} onChange={(e) => store.setVariant('productCode', e.currentTarget.value)} /> : <Text size="sm" c="dimmed">קוד מוצר: {form.productCode}</Text>}
       <TextInput disabled={store.saving || store.variantNeedsRefresh} required label="מחיר לסט (₪)" inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" value={form.pricePerSet} onChange={(e) => store.setVariant('pricePerSet', e.currentTarget.value)} />
       <NumberInput disabled={store.saving || store.variantNeedsRefresh} label="סף מלאי נמוך בסטים" min={0} allowDecimal={false} required value={form.lowStockThresholdSets} onChange={(v) => store.setVariant('lowStockThresholdSets', Number(v))} />
       <NumberInput disabled={store.saving || store.variantNeedsRefresh} label="כמות ייצור יומית ברירת מחדל" min={1} allowDecimal={false} required value={form.defaultProductionQuantitySets} onChange={(v) => store.setVariant('defaultProductionQuantitySets', Number(v))} />

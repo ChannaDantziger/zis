@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, Badge, Button, Card, Checkbox, Group, Pagination, Select, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Accordion, Alert, Badge, Button, Card, Checkbox, Group, Pagination, Select, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import { IconArrowLeft, IconRefresh } from '@tabler/icons-react';
 import { currentBusinessDate, request } from '../shared/api/http-client.js';
@@ -48,13 +48,23 @@ export const OrdersPage = observer(function OrdersPage() {
     <Group justify="space-between"><div><Text c="dimmed" size="sm">{date}</Text><Title order={1}>הזמנות לפי יום</Title></div><Button variant="subtle" disabled={busy} leftSection={<IconRefresh size={16} />} onClick={() => query.refetch()}>רענון</Button></Group>
     <SimpleGrid cols={{ base: 1, sm: 2 }}>
       <TextInput type="date" label="תאריך אספקה" value={date} disabled={busy} onChange={(event) => { if (event.currentTarget.value) adminUiStore.setDeliveryDate(event.currentTarget.value); }} />
-      <Select label="סינון סטטוס" clearable disabled={busy} value={statusFilter} onChange={(value) => adminUiStore.setStatusFilter(value)} data={Object.entries(statusLabels).map(([value, label]) => ({ value, label }))} />
+      <Select label="שלב ההזמנה" placeholder="כל השלבים" clearable disabled={busy} value={statusFilter} onChange={(value) => adminUiStore.setStatusFilter(value)} data={Object.entries(statusLabels).map(([value, label]) => ({ value, label }))} />
+    </SimpleGrid>
+    <Group>
+      <Button variant="subtle" disabled={busy} onClick={() => adminUiStore.setDeliveryDate(currentBusinessDate())}>היום</Button>
+      {adminUiStore.location && <Button size="compact-sm" variant="light" disabled={busy} onClick={() => adminUiStore.setLocation('')}>עיר: {adminUiStore.location} ×</Button>}
+      {productVariantFilter && <Button size="compact-sm" variant="light" disabled={busy} onClick={() => adminUiStore.setProductVariantFilter(null)}>{query.data?.variants.find((variant) => variant.value === productVariantFilter)?.label ?? 'מוצר שנבחר'} ×</Button>}
+      {(sortBy !== 'status' || sortDirection !== 'asc') && <Badge>מיון: {sortOptions.find((option) => option.value === sortBy)?.label} · {sortDirection === 'asc' ? 'עולה' : 'יורד'}</Badge>}
+    </Group>
+    <Accordion variant="contained"><Accordion.Item value="filters"><Accordion.Control>סינון ומיון נוספים</Accordion.Control><Accordion.Panel>
+    <SimpleGrid cols={{ base: 1, sm: 2 }}>
       <TextInput label="סינון עיר" value={adminUiStore.location} disabled={busy} onChange={(event) => adminUiStore.setLocation(event.currentTarget.value)} />
       <Select label="סינון מוצר / וריאציה" searchable clearable value={productVariantFilter} disabled={busy || query.isPending} data={query.data?.variants ?? []} onChange={(value) => adminUiStore.setProductVariantFilter(value)} />
       <Select label="מיון לפי" value={sortBy} disabled={busy} data={sortOptions} onChange={(value) => { if (value) adminUiStore.setSortBy(value); }} />
       <Select label="כיוון מיון" value={sortDirection} disabled={busy} data={[{ value: 'asc', label: 'עולה' }, { value: 'desc', label: 'יורד' }]} onChange={(value) => { if (value) adminUiStore.setSortDirection(value); }} />
     </SimpleGrid>
-    <Button variant="subtle" disabled={busy} onClick={() => adminUiStore.setDeliveryDate(currentBusinessDate())}>חזרה להיום</Button>
+    <Button variant="subtle" mt="sm" disabled={busy} onClick={() => adminUiStore.clearAdditionalFilters()}>ניקוי הסינון והמיון הנוספים</Button>
+    </Accordion.Panel></Accordion.Item></Accordion>
     {mutation.isError && <Alert color="red" title="שינוי הסטטוס נכשל">{mutation.error.message}</Alert>}
     {mutation.data && <Alert color={mutation.data.failed ? 'orange' : 'teal'} title={`הושלמו ${mutation.data.succeeded}, נכשלו ${mutation.data.failed}`}><Stack gap="xs">{mutation.data.results.filter((item) => !item.ok).map((item) => <Text key={item.orderId} size="sm">{orders.find((order) => order.orderId === item.orderId)?.orderNumber ?? item.orderId}: {item.reason ?? 'המעבר לא הושלם'}</Text>)}</Stack></Alert>}
     {query.isPending ? <LoadingState /> : query.isError ? <ErrorState message={query.error.message} /> : <>
@@ -68,7 +78,7 @@ export const OrdersPage = observer(function OrdersPage() {
 
 const OrderRowCard = observer(function OrderRowCard({ order, busy }: { order: OrderRow; busy: boolean }) {
   return <Card withBorder radius="lg"><Group align="flex-start" wrap="nowrap">
-    <Checkbox disabled={busy || !order.allowedNextStatuses.length} checked={adminUiStore.selectedOrderIds.includes(order.orderId)} onChange={(event) => adminUiStore.toggleOrder(order.orderId, event.currentTarget.checked)} aria-label={`בחר ${order.orderNumber}`} />
+    {order.allowedNextStatuses.length > 0 && <Checkbox disabled={busy} checked={adminUiStore.selectedOrderIds.includes(order.orderId)} onChange={(event) => adminUiStore.toggleOrder(order.orderId, event.currentTarget.checked)} aria-label={`בחר ${order.orderNumber}`} />}
     <div className="grow"><Group justify="space-between"><Text fw={700}>{order.orderNumber}</Text><OrderStatusBadge order={order} /></Group><Text size="sm" c="dimmed">{order.location}</Text><Text size="sm" truncate title={order.itemSummary}>{order.itemSummary}</Text><Group mt="xs"><Text size="sm">₪ {order.total}</Text>{order.hasOpenTask && <Badge color="orange">שים לב · משימה פתוחה</Badge>}<Button component={Link} to={`/orders/${order.orderId}`} variant="subtle" size="xs" disabled={busy}>פתח פרטים</Button></Group></div>
   </Group></Card>;
 });

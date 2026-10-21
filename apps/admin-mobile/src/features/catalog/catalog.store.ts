@@ -11,6 +11,7 @@ export class CatalogStore {
   private loadSequence = 0;
   private savedProductId = '';
   private savedVariantProductId = '';
+  private productSnapshot = '';
   catalog: ManagedCatalog | null = null;
   product: ManagedProduct | null = null;
   variant: ManagedVariant | null = null;
@@ -20,30 +21,45 @@ export class CatalogStore {
   error = '';
   success = '';
   category: ManagedCategory | null = null;
+  selectedCategoryId = '';
+  editorMode: 'basic' | 'advanced' = 'basic';
   constructor() { makeAutoObservable(this); }
+  get selectedCategory() { return this.catalog?.categories.find((category) => category.categoryId === this.selectedCategoryId); }
+  get productHasChanges() { return !!this.product && snapshot(this.product) !== this.productSnapshot; }
+  acceptProduct(product: ManagedProduct) { this.product = product; this.productSnapshot = snapshot(product); }
+  setEditorMode(mode: 'basic' | 'advanced') { if (!this.saving) this.editorMode = mode; }
+  selectCategory(categoryId: string) { if (this.saving || !this.close()) return; this.selectedCategoryId = categoryId; this.page = 1; this.success = ''; void this.load(1); }
   get productNeedsRefresh() { return !!this.savedProductId; }
   get variantNeedsRefresh() { return !!this.savedVariantProductId; }
-  reset() { this.savedProductId = this.savedVariantProductId = ''; this.generation++; this.loadSequence++; this.catalog = null; this.product = null; this.variant = null; this.category = null; this.page = 1; this.loading = false; this.saving = false; this.error = this.success = ''; }
+  reset() { this.savedProductId = this.savedVariantProductId = ''; this.generation++; this.loadSequence++; this.catalog = null; this.product = null; this.variant = null; this.category = null; this.selectedCategoryId = ''; this.editorMode = 'basic'; this.page = 1; this.loading = false; this.saving = false; this.error = this.success = ''; }
   async load(page = this.page) {
     const generation = this.generation, sequence = ++this.loadSequence;
     this.loading = true; this.error = ''; this.page = page;
-    try { const data = await request<ManagedCatalog>(`/admin/products?page=${page}`); runInAction(() => { if (generation === this.generation && sequence === this.loadSequence) this.catalog = data; }); }
+    const params = new URLSearchParams({ page: String(page) });
+    if (this.selectedCategoryId) params.set('categoryId', this.selectedCategoryId);
+    try { const data = await request<ManagedCatalog>(`/admin/products?${params}`); runInAction(() => { if (generation === this.generation && sequence === this.loadSequence) this.catalog = data; }); }
     catch (error) { runInAction(() => { if (generation === this.generation && sequence === this.loadSequence) this.error = message(error); }); }
     finally { runInAction(() => { if (generation === this.generation && sequence === this.loadSequence) this.loading = false; }); }
   }
-  newProduct() { if (this.saving) return; this.savedProductId = this.savedVariantProductId = ''; this.product = { ...EMPTY_PRODUCT, categoryId: this.catalog?.categories[0]?.categoryId ?? '' }; this.variant = null; this.success = ''; }
-  editProduct(value: ManagedProduct) { if (this.saving) return; this.savedProductId = this.savedVariantProductId = ''; this.product = { ...value }; this.variant = null; this.success = ''; }
+  newProduct() { if (this.saving) return; this.savedProductId = this.savedVariantProductId = ''; this.acceptProduct({ ...EMPTY_PRODUCT, categoryId: this.selectedCategoryId, variants: [], images: [] }); this.editorMode = 'basic'; this.variant = null; this.success = ''; }
+  editProduct(value: ManagedProduct) { if (this.saving) return; this.savedProductId = this.savedVariantProductId = ''; this.acceptProduct({ ...value }); this.editorMode = 'basic'; this.variant = null; this.success = ''; }
   editVariant(value?: ManagedVariant) { if (this.saving) return; this.savedVariantProductId = ''; this.variant = { ...(value ?? EMPTY_VARIANT) }; }
   editCategory(value?: ManagedCategory) { if (this.saving) return; this.category = value ? { ...value } : { categoryId: '', name: '', sortOrder: this.catalog?.categories.length ?? 0, status: 'active' }; this.error = ''; this.success = ''; }
-  close() { if (!this.saving) { this.product = null; this.variant = null; this.category = null; } }
+  close(confirmUnsaved = true) {
+    if (this.saving) return false;
+    if (confirmUnsaved && this.productHasChanges && typeof window !== 'undefined' && !window.confirm('יש שינויים שלא נשמרו במוצר. לצאת בלי לשמור?')) return false;
+    this.product = null; this.variant = null; this.category = null; return true;
+  }
+  closeCategory() { if (!this.saving) this.category = null; }
   async saveCategory() {
     if (!this.category || this.saving) return;
     const generation = this.generation, form = { ...this.category }, isEdit = !!form.categoryId;
     this.saving = true; this.error = ''; this.success = '';
     try {
-      await request(isEdit ? `/admin/categories/${form.categoryId}` : '/admin/categories', { method: isEdit ? 'PATCH' : 'POST', body: JSON.stringify({ name: form.name, sortOrder: form.sortOrder, status: form.status }) });
+      const result = await request<{ categoryId: string }>(isEdit ? `/admin/categories/${form.categoryId}` : '/admin/categories', { method: isEdit ? 'PATCH' : 'POST', body: JSON.stringify({ name: form.name, sortOrder: form.sortOrder, status: form.status }) });
       if (generation !== this.generation) return;
       this.category = null;
+      if (!isEdit) { this.selectedCategoryId = result.categoryId; this.page = 1; }
       await this.load();
       if (generation === this.generation) this.success = isEdit ? 'הקטגוריה עודכנה' : 'הקטגוריה נוצרה';
     } catch (error) { runInAction(() => { if (generation === this.generation) this.error = message(error); }); }
@@ -61,9 +77,10 @@ export class CatalogStore {
       runInAction(() => { this.savedProductId = result.productId; });
       const saved = await request<ManagedProduct>("/admin/products/" + result.productId);
       if (generation !== this.generation) return;
+      runInAction(() => { if (this.selectedCategoryId !== saved.categoryId) this.page = 1; this.selectedCategoryId = saved.categoryId; });
       await this.load();
       if (generation !== this.generation) return;
-      runInAction(() => { this.product = saved; this.savedProductId = ''; this.success = 'המוצר נשמר'; });
+      runInAction(() => { this.acceptProduct(saved); this.savedProductId = ''; this.success = 'המוצר נשמר'; });
     } catch (error) { runInAction(() => { if (generation === this.generation) this.error = (this.savedProductId || this.savedVariantProductId ? 'הנתונים נשמרו; יש לנסות שוב לרענון בלבד. ' : '') + message(error); }); }
     finally { runInAction(() => { if (generation === this.generation) this.saving = false; }); }
   }
@@ -82,10 +99,11 @@ export class CatalogStore {
       if (generation !== this.generation) return;
       await this.load();
       if (generation !== this.generation) return;
-      runInAction(() => { this.product = saved; this.variant = null; this.savedVariantProductId = ''; this.success = 'הווריאציה נשמרה'; });
+      runInAction(() => { this.acceptProduct(saved); this.variant = null; this.savedVariantProductId = ''; this.success = 'הווריאציה נשמרה'; });
     } catch (error) { runInAction(() => { if (generation === this.generation) this.error = (this.savedProductId || this.savedVariantProductId ? 'הנתונים נשמרו; יש לנסות שוב לרענון בלבד. ' : '') + message(error); }); }
     finally { runInAction(() => { if (generation === this.generation) this.saving = false; }); }
   }
 }
+function snapshot(product: ManagedProduct) { return JSON.stringify([product.name, product.categoryId, product.description, product.pricePerSet, product.availableSets, product.setSize, product.displayOrder, product.status]); }
 function message(error: unknown) { return error instanceof Error ? error.message : 'הפעולה נכשלה'; }
 export const catalogStore = new CatalogStore();

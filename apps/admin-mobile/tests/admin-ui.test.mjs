@@ -35,6 +35,18 @@ test('invalid dates leave valid screen state intact', () => {
   assert.equal(store.productVariantFilter, null);
 });
 
+test('clearing additional order filters preserves the chosen day and status while clearing selection', () => {
+  const store = new AdminUiStore();
+  store.setDeliveryDate('2026-10-21'); store.setStatusFilter('packed');
+  store.setLocation('בני ברק'); store.setProductVariantFilter('variant'); store.setSortBy('total');
+  store.setSortDirection('desc'); store.setOrderPage(3); store.selectOrders(['order']);
+  store.clearAdditionalFilters();
+  assert.equal(store.deliveryDate, '2026-10-21'); assert.equal(store.statusFilter, 'packed');
+  assert.equal(store.location, ''); assert.equal(store.productVariantFilter, null);
+  assert.equal(store.sortBy, 'status'); assert.equal(store.sortDirection, 'asc');
+  assert.equal(store.orderPage, 1); assert.deepEqual(store.selectedOrderIds, []);
+});
+
 test('session changes reset dates, filters, tasks, pages and selected orders', async () => {
   const storage = new Map();
   globalThis.window = { localStorage: { getItem: (key) => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: (key) => storage.delete(key) } };

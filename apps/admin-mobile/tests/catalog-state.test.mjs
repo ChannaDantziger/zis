@@ -21,6 +21,38 @@ function deferred() {
 }
 beforeEach(() => { catalogStore.reset(); });
 
+test('category navigation resets pagination, scopes every page and supplies the new product category', async () => {
+  const store = new CatalogStore(), calls = [];
+  globalThis.catalogRequest = async (path) => { calls.push(path); return { ...page(1), categories: [{ categoryId: 'chosen', name: 'Chosen' }] }; };
+  store.page = 3; store.selectCategory('chosen');
+  await store.load(2);
+  assert.equal(store.page, 2);
+  assert.deepEqual(calls, ['/admin/products?page=1&categoryId=chosen', '/admin/products?page=2&categoryId=chosen']);
+  store.newProduct(); assert.equal(store.product.categoryId, 'chosen');
+  store.setEditorMode('advanced'); store.editProduct(product);
+  assert.equal(store.editorMode, 'basic');
+  store.reset(); assert.equal(store.selectedCategoryId, '');
+});
+
+test('a category response arriving late cannot replace the newly selected category', async () => {
+  const store = new CatalogStore(), first = deferred(), second = deferred();
+  globalThis.catalogRequest = (path) => path.includes('first') ? first.promise : second.promise;
+  store.selectedCategoryId = 'first'; const old = store.load();
+  store.selectedCategoryId = 'second'; const current = store.load();
+  second.resolve({ ...page(1), data: [{ ...product, categoryId: 'second' }] }); await current;
+  first.resolve({ ...page(1), data: [{ ...product, categoryId: 'first' }] }); await old;
+  assert.equal(store.catalog.data[0].categoryId, 'second');
+  assert.equal(store.selectedCategoryId, 'second');
+});
+
+test('product changes are tracked without treating refreshed publication status as an unsaved edit', () => {
+  const store = new CatalogStore(); store.editProduct(product);
+  assert.equal(store.productHasChanges, false);
+  store.setProduct('name', 'Changed'); assert.equal(store.productHasChanges, true);
+  store.acceptProduct({ ...product, name: 'Changed', status: 'active' });
+  assert.equal(store.productHasChanges, false);
+});
+
 test('the latest catalog page wins even when earlier requests resolve later', async () => {
   const store = new CatalogStore(), first = deferred(), second = deferred();
   globalThis.catalogRequest = (path) => path.endsWith('=1') ? first.promise : second.promise;

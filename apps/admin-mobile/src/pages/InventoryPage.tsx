@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import { Alert, Badge, Button, Group, Pagination, Paper, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Accordion, Alert, Badge, Button, Group, Pagination, Paper, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { Link, useSearchParams } from 'react-router-dom';
 import { currentBusinessDate, request } from '../shared/api/http-client.js';
 import { EmptyState, ErrorState, LoadingState } from '../shared/components/StateMessage.js';
@@ -26,15 +26,17 @@ export const InventoryPage = observer(function InventoryPage() {
   }, [details.data, ui.historyPage, ui]);
   const select = (id: string) => { ui.setHistoryPage(1); setParams({ weekStartDate, ...(id ? { variant: id } : {}) }); };
   return <Stack gap="lg">
-    <Group justify="space-between"><Title order={1}>מלאי וקיבולת ייצור</Title><Button variant="default" loading={listing.isFetching || (Boolean(selectedId) && details.isFetching)} onClick={() => { void listing.refetch(); if (selectedId) void details.refetch(); }}>רענון</Button></Group>
+    <Group justify="space-between"><Title order={1}>מלאי זמין</Title><Button variant="default" loading={listing.isFetching || (Boolean(selectedId) && details.isFetching)} onClick={() => { void listing.refetch(); if (selectedId) void details.refetch(); }}>רענון</Button></Group>
+    <Accordion variant="contained"><Accordion.Item value="planning"><Accordion.Control>תכנון קיבולת — מתקדם</Accordion.Control><Accordion.Panel><Stack>
     <TextInput type="date" label="תחילת השבוע של רשומת הקיבולת" value={weekStartDate} onChange={(event) => { ui.setPage(1); ui.setHistoryPage(1); setParams({ weekStartDate: event.currentTarget.value, ...(selectedId ? { variant: selectedId } : {}) }); }} />
     <Alert color="blue">קיבולת ייצור והקצאות הן נתוני תכנון. הן אינן נוספות למלאי הזמין. אישור מילוי שבועי, כולל אישור חלקי, טרם מומש.</Alert>
     <Button component={Link} to="/catalog" variant="subtle">ניהול מוצרים, ספים וכמויות ברירת מחדל</Button>
+    </Stack></Accordion.Panel></Accordion.Item></Accordion>
     {listing.isPending ? <LoadingState /> : listing.isError ? <ErrorState message={listing.error.message} /> : <>
       {!listing.data.data.length ? <EmptyState>אין וריאציות מלאי להצגה.</EmptyState> : <SimpleGrid cols={{ base: 1, sm: 2 }}>{listing.data.data.map((variant) => <Paper key={variant.productVariantId} withBorder p="md"><Stack gap="sm">
         <Group justify="space-between"><Title order={3}>{variant.productName} · {variant.variantName}</Title>{variant.availableSets <= variant.lowStockThresholdSets && <Badge color="red">מלאי נמוך</Badge>}</Group>
-        <Text size="sm">קוד: {variant.productCode} · סטטוס: {variant.status}</Text><InventoryFigures variant={variant} />
-        <Button variant={selectedId === variant.productVariantId ? 'filled' : 'light'} onClick={() => select(variant.productVariantId)}>פרטים, היסטוריה ועדכון</Button>
+        <Text fw={700} size="xl">{variant.availableSets} סטים זמינים</Text>
+        <Button variant={selectedId === variant.productVariantId ? 'filled' : 'light'} onClick={() => select(variant.productVariantId)}>עדכון מלאי</Button>
       </Stack></Paper>)}</SimpleGrid>}
       {listing.data.page.totalPages > 1 && <Pagination total={listing.data.page.totalPages} value={ui.page} onChange={ui.setPage} />}
     </>}
@@ -42,8 +44,9 @@ export const InventoryPage = observer(function InventoryPage() {
       <Group justify="space-between"><Title order={2}>פרטי מלאי</Title><Button variant="subtle" onClick={() => select('')}>סגירת הפרטים</Button></Group>
       {details.isPending ? <LoadingState /> : details.isError ? <ErrorState message={details.error.message} /> : <>
         <Title order={3}>{details.data.variant.productName} · {details.data.variant.variantName}</Title>
-        <InventoryFigures variant={details.data.variant} />
         <InventoryAdjustmentForm key={selectedId} variant={details.data.variant} />
+        <Accordion variant="contained"><Accordion.Item value="planning"><Accordion.Control>פרטי מלאי ותכנון</Accordion.Control><Accordion.Panel><InventoryFigures variant={details.data.variant} /></Accordion.Panel></Accordion.Item>
+        <Accordion.Item value="history"><Accordion.Control>היסטוריית שינויים · {details.data.page.totalItems}</Accordion.Control><Accordion.Panel><Stack>
         <Title order={3}>היסטוריית תנועות · {details.data.page.totalItems}</Title>
         {!details.data.movements.length ? <EmptyState>אין תנועות מלאי לווריאציה זו.</EmptyState> : details.data.movements.map((movement) => <Paper key={movement.movementId} withBorder p="md"><Stack gap="xs">
           <Group justify="space-between"><Text fw={600}>{movement.movementType}</Text><Text size="sm">{formatTime(movement.createdAt)}</Text></Group>
@@ -52,6 +55,7 @@ export const InventoryPage = observer(function InventoryPage() {
           {movement.orderId && <Button component={Link} to={`/orders/${movement.orderId}`} variant="subtle">פתיחת ההזמנה</Button>}
         </Stack></Paper>)}
         {details.data.page.totalPages > 1 && <Pagination total={details.data.page.totalPages} value={ui.historyPage} onChange={ui.setHistoryPage} />}
+        </Stack></Accordion.Panel></Accordion.Item></Accordion>
       </>}
     </Stack>}
   </Stack>;

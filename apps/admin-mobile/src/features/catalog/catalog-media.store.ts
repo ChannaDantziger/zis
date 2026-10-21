@@ -67,10 +67,10 @@ export class CatalogMediaStore {
       runInAction(() => { this.metadataSaved = true; });
       const product = await request<ManagedProduct>(`/admin/products/${productId}`);
       if (generation !== this.generation) return;
-      runInAction(() => { catalogStore.product = product; });
+      runInAction(() => { catalogStore.acceptProduct(product); });
       await catalogStore.load();
       if (generation !== this.generation) return;
-      runInAction(() => { catalogStore.product = product; this.saving = false; catalogStore.saving = false; this.reset(); this.success = 'התמונה נשמרה'; });
+      runInAction(() => { catalogStore.acceptProduct(product); this.saving = false; catalogStore.saving = false; this.reset(); this.success = 'התמונה נשמרה'; });
     } catch (error) { runInAction(() => { if (generation === this.generation) this.error = error instanceof Error ? error.message : 'שמירת התמונה נכשלה'; }); }
     finally { runInAction(() => { if (generation === this.generation) { this.saving = false; catalogStore.saving = false; } }); }
   }
@@ -83,7 +83,7 @@ export class CatalogMediaStore {
       if (generation !== this.generation) return;
       const product = await request<ManagedProduct>(`/admin/products/${productId}`);
       if (generation !== this.generation) return;
-      runInAction(() => { catalogStore.product = product; });
+      runInAction(() => { catalogStore.acceptProduct(product); });
       await catalogStore.load();
       if (generation === this.generation) { this.reset(); this.success = 'התמונה והקובץ נמחקו'; }
     } catch (error) { runInAction(() => { if (generation === this.generation) this.error = error instanceof Error ? error.message : 'מחיקת התמונה נכשלה'; }); }
@@ -99,7 +99,7 @@ export class CatalogMediaStore {
       if (generation !== this.generation) return;
       const product = await request<ManagedProduct>(`/admin/products/${productId}`);
       if (generation !== this.generation) return;
-      runInAction(() => { catalogStore.product = product; });
+      runInAction(() => { catalogStore.acceptProduct(product); });
       await catalogStore.load();
       if (generation === this.generation) { this.reset(); this.success = 'התמונה הראשית עודכנה'; }
     } catch (error) { runInAction(() => { if (generation === this.generation) this.error = error instanceof Error ? error.message : 'עדכון התמונה הראשית נכשל'; }); }

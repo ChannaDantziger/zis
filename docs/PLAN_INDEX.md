@@ -98,6 +98,7 @@
 | [ADMIN_NOTIFICATIONS](ADMIN_NOTIFICATIONS.md) | תיבת התראות אישית, העדפות ו־Audit; בדיקות מקומיות, אימות חי פתוח |
 | [ADMIN_INVENTORY](ADMIN_INVENTORY.md) | מלאי זמין, קיבולת, היסטוריה וטופס התאמה; מילוי שבועי טרם מומש |
 | [ADMIN_CATALOG](ADMIN_CATALOG.md) | ניהול מוצרים פשוטים/מורכבים, קטגוריות, תמונות וגלריה כללית; typecheck ובדיקות ממוקדות, אימות DB/Storage ופריסה פתוחים |
+| [ADMIN_UX_SIMPLIFICATION](ADMIN_UX_SIMPLIFICATION.md) | פישוט קטלוג עם פירורי לחם, עריכה רגילה/מתקדמת, הגדרות ומסכים יומיומיים; אימות מקומי 21.10, דפדפן חי פתוח |
 | [ADMIN_OPERATION_REPORTS](ADMIN_OPERATION_REPORTS.md) | תוויות אריזה ורשימת אספקה, בחירה מדויקת והדפסה; בדיקות מקומיות, אימות חי פתוח |
 | [ADMIN_QUALITY_AUDIT](ADMIN_QUALITY_AUDIT.md) | הרשאות מנהל, התראות אישיות, בידוד Session ותאריכים; בדיקות ממוקדות מקומיות |
 | [ADMIN_PRODUCTION_REPORT](ADMIN_PRODUCTION_REPORT.md) | רשימת ייצור להדפסה/שמירה כ־PDF בדפדפן; תצוגה ריקה ופתיחת הדפסה אומתו, PDF עם נתונים פתוח |

@@ -32,6 +32,7 @@ export class AdminUiStore {
   setLocation(value: string) { this.location = value; this.resetOrderPage(); }
   setSortBy(value: string) { this.sortBy = value; this.resetOrderPage(); }
   setSortDirection(value: string) { this.sortDirection = value; this.resetOrderPage(); }
+  clearAdditionalFilters() { this.location = ''; this.productVariantFilter = null; this.sortBy = 'status'; this.sortDirection = 'asc'; this.resetOrderPage(); }
   setTaskStatus(value: TaskStatus) { this.taskStatus = value; this.taskPage = 1; }
   setTaskPage(value: number) { this.taskPage = value; }
   setProductVariantFilter(value: string | null) { this.productVariantFilter = value; this.resetOrderPage(); }
