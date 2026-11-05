@@ -28,9 +28,11 @@ npm.cmd --prefix apps/admin-mobile ci
 
 ## הפעלה — שני טרמינלים
 
-טרמינל ראשון, שרת API עם טעינה מחדש לאחר שינוי קוד:
+טרמינל ראשון, שרת API מקומי, מול Database Production לפי הבקשה הנוכחית:
 
 ```powershell
+$env:DATABASE_TARGET = "production"
+$env:APP_ENV = "development"
 $env:NODE_ENV = "development"
 npm.cmd --prefix zis-api run dev
 ```
@@ -45,11 +47,11 @@ npm.cmd --prefix apps/admin-mobile run dev
 
 ## הגדרות וחיבור
 
-- ב־Development השרת משתמש ב־`DATABASE_URL_TRN`; ב־Production הוא משתמש ב־`DATABASE_URL`. הרצה מקומית אינה יוצרת מסד DEV או הפרדה מ־Production.
+- `DATABASE_TARGET` קובע לאיזה מסד השרת יתחבר: `production` משתמש ב־`DATABASE_URL`; `development` משתמש ב־`DATABASE_URL_TRN`. `APP_ENV` קובע CORS: `development` מאפשר localhost; `production` דורש Origins מפורשים. כרגע ה־API רץ מקומית מול Database Production (`DATABASE_TARGET=production`, `APP_ENV=development`), ולכן כל כתיבה מגיעה למסד Production.
 - להפעלת מסכי הניהול המחוברים נדרשים גם `SUPABASE_URL` ו־`SUPABASE_SERVICE_ROLE_KEY` או `SUPABASE_SECRET_KEY`. פרטי ההגדרות ב־[מדריך החיבור](LIVE_CONNECTION_RUNBOOK.md).
 - השרת טוען קובץ סביבה מקומי מתיקיית `zis-api` כשה־Node תומך בכך; משתני סביבת התהליך נתמכים גם הם. סודות נשארים בצד השרת.
 - `VITE_API_BASE_URL` קובע לאיזה API הניהול פונה; ברירת המחדל היא `http://localhost:3000`. משתני `VITE_` חשופים בדפדפן ואין לשים בהם סודות.
-- `CORS_ALLOWED_ORIGINS` מאפשר להגדיר כתובות ניהול. ב־DEV ברירת המחדל מתירה `localhost:5173` ו־`127.0.0.1:5173`.
+- `CORS_ALLOWED_ORIGINS` מאפשר להגדיר כתובות Frontend מופרדות בפסיקים. לפי `APP_ENV=development` הכתובות מתווספות ל־localhost/127.0.0.1 בפורטים 5173/5174; `APP_ENV=production` משתמש רק בכתובות שהוגדרו במפורש.
 - בלי תלויות השרת המלאות ניתן לקבל liveness; readiness ייכשל ומסכי הנתונים לא יעבדו. `/health/live` לבדו אינו הוכחה לחיבור למסד.
 - אין הרצת מיגרציות אוטומטית בזמן עליית השרת. מצב Production הוא החלה ידנית מדווחת ללא ledger; אין להריץ מחדש את המיגרציות הקיימות.
 - בפרויקט זה הסוכן אינו מריץ מיגרציות. הוא מכין את קובץ המיגרציה ומבקש מבעלת האתר להחיל אותו ידנית בתהליך המאושר של ספק ה־DB.

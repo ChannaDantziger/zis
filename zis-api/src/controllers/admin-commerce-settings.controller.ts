@@ -34,10 +34,6 @@ export function createAdminCommerceSettingsController(service: CommerceSettingsS
       const body = asRecord(request.body);
       response.status(200).json(await service.updateShippingZone({ shippingZoneId: uuid(request.params.shippingZoneId, 'shippingZoneId'), name: optionalText(body.name, 'name'), city: optionalText(body.city, 'city'), neighborhood: optionalNullableText(body.neighborhood, 'neighborhood'), dispatchTime: optionalTime(body.dispatchTime, 'dispatchTime'), isActive: optionalBoolean(body.isActive, 'isActive') }, adminUserId));
     }),
-    updateMethod: withManager(resolveAdminUserId, async (request, response, adminUserId) => {
-      const body = asRecord(request.body);
-      response.status(200).json(await service.updateShippingMethod({ shippingMethodId: uuid(request.params.shippingMethodId, 'shippingMethodId'), name: optionalText(body.name, 'name'), isActive: optionalBoolean(body.isActive, 'isActive') }, adminUserId));
-    }),
     createRule: withManager(resolveAdminUserId, async (request, response, adminUserId) => {
       const body = asRecord(request.body);
       response.status(201).json(await service.createShippingRule(readRule(body), adminUserId));
@@ -47,7 +43,7 @@ export function createAdminCommerceSettingsController(service: CommerceSettingsS
       const sizeFromSets = optionalPositiveInteger(body.sizeFromSets, 'sizeFromSets');
       const sizeToSets = body.sizeToSets === undefined || body.sizeToSets === null ? body.sizeToSets as null | undefined : nonNegativeInteger(body.sizeToSets, 'sizeToSets');
       if (sizeFromSets !== undefined && sizeToSets !== undefined && sizeToSets !== null && sizeToSets < sizeFromSets) throw invalid('sizeToSets must be greater than or equal to sizeFromSets');
-      response.status(200).json(await service.updateShippingRule({ shippingRuleId: uuid(request.params.shippingRuleId, 'shippingRuleId'), shippingZoneId: body.shippingZoneId === undefined ? undefined : uuid(body.shippingZoneId, 'shippingZoneId'), shippingMethodId: body.shippingMethodId === undefined ? undefined : uuid(body.shippingMethodId, 'shippingMethodId'), basePrice: optionalMoney(body.basePrice, 'basePrice'), sizeFromSets, sizeToSets, sizeSurcharge: optionalMoney(body.sizeSurcharge, 'sizeSurcharge'), timeSurcharge: optionalMoney(body.timeSurcharge, 'timeSurcharge'), urgencySurcharge: optionalMoney(body.urgencySurcharge, 'urgencySurcharge'), isActive: optionalBoolean(body.isActive, 'isActive') }, adminUserId));
+      response.status(200).json(await service.updateShippingRule({ shippingRuleId: uuid(request.params.shippingRuleId, 'shippingRuleId'), shippingZoneId: body.shippingZoneId === undefined ? undefined : uuid(body.shippingZoneId, 'shippingZoneId'), basePrice: optionalMoney(body.basePrice, 'basePrice'), sizeFromSets, sizeToSets, sizeSurcharge: optionalMoney(body.sizeSurcharge, 'sizeSurcharge'), timeSurcharge: optionalMoney(body.timeSurcharge, 'timeSurcharge'), urgencySurcharge: optionalMoney(body.urgencySurcharge, 'urgencySurcharge'), isActive: optionalBoolean(body.isActive, 'isActive') }, adminUserId));
     }),
     createClosure: withManager(resolveAdminUserId, async (request, response, adminUserId) => {
       const body = asRecord(request.body);
@@ -70,7 +66,7 @@ function readRule(body: Record<string, unknown>) {
   const sizeToSets = body.sizeToSets === undefined || body.sizeToSets === null ? null : nonNegativeInteger(body.sizeToSets, 'sizeToSets');
   const sizeFromSets = positiveInteger(body.sizeFromSets, 'sizeFromSets');
   if (sizeToSets !== null && sizeToSets < sizeFromSets) throw invalid('sizeToSets must be greater than or equal to sizeFromSets');
-  return { shippingZoneId: uuid(body.shippingZoneId, 'shippingZoneId'), shippingMethodId: uuid(body.shippingMethodId, 'shippingMethodId'), basePrice: money(body.basePrice, 'basePrice'), sizeFromSets, sizeToSets, sizeSurcharge: money(body.sizeSurcharge, 'sizeSurcharge'), timeSurcharge: money(body.timeSurcharge, 'timeSurcharge'), urgencySurcharge: money(body.urgencySurcharge, 'urgencySurcharge'), isActive: requiredBoolean(body.isActive, 'isActive') };
+  return { shippingZoneId: uuid(body.shippingZoneId, 'shippingZoneId'), basePrice: money(body.basePrice, 'basePrice'), sizeFromSets, sizeToSets, sizeSurcharge: money(body.sizeSurcharge, 'sizeSurcharge'), timeSurcharge: money(body.timeSurcharge, 'timeSurcharge'), urgencySurcharge: money(body.urgencySurcharge, 'urgencySurcharge'), isActive: requiredBoolean(body.isActive, 'isActive') };
 }
 
 function withAdmin(resolve: AdminUserResolver, handler: (request: Request, response: Response, adminUserId: string) => Promise<Response | void>) {

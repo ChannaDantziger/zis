@@ -9,6 +9,8 @@ export interface OperationReportOrder {
   deliveryDate: string;
   customerName: string;
   customerPhone: string;
+  deliveryPhone?: string;
+  isTest?: boolean;
   address: { city: string | null; neighborhood: string | null; street: string | null; houseNumber: string | null; apartment: string | null; postalCode: string | null };
   venueName: string | null;
   dedicationText: string | null;

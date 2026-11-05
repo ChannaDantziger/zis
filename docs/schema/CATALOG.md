@@ -36,8 +36,8 @@
 | `description` | `text` | לא | תיאור המוצר |
 | `status` | `text` | כן | `draft`, `active`, `hidden`, `sold_out`, `archived` |
 | `set_size` | `integer` | כן | מספר היחידות הפיזיות בכל Set של מוצר זה |
-| `price_per_item` | `numeric(12,2)` | לא | מחיר ליחידה למוצר פשוט ללא וריאציות |
-| `available_items` | `integer` | כן | מלאי יחידות למוצר פשוט ללא וריאציות |
+| `price_per_item` | `numeric(12,2)` | לא | מחיר ליחידה פיזית; עבור מוצר פשוט יש להכפיל ב־`set_size` לקבלת מחיר ה־Set |
+| `available_items` | `integer` | כן | מלאי ביחידות פיזיות למוצר פשוט; מספר ה־Sets למכירה הוא `floor(available_items / set_size)` |
 | `product_code` | `text` | לא | קוד פנימי למוצר פשוט |
 | `display_order` | `integer` | כן | סדר תצוגה; UI מציע קפיצות 10 אך מאפשר הזנה ידנית |
 | `created_at` | `timestamptz` | כן | זמן יצירה |
@@ -65,7 +65,7 @@
 | `product_id` | `uuid` | כן | FK ל־`products.product_id` |
 | `name` | `text` | כן | שם תצוגה, למשל טעם או צבע |
 | `product_code` | `text` | כן | מזהה פנימי יציב של סוג Product/Variant |
-| `price_per_set` | `numeric(12,2)` | כן | מחיר Set בשקלים |
+| `price_per_item` | `numeric(12,2)` | כן | מחיר ליחידה פיזית; יש להכפיל ב־`products.set_size` לקבלת מחיר ה־Set |
 | `available_sets` | `integer` | כן | מלאי זמין ב־Sets |
 | `low_stock_threshold_sets` | `integer` | כן | סף התראת מלאי נמוך |
 | `attributes` | `jsonb` | לא | מאפיינים גמישים של הווריאציה |
@@ -78,7 +78,7 @@
 
 - `FOREIGN KEY (product_id) REFERENCES products(product_id)`.
 - `UNIQUE (product_code)`.
-- `CHECK (price_per_set >= 0)`.
+- `CHECK (price_per_item >= 0)` לאחר מיגרציה 017; עד להחלתה הסכמה הקיימת משתמשת בשם `price_per_set` ובמשמעות הישנה של מחיר Set.
 - `CHECK (available_sets >= 0)`.
 - `CHECK (status IN ('active', 'hidden', 'sold_out', 'archived'))`.
 - Partial Unique Index `ux_product_one_default_variant` על `(product_id)` כאשר `is_default = true`.

@@ -6,7 +6,7 @@ export async function listOrdersWithClient(client: SqlClient, query: AdminOrders
   const { values, filters } = orderFilters(query);
   const limitSql = limit ? ` limit $${values.push(limit)} offset $${values.push(offset)}` : '';
   const result = await client.query<AdminOrderRow & { [key: string]: unknown }>(
-    `select o.order_id as "orderId", o.order_number as "orderNumber", o.status, o.payment_status as "paymentStatus", o.total::text,
+    `select o.order_id as "orderId", o.order_number as "orderNumber", o.status, o.payment_status as "paymentStatus", o.is_test as "isTest", o.total::text,
             coalesce(o.delivery_address->>'city', '') as location, coalesce(o.delivery_address->>'city', '') as city,
             to_char(o.delivery_date, 'YYYY-MM-DD') as "deliveryDate", min(oi.product_variant_id::text) as "productVariantId",
             string_agg(distinct oi.product_name_snapshot || ' · ' || oi.variant_name_snapshot, ', ' order by (oi.product_name_snapshot || ' · ' || oi.variant_name_snapshot)) as "itemSummary",

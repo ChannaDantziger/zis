@@ -12,7 +12,7 @@
 
 החיבור נוצר בעת עליית `zis-api/src/server.ts`:
 
-1. `readServerConfig()` בוחר כתובת PostgreSQL לפי `NODE_ENV`.
+1. `readServerConfig()` בוחר כתובת PostgreSQL לפי `DATABASE_TARGET`, בנפרד מ־`APP_ENV` שקובע CORS.
 2. `createSupabaseServerClient()` יוצר Client שרת מול אותו פרויקט Supabase.
 3. `createPostgresPool()` יוצר Pool של `pg` מול PostgreSQL.
 4. ה־Repositories של קטלוג, מלאי, Dashboard, סטטוסים והגדרות משלוח מקבלים את ה־Pool.
@@ -24,8 +24,9 @@
 
 | סביבה | PostgreSQL | Supabase | Frontend |
 |---|---|---|---|
-| Development | `DATABASE_URL_TRN` | `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` או `SUPABASE_SECRET_KEY` | `VITE_API_BASE_URL` |
-| Production | `NODE_ENV=production` + `DATABASE_URL` | אותם משתני Supabase | `VITE_API_BASE_URL` של ה־API הציבורי |
+| Local Development מול Production DB | `DATABASE_TARGET=production` + `DATABASE_URL` | אותם משתני Supabase של אותו פרויקט | `APP_ENV=development`; `VITE_API_BASE_URL` מקומי |
+| Development DB | `DATABASE_TARGET=development` + `DATABASE_URL_TRN` | אותם משתני Supabase של סביבת Development | `APP_ENV=development`; `VITE_API_BASE_URL` מקומי |
+| אתר Production | `DATABASE_TARGET=production` + `DATABASE_URL` | אותם משתני Supabase | `APP_ENV=production`; `VITE_API_BASE_URL` ציבורי |
 
 ב־Production `DATABASE_URL_TRN` מתעלם בכוונה. כתובת PostgreSQL ומרכיב Supabase חייבים להיות של אותו פרויקט/סביבה. מפתחות נשמרים במנהל סודות או בסביבת התהליך; לא במסמך ולא בצ׳אט.
 
@@ -33,7 +34,7 @@
 
 ## סדר הפעלה בטוח
 
-1. לוודא שה־API רץ עם `NODE_ENV=production` ו־`DATABASE_URL` של אותו פרויקט Supabase; אין להשתמש ב־`DATABASE_URL_TRN`.
+1. לוודא `DATABASE_TARGET=production`, `APP_ENV=production`, ו־`DATABASE_URL`/Supabase של אותו פרויקט; אין להשתמש ב־`DATABASE_URL_TRN`.
 2. מאחר שאין ledger להרצות הידניות, לדלג על `check:db-migrations`; הוא דורש טבלת היסטוריה מוכרת ולא יוכל לשחזר בדיעבד מה הורץ.
 3. אפשר להריץ `npm.cmd run check:manual-schema` מול `DATABASE_URL` כדי לבדוק קיום טבלאות ועמודות בקריאה בלבד. שמירת הפלט תספק בדיקת schema, לא היסטוריית migrations.
 4. אין להריץ `apply:manual-migrations` על Production. מיגרציה חסרה תעבור בתהליך השינוי המאושר של ספק ה־DB, עם גיבוי, חלון שינוי ו־rollback.

@@ -10,7 +10,6 @@ export function createAdminCommerceSettingsRouter(service: CommerceSettingsServi
   router.patch('/admin/commerce/settings', controller.updateBusiness);
   router.post('/admin/shipping/zones', controller.createZone);
   router.patch('/admin/shipping/zones/:shippingZoneId', controller.updateZone);
-  router.patch('/admin/shipping/methods/:shippingMethodId', controller.updateMethod);
   router.post('/admin/shipping/rules', controller.createRule);
   router.patch('/admin/shipping/rules/:shippingRuleId', controller.updateRule);
   router.post('/admin/store-closures', controller.createClosure);

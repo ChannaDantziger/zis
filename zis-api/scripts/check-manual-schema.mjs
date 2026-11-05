@@ -6,13 +6,13 @@ if (!databaseUrl) throw new Error('DATABASE_URL is not configured; no Production
 const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
 const tableNames = [
   'categories', 'products', 'product_variants', 'orders', 'store_settings', 'shipping_zones',
-  'shipping_methods', 'shipping_rules', 'system_defaults', 'event_gallery_images',
-  'admin_tasks', 'order_confirmation_tokens', 'storage.buckets',
+  'shipping_rules', 'system_defaults', 'event_gallery_images',
+  'admin_tasks', 'order_confirmation_tokens', 'order_creation_requests', 'order_pending_edit_requests', 'storage.buckets',
 ];
 const columnChecks = [
-  ['products', 'product_code'], ['product_variants', 'product_code'], ['product_variants', 'available_sets'],
+  ['products', 'product_code'], ['product_variants', 'product_code'], ['product_variants', 'available_sets'], ['product_variants', 'price_per_item'],
   ['orders', 'delivery_venue_name'], ['orders', 'payment_confirmed_at'], ['admin_users', 'role'],
-  ['shipping_zones', 'dispatch_time'], ['store_settings', 'max_advance_days'],
+  ['shipping_zones', 'dispatch_time'], ['store_settings', 'max_advance_days'], ['orders', 'shipping_method_snapshot'],
 ];
 
 try {

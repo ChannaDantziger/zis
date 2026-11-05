@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Alert, Button, Card, Group, Pagination, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Alert, Button, Card, Group, Image, Pagination, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { catalogStore as store } from '../features/catalog/catalog.store.js';
 import { CatalogProductEditor } from '../features/catalog/CatalogProductEditor.js';
 import { CatalogBreadcrumbs, CatalogCategoryEditor } from '../features/catalog/CatalogCategoryEditor.js';
@@ -30,7 +30,8 @@ export const CatalogPage = observer(function CatalogPage() {
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
           {store.catalog?.categories.map((item) => <Card key={item.categoryId} withBorder radius="lg" component="button" type="button" ta="right"
             disabled={store.saving} onClick={() => store.selectCategory(item.categoryId)}>
-            <Stack gap="xs"><Text fw={700} size="lg">{item.name}</Text>
+            <Stack gap="xs"><Text fw={700} size="lg">{item.name}{item.productCount !== undefined && ` (${item.productCount})`}</Text>
+              {!!item.previewImages?.length && <SimpleGrid cols={4}>{item.previewImages.map((image) => <Image key={image.productId} src={image.url} alt={image.productName} title={image.productName} h={64} fit="contain" />)}</SimpleGrid>}
               <Text size="sm" c="dimmed">{item.status === 'hidden' ? 'מוסתרת באתר · כניסה למוצרים' : 'לצפייה במוצרים ולהוספת מוצר'}</Text>
             </Stack>
           </Card>)}

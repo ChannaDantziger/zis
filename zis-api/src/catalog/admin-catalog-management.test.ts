@@ -62,26 +62,26 @@ test('category pagination applies the same scope to the count and the page in a 
 });
 test('variant edits cannot overwrite inventory or internal product code', async () => {
   const f = fixture();
-  await f.controller.updateVariant({ params: { productVariantId: id }, body: { name: ' שוקולד ', pricePerSet: '24.5', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'hidden', version, availableSets: 999, productCode: 'spoofed' } } as never, f.response);
-  assert.deepEqual(f.calls, [[{ productVariantId: id, name: 'שוקולד', pricePerSet: '24.50', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'hidden', version }, id]]);
+  await f.controller.updateVariant({ params: { productVariantId: id }, body: { name: ' שוקולד ', pricePerUnit: '24.5', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'hidden', version, availableSets: 999, productCode: 'spoofed' } } as never, f.response);
+  assert.deepEqual(f.calls, [[{ productVariantId: id, name: 'שוקולד', pricePerUnit: '24.50', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'hidden', version }, id]]);
 });
 
 test('a product with variant pricing can keep its null product price during a regular edit', async () => {
   const f = fixture();
   await f.controller.updateProduct({ params: { productId: id }, body: {
     categoryId: id, name: 'מארז טעמים', description: 'תיאור חדש', setSize: 4,
-    pricePerSet: null, availableSets: 0, displayOrder: 10, status: 'active', version,
+    pricePerUnit: null, availableItems: 0, displayOrder: 10, status: 'active', version,
   } } as never, f.response);
-  const [input] = f.calls[0] as [{ pricePerSet: string | null; name: string }];
-  assert.equal(input.pricePerSet, null); assert.equal(input.name, 'מארז טעמים');
+  const [input] = f.calls[0] as [{ pricePerUnit: string | null; name: string }];
+  assert.equal(input.pricePerUnit, null); assert.equal(input.name, 'מארז טעמים');
 });
 function databaseFixture(currentVersion: string) {
   const statements: Array<{ sql: string; values?: unknown[] }> = [];
   let released = false;
-  const client = { query: async (sql: string, values?: unknown[]) => { statements.push({ sql, values }); return { rows: sql.includes('for update') ? [{ version: currentVersion, price_per_set: '10.00' }] : [] }; }, release: () => { released = true; } } as unknown as SqlClient;
+  const client = { query: async (sql: string, values?: unknown[]) => { statements.push({ sql, values }); return { rows: sql.includes('for update') ? [{ version: currentVersion, price_per_item: '10.00' }] : [] }; }, release: () => { released = true; } } as unknown as SqlClient;
   return { repository: createCatalogManagementRepository(async () => client), statements, released: () => released };
 }
-const variantInput = { productVariantId: id, name: 'New', pricePerSet: '25.00', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'active' as const, version };
+const variantInput = { productVariantId: id, name: 'New', pricePerUnit: '25.00', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'active' as const, version };
 test('stale catalog edit rolls back without updating or auditing', async () => {
   const f = databaseFixture('changed');
   await assert.rejects(() => f.repository.updateVariant(variantInput, id), (e: unknown) => (e as { statusCode: number }).statusCode === 409);
@@ -95,6 +95,6 @@ test('price update preserves inventory and commits its before value in the same 
   const update = f.statements.find((s) => s.sql.startsWith('update'))!;
   assert.ok(update); assert.equal(update.sql.includes('available_sets'), false);
   const audit = f.statements.find((s) => s.sql.includes('admin_audit_log'))!;
-  assert.equal((audit.values?.[4] as { price_per_set: string }).price_per_set, '10.00');
+  assert.equal((audit.values?.[4] as { price_per_item: string }).price_per_item, '10.00');
   assert.equal(f.statements.at(-1)?.sql, 'commit'); assert.equal(f.released(), true);
 });

@@ -70,7 +70,7 @@ async function createProduct(factory: SqlClientFactory, input: CreateProductInpu
         (category_id, name, description, set_size, price_per_item, available_items, display_order, status)
        values ($1, $2, $3, $4, $5, $6, $7, 'draft')
        returning product_id as id`,
-      [input.categoryId, input.name, input.description, input.setSize, input.pricePerSet, input.availableSets, input.displayOrder],
+      [input.categoryId, input.name, input.description, input.setSize, input.pricePerUnit, input.availableItems, input.displayOrder],
     );
     const productId = result.rows[0]?.id;
     if (!productId) throw new Error('Product creation failed');
@@ -91,11 +91,11 @@ async function createVariant(factory: SqlClientFactory, input: CreateVariantInpu
   return withTransaction(factory, async (client) => {
     const result = await client.query<IdRow>(
       `insert into public.product_variants
-        (product_id, name, product_code, price_per_set, available_sets,
+        (product_id, name, product_code, price_per_item, available_sets,
          low_stock_threshold_sets, default_production_quantity_sets, attributes, is_default, status)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        returning product_variant_id as id`,
-      [input.productId, input.name, input.productCode, input.pricePerSet, input.availableSets,
+      [input.productId, input.name, input.productCode, input.pricePerUnit, input.availableSets,
         input.lowStockThresholdSets, input.defaultProductionQuantitySets, input.attributes, input.isDefault, input.status],
     );
     const productVariantId = result.rows[0]?.id;

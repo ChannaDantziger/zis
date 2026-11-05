@@ -1,3 +1,5 @@
+import { createFaqService } from './faq/faq.service.js';
+import { createTestPaymentService } from './commerce/test-payment.service.js';
 import { createApp } from './app.js';
 import { createOrderService } from './commerce/order.service.js';
 import { createPostgresOrderRepository } from './commerce/postgres-order.repository.js';
@@ -49,8 +51,8 @@ if (existsSync(envFilePath) && typeof process.loadEnvFile === 'function') {
 const port = Number(process.env.PORT ?? DEFAULT_PORT);
 const serverConfig = readServerConfig();
 const configurationErrors = validateServerConfig(serverConfig);
-if (process.env.NODE_ENV === 'production' && configurationErrors.length > 0) {
-  throw new Error(`Invalid production configuration: ${configurationErrors.join('; ')}`);
+if (configurationErrors.length > 0) {
+  throw new Error(`Invalid server configuration: ${configurationErrors.join('; ')}`);
 }
 const databaseUrl = serverConfig.databaseUrl;
 const hasServerDependencies = Boolean(
@@ -77,6 +79,8 @@ const app = hasServerDependencies
         (bucket, storagePath) => storage.createSignedUrl(bucket, storagePath).then((result) => result.url),
       );
       return createApp({
+        faqService: createFaqService(createPostgresClientFactory(pool)),
+        testPaymentService: createTestPaymentService(createPostgresClientFactory(pool)),
         orderService: createOrderService(createPostgresOrderRepository(createPostgresClientFactory(pool)),
           serverConfig.orderConfirmationTokenTtlSeconds && serverConfig.orderConfirmationTokenSecret ? {
             confirmationTokenTtlSeconds: serverConfig.orderConfirmationTokenTtlSeconds,

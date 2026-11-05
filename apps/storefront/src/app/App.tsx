@@ -14,7 +14,11 @@ import { StoreStatusBanner } from '../shared/store-status';
 export function App() {
   const location = useLocation();
   useEffect(() => {
-    if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+    if (location.hash) {
+      const section = document.getElementById(location.hash.slice(1));
+      section?.scrollIntoView();
+      section?.querySelector<HTMLElement>('h1, h2')?.focus({ preventScroll: true });
+    }
     else window.scrollTo({ top: 0 });
   }, [location.pathname, location.hash]);
   return <>

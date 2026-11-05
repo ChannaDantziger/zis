@@ -29,8 +29,8 @@ export const CatalogProductEditor = observer(function CatalogProductEditor() {
       <TextInput disabled={disabled} label="שם המוצר" required maxLength={200} value={form.name} onChange={(event) => store.setProduct('name', event.currentTarget.value)} />
       <Textarea disabled={disabled} label="תיאור המוצר" autosize minRows={2} value={form.description ?? ''} onChange={(event) => store.setProduct('description', event.currentTarget.value || null)} />
       {form.variants.length === 0 ? <SimpleGrid cols={{ base: 1, sm: 2 }}>
-        <TextInput disabled={disabled} label="מחיר ליחידת קנייה (₪)" description={`יחידת קנייה מכילה ${form.setSize} יחידות מוצר`} required inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" value={form.pricePerSet ?? ''} onChange={(event) => store.setProduct('pricePerSet', event.currentTarget.value)} />
-        <NumberInput disabled={disabled} label="כמות במלאי" min={0} allowDecimal={false} required value={form.availableSets} onChange={(value) => store.setProduct('availableSets', Number(value))} />
+        <TextInput disabled={disabled} label="מחיר ליחידה (₪)" description={`מחיר הסט מחושב לפי ${form.setSize} יחידות מוצר`} required inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" value={form.pricePerUnit ?? ''} onChange={(event) => store.setProduct('pricePerUnit', event.currentTarget.value)} />
+        <NumberInput disabled={disabled} label="מלאי ביחידות פיזיות" description={`זמינים למכירה ${form.setSize > 0 ? Math.floor(form.availableItems / form.setSize) : 0} סטים שלמים`} min={0} allowDecimal={false} required value={form.availableItems} onChange={(value) => store.setProduct('availableItems', Number(value))} />
       </SimpleGrid> : <Text size="sm" c="dimmed">למוצר יש אפשרויות לבחירה. המחיר והמלאי של כל אפשרות נמצאים בעריכה המתקדמת.</Text>}
       {advanced && <Stack gap="sm">
         <Title order={3} size="h4">הגדרות נוספות</Title>
@@ -56,7 +56,7 @@ export const CatalogProductEditor = observer(function CatalogProductEditor() {
       {!form.productId ? <Text c="dimmed">שמרי את המוצר כדי להוסיף לו וריאציות.</Text> : <>
         {form.variants.length === 0 && <Text c="dimmed">למוצר אין וריאציות. אפשר להשאיר אותו כמוצר רגיל.</Text>}
         {form.variants.map((variant) => <Card withBorder key={variant.productVariantId}><Group justify="space-between"><div>
-          <Text fw={600}>{variant.name}</Text><Text size="sm">₪{variant.pricePerSet} לסט · מלאי {variant.availableSets}</Text>
+          <Text fw={600}>{variant.name}</Text><Text size="sm">₪{variant.pricePerUnit} ליחידה · {form.setSize} יחידות בסט · מלאי {variant.availableSets} סטים</Text>
           <Text size="sm" c="dimmed">{productStatuses.find((status) => status.value === variant.status)?.label}</Text>
         </div><Button variant="light" disabled={store.saving || store.productHasChanges} onClick={() => store.editVariant(variant)}>עריכת וריאציה</Button></Group></Card>)}
         {!store.productHasChanges && <CatalogVariantEditor />}

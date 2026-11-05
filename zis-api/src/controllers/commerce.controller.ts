@@ -5,9 +5,13 @@ import type { CommerceService } from '../commerce/commerce.types.js';
 
 export function createCommerceController(service: CommerceService) {
   return {
+    getDeliveryDates: async (request: Request, response: Response) => {
+      const zone=readText(request.query.shippingZoneId,'shippingZoneId');
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(zone)) throw new ApiError(400,'VALIDATION_ERROR','Invalid shippingZoneId');
+      response.json(await service.getDeliveryDates!(zone));
+    },
     getStoreStatus: async (_request: Request, response: Response) => response.status(200).json(await service.getStoreStatus()),
     listShippingZones: async (_request: Request, response: Response) => response.status(200).json({ data: await service.listShippingZones() }),
-    listShippingMethods: async (_request: Request, response: Response) => response.status(200).json({ data: await service.listShippingMethods() }),
     getAvailability: async (request: Request, response: Response) => response.status(200).json(await service.getAvailability(readAvailabilityInput(request.body))),
     calculateQuote: async (request: Request, response: Response) => response.status(200).json(await service.calculateQuote(readQuoteInput(request.body))),
   };
@@ -23,7 +27,6 @@ function readQuoteInput(value: unknown): ShippingQuoteInput {
   return {
     deliveryDate: readText(body.deliveryDate, 'deliveryDate'),
     shippingZoneId: readText(body.shippingZoneId, 'shippingZoneId'),
-    shippingMethodId: readText(body.shippingMethodId, 'shippingMethodId'),
     items: readItems(body.items),
     isUrgent: body.isUrgent === undefined || body.isUrgent === false ? false : rejectUrgent(),
   };

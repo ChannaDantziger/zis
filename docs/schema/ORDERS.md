@@ -1,4 +1,4 @@
-> מפרט תכנון, לא אישור לסכמה חיה. [מפת ERD](../ERD_SCHEMA.md) · [אינדקס](../PLAN_INDEX.md) · [פערים](../OPEN_ISSUES.md).
+> מפרט ותיאור יעד לסכמה לאחר [מיגרציה 014](../../zis-db/migrations/014_single_shipping_method.sql); המיגרציה טרם הוחלה. [מפת ERD](../ERD_SCHEMA.md) · [אינדקס](../PLAN_INDEX.md) · [פערים](../OPEN_ISSUES.md).
 > יש לקרוא יחד עם [עדכוני הסכמה](POLICIES_AND_UPDATES.md) ו־[מודל המלאי](../INVENTORY_MODEL.md); שדות 003/004 אינם משוכפלים בכל טבלה.
 
 ## טבלאות הזמנות ותשלום
@@ -18,7 +18,7 @@
 | `customer_email` | `text` | כן | אימייל |
 | `delivery_address` | `jsonb` | כן | כתובת יעד למשלוח בלבד |
 | `shipping_zone_id` | `uuid` | כן | FK ל־`shipping_zones.shipping_zone_id` |
-| `shipping_method_id` | `uuid` | כן | FK ל־`shipping_methods.shipping_method_id` |
+| `shipping_method_snapshot` | `text` | כן | תווית קריאה שנשמרת להזמנות היסטוריות; להזמנה חדשה ערכה `משלוח` |
 | `delivery_date` | `date` | כן | תאריך יעד |
 | `delivery_time_window` | `jsonb` | לא | חלון שעות |
 | `subtotal` | `numeric(12,2)` | כן | סכום מוצרים |
@@ -36,7 +36,7 @@
 - `CHECK (subtotal >= 0 AND shipping_total >= 0 AND discount_total >= 0 AND total >= 0)`.
 - `CHECK (status IN ('ordered', 'in_preparation', 'packed', 'in_transit', 'delivered', 'approved', 'cancelled'))`.
 - `CHECK (payment_status IN ('pending', 'authorized', 'paid', 'failed'))`.
-- FK ל־`shipping_zones` ול־`shipping_methods`.
+- FK ל־`shipping_zones`; אין קשר לטבלת שיטות משלוח לאחר 014.
 - אינדקס `idx_orders_status_created` על `(status, created_at DESC)`.
 - אינדקס `idx_orders_customer_email` על `(customer_email)`.
 - אינדקס `idx_orders_delivery_date_status` על `(delivery_date, status)`.
@@ -54,8 +54,8 @@
 | `product_name_snapshot` | `text` | כן | שם בזמן הרכישה |
 | `variant_name_snapshot` | `text` | כן | וריאציה בזמן הרכישה |
 | `product_code_snapshot` | `text` | כן | Product Code בזמן הרכישה |
-| `set_size_snapshot` | `integer` | כן | גודל Set בזמן הרכישה |
-| `unit_set_price_snapshot` | `numeric(12,2)` | כן | מחיר Set בזמן הרכישה |
+| `set_size_snapshot` | `integer` | כן | מספר היחידות הפיזיות ב־Set בזמן הרכישה; שורות ישנות של מוצר פשוט עשויות להיות null |
+| `unit_set_price_snapshot` | `numeric(12,2)` | כן | מחיר ה־Set בזמן הרכישה, שנגזר ממחיר ליחידה × גודל ה־Set; נשמר כ־Snapshot היסטורי |
 | `quantity_sets` | `integer` | כן | מספר Sets שנרכשו |
 | `line_total` | `numeric(12,2)` | כן | מחיר שורה |
 

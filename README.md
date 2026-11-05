@@ -35,6 +35,7 @@ cd "C:\Users\123\Documents\ChatGPT\ZIS"
 
 ```powershell
 $env:NODE_ENV = "development"
+------------------1-------------------------------
 npm.cmd --prefix zis-api run dev
 ```
 
@@ -43,10 +44,17 @@ npm.cmd --prefix zis-api run dev
 בחלון השני מפעילים את אתר הלקוחות:
 
 ```powershell
+----------------------2------------------------------------------------
 npm.cmd --prefix apps/storefront run dev -- --configLoader native
+אתר הלקוחות
+אחר כך פתחי בדפדפן את http://127.0.0.1:5174. 
+
 ```
 
-פותחים את [אתר הלקוחות](http://127.0.0.1:5174/). עוצרים כל שרת עם `Ctrl+C` בחלון שבו הוא פועל. להפעלת ממשק הניהול, מתקינים בנפרד עם `npm.cmd --prefix apps/admin-mobile ci` ומפעילים לפי [מדריך הפיתוח](docs/DEVELOPMENT.md).
+##פותחים את [אתר הלקוחות](http://127.0.0.1:5174/). עוצרים כל שרת עם `Ctrl+C` בחלון שבו הוא פועל. להפעלת ממשק הניהול, מתקינים בנפרד עם ##`npm.cmd --prefix apps/admin-mobile ci` ומפעילים לפי [מדריך הפיתוח](docs/DEVELOPMENT.md).
+
+-----------------------3-------------------------
+npm.cmd --prefix apps/admin-mobile run dev
 
 הוראות חיבור, בדיקות והפעלת הניהול נמצאות ב־[מדריך הפיתוח](docs/DEVELOPMENT.md). הפקודות מוגדרות ב־`package.json` של כל יישום; הפעלת השרת אינה מריצה מיגרציות מסד נתונים.
 

@@ -11,6 +11,8 @@
 - עימוד משתמש ב־`page` ו־`pageSize`; ברירת המחדל היא 24, והמקסימום הוא 50.
 - כל תגובה יכולה לכלול `X-Request-Id`; שגיאה מחזירה `{ "error": { "code", "message", "fields?", "requestId?" } }`.
 - השרת לא מחזיר `storage_path`, נתוני Admin, payload של ספק תשלום או פרטי כרטיס ללקוח.
+- `pricePerUnit` הוא מחיר של יחידה פיזית גם במוצר פשוט וגם בווריאציה; מחיר Set מחושב בשרת ובחנות כמחיר ליחידה כפול `setSize`.
+- במוצר פשוט `available_items` נספר ביחידות פיזיות; שדה `availableSets` ללקוחה הוא `floor(available_items / set_size)`. בווריאציה `availableSets` נשלף מ־`product_variants.available_sets`.
 
 ## קטלוג ומדיה
 
@@ -25,8 +27,8 @@
 | `PATCH /admin/product-images/:id` | Admin | alt, סדר, סוג או ארכוב לוגי; החלפה מתבצעת בהעלאה חדשה ואז עדכון metadata |
 | `POST /admin/products` | Admin | יצירת מוצר במצב טיוטה ורישום Audit |
 | `GET /admin/products` | מנהלת תפעול | `page` ו־`categoryId` אופציונלי מסוג UUID; עמוד של 25 מוצרים, ספירה מסוננת וכל הקטגוריות. מימוש 21.10.2026 |
-| `PATCH /admin/products/:id` | מנהלת תפעול | עריכת מוצר עם גרסה; `pricePerSet` יכול להישאר `null` למוצר עם מחירי וריאציות. פרסום נבדק בשרת |
-| `POST /admin/products/:id/variants` | Admin | יצירת וריאציה ומלאי התחלתי ורישום Audit |
+| `PATCH /admin/products/:id` | מנהלת תפעול | עריכת מוצר עם גרסה; `pricePerUnit` יכול להישאר `null` למוצר עם מחירי וריאציות. פרסום נבדק בשרת |
+| `POST /admin/products/:id/variants` | Admin | יצירת וריאציה עם `pricePerUnit`, מלאי התחלתי ורישום Audit |
 | `GET /event-gallery` | ציבורי | תמונות אירועים שפורסמו בלבד |
 
 תמונת מוצר כוללת `imageId`, `url`, `altText`, `imageType` ו־`sortOrder`. URL מדיה נוצר מחדש על ידי השרת; הוא אינו אסמכתה קבועה. העלאה מותרת רק ל־JPEG/PNG/WebP עד 5 MiB. קובץ חדש נבדק ונרשם לפני הסרת הקודם.
@@ -35,19 +37,28 @@
 
 | שיטה ונתיב | הרשאה | חוזה |
 |---|---|---|
-| `GET /store-status` | ציבורי | פתיחה, הודעת סגירה, אזור זמן ושעת יציאה כללית |
-| GET /shipping/methods | ציבורי | { data: ShippingMethodResponse[] }, פעילות בלבד |
+| `GET /store-status` | ציבורי | פתיחה, הודעת סגירה, אזור זמן, שעת יציאה ו־`minimumProductSubtotal` כמחרוזת כספית |
 | `GET /shipping/zones` | ציבורי | אזורים פעילים בלבד |
 | `POST /availability` | ציבורי | `AvailabilityRequest` → `AvailabilityResponse` |
 | `POST /quote` | ציבורי | `ShippingQuoteInput` → `QuotePreview` |
 
-`QuotePreview` הוא חישוב תצוגה בלבד: `reservationCreated` תמיד `false`, אין לו תוקף ואין בו הבטחת מחיר או מלאי. ביצירת הזמנה השרת מחשב מחדש מחיר, מינימום, אזור, סגירות, cutoff ושעון `Asia/Jerusalem`; לוח חגים אינו מופעל בשלב זה.
+`QuotePreview` הוא חישוב תצוגה בלבד: `reservationCreated` תמיד `false`, אין לו תוקף ואין בו הבטחת מחיר או מלאי. מחיר המוצרים מחושב כמחיר יחידה × מספר יחידות פיזיות ב־Set × מספר Sets. ביצירת הזמנה השרת מחשב מחדש מחיר, מינימום, אזור, סגירות, cutoff ושעון `Asia/Jerusalem`; לוח חגים אינו מופעל בשלב זה.
 
 מינימום ההזמנה נשלח בהגדרות כ־`minimumProductSubtotal` ונקרא במסד מתוך `store_settings.minimum_product_subtotal`. Quote ויצירת הזמנה משווים אליו את סכום המוצרים לפני משלוח; אי עמידה מחזירה `MINIMUM_ORDER_NOT_MET`.
+
+עדכון קוד 29.10.2026: `/store-status` מחזיר את המינימום עבור שלב המוצרים והעגלה; ערך חסר אינו מתפרש כ־0. חוסר מוצר/כמות ב־Quote מחזיר `STOCK_UNAVAILABLE`, כדי לא לערבב חוסר מלאי עם תאריך/אזור לא תקינים.
 
 ## יצירת הזמנה ואישור אורח
 
 `POST /orders` מקבל `Idempotency-Key` אטומי וגוף `CreateOrderInput`. השרת שומר הזמנה `pending`/`ordered` לפני פנייה לספק התשלום ומחזיר רק לאחר commit. כשל תשלום אינו מוחק את ההזמנה או את העגלה המקומית.
+
+`PATCH /orders/pending` מקבל את רשימת הפריטים הסופית, כולל שינוי כמות, הוספה, הסרה או החלפה, עם `Authorization: Bearer <confirmationToken>`, כותרת `Idempotency-Key` וגוף `{ "expectedVersion": "...", "items": [...] }`. הרשימה חייבת לכלול 1–100 פריטים ייחודיים בכמויות חיוביות. אין מזהה הזמנה או מחיר בגוף: האסימון מזהה את ההזמנה, ו־`version` מוחזר ביצירה ובאישור. האסימון חייב להיות בתוקף ולא מבוטל.
+
+העריכה נועלת את ההזמנה והאסימון בטרנזקציה, מותרת רק ב־`ordered/pending` ונדחית אם קיים תשלום `pending/authorized/paid`. נבדקים פרסום/כשירות מכירה, זמינות ומינימום של כל הפריטים הסופיים. לפריט שכבר נמצא בהזמנה נשמר Snapshot ומחיר יחידה קיים; פריט חדש מקבל Snapshot ומחיר ממקור האמת. הוספה/עדכון/מחיקת שורות וסכומי שורות, משלוח, מס וסכום כולל נשמרים יחד, ללא שינוי סטטוס או מלאי. שינוי גרסה מחזיר `409 ORDER_CHANGED`; מצב שאינו ניתן לעריכה מחזיר `409 ORDER_NOT_EDITABLE`.
+
+מפתחות העריכה נשמרים בטבלה נפרדת `order_pending_edit_requests` מ־[016](../zis-db/migrations/016_pending_order_edit_requests.sql), עם hash של הפעולה, ההזמנה והגוף ו־metadata של התשובה. ניסיון חוזר באותו גוף/מפתח מחזיר את תשובת העריכה שנשמרה; גוף/הזמנה אחרים באותו מפתח מחזירים התנגשות. מפתחות יצירה ועריכה הם מרחבים נפרדים; unique של טבלת היצירה על order_id נשאר ללא שינוי. **016 לא הורצה ודורשת החלה ידנית בתהליך המאושר לפני הפעלת העריכה מול DB**; בהיעדרה מוחזר `503 PENDING_ORDER_EDIT_NOT_CONFIGURED`.
+
+האישור הפרטי המאומת כולל גם `items` עם IDs/variant IDs/quantities בלבד, ללא פרטי לקוחה או כתובת; `items` ו־`version` נקראים יחד. אי התאמת גרסה חוסמת עריכה ותשלום עד טעינה מפורשת של הרשימה והגרסה העדכניות; אין עדכון version בלבד מעל רשימה מקומית ישנה. בקשת עריכה שתוצאתה לא ידועה נשארת בניסיון חוזר עם אותו מפתח וגוף.
 
 ```json
 {
@@ -56,7 +67,6 @@
   "customerEmail": "customer@example.invalid",
   "deliveryDate": "2026-10-01",
   "shippingZoneId": "00000000-0000-0000-0000-000000000001",
-  "shippingMethodId": "00000000-0000-0000-0000-000000000002",
   "items": [{ "productVariantId": "00000000-0000-0000-0000-000000000003", "quantitySets": 1 }],
   "deliveryAddress": { "city": "ירושלים", "street": "רחוב הדוגמה", "houseNumber": "1" }
 }
@@ -68,11 +78,10 @@
 
 ## Admin תפעולי
 
-| `GET /admin/commerce/settings` | Admin פעיל | הגדרות עסק, אזורי משלוח, שיטות, כללי תמחור וסגירות |
+| `GET /admin/commerce/settings` | Admin פעיל | הגדרות עסק, אזורי משלוח, כללי תמחור וסגירות |
 | `PATCH /admin/commerce/settings` | מנהל תפעול | cutoff, שעת יציאה כללית, טווח הזמנה, סגירת חנות ומינימום סכום מוצרים להזמנה (ללא דמי משלוח) |
 | `POST/PATCH /admin/shipping/zones/:id` | מנהל תפעול | יצירה/עדכון אזור ושעת יציאה אזורית |
-| `PATCH /admin/shipping/methods/:id` | מנהל תפעול | שינוי שם והפעלה של שיטת משלוח |
-| `POST/PATCH /admin/shipping/rules/:id` | מנהל תפעול | כלל מחיר לפי אזור, שיטה וטווח Sets |
+| `POST/PATCH /admin/shipping/rules/:id` | מנהל תפעול | כלל מחיר לפי אזור וטווח Sets |
 | `POST/PATCH /admin/store-closures/:id` | מנהל תפעול | חלון סגירה מתוזמן; עדכון לוגי באמצעות `isActive` |
 
 | שיטה ונתיב | הרשאה | חוזה |
@@ -110,4 +119,4 @@
 
 ## מימוש P5 — 10.10.2026
 
-POST /orders ואישור האורח נוספו בקוד ונבדקו מקומית; [תיעוד](ORDER_CREATION.md). מיגרציה 010 טרם הורצה. תצורת אסימון חסרה מחזירה 503 ORDER_CREATION_NOT_CONFIGURED. Quote ויצירה דורשים system_defaults.tax_rate מפורש; חסר או לא תקין מחזיר 503 COMMERCE_TAX_NOT_CONFIGURED. QuotePreview כולל taxRate ופירוק מס מתוך מחיר כולל, ללא תוספת מס נוספת. אין ספק תשלום או אישור חיוב. בדיקות HTTP/DB ודפדפן מלא עדיין פתוחות.
+POST /orders ואישור האורח נוספו בקוד ונבדקו מקומית; [תיעוד](ORDER_CREATION.md). מיגרציה 010 טרם הורצה. תצורת אסימון חסרה מחזירה 503 ORDER_CREATION_NOT_CONFIGURED. Quote/Checkout אינם קוראים שיעור מס; השדות tax_total/tax_rate נשמרים כאפס עד פיתוח החשבונית. אין ספק תשלום או אישור חיוב. בדיקות HTTP/DB ודפדפן מלא עדיין פתוחות.

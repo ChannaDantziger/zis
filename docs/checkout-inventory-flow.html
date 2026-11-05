@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="מצגת טכנית על מסלול רכישה, בדיקות מלאי, SQL ותפעול הזמנה בפרויקט ZIS">
+<title>מסלול רכישה, מלאי ותפעול — ZIS</title>
+<style>
+:root{color-scheme:light;--ink:#28241e;--muted:#6e675d;--paper:#fbf8f1;--sand:#f1e8d7;--line:#d9cdb8;--accent:#805238;--accent-soft:#ead9c8;--good:#35664c;--good-soft:#e5f0e7;--warn:#9b5b16;--warn-soft:#fff0d7;--bad:#a73e35;--bad-soft:#f8e4df;--blue:#3c6573;--blue-soft:#e4eff2;--code:#292723;--code-ink:#f3eee5;font-family:Arial,"Segoe UI",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-size:18px;line-height:1.55}
+.deck{min-height:100vh;display:flex;flex-direction:column}.bar{position:sticky;top:0;z-index:3;background:rgba(251,248,241,.96);border-bottom:1px solid var(--line);padding:10px clamp(16px,4vw,60px);display:flex;align-items:center;gap:16px}.brand{font-size:14px;font-weight:700;white-space:nowrap;color:var(--accent)}.progress{height:5px;background:var(--sand);flex:1;border-radius:8px;overflow:hidden}.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}.count{font-size:14px;color:var(--muted);min-width:58px;text-align:center;font-variant-numeric:tabular-nums}
+main{width:min(1180px,100%);margin:auto;padding:clamp(22px,4vw,56px) clamp(18px,5vw,70px) 30px;flex:1}.slide{min-height:70vh;animation:arrive .24s ease-out}.slide[hidden]{display:none}@keyframes arrive{from{opacity:.55;transform:translateY(5px)}to{opacity:1;transform:none}}
+h1,h2,h3,p{margin-top:0}h1{font-size:clamp(38px,6vw,68px);line-height:1.08;max-width:900px;letter-spacing:-1px}h2{font-size:clamp(30px,4.3vw,46px);line-height:1.15;margin-bottom:22px}h3{font-size:21px;margin-bottom:8px}p{max-width:900px}.eyebrow{color:var(--accent);font-size:14px;font-weight:700;letter-spacing:.04em;margin-bottom:16px}.lede{font-size:clamp(20px,2.5vw,27px);color:#544d43;max-width:850px}.source{font-size:13px;color:var(--muted);border-top:1px solid var(--line);margin-top:26px;padding-top:10px;direction:ltr;text-align:left;overflow-wrap:anywhere}.source code{color:#554a3b}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px}.cols.three{grid-template-columns:repeat(3,minmax(0,1fr))}.row{display:flex;align-items:stretch;gap:14px;flex-wrap:wrap}.node{flex:1 1 180px;min-width:0;border-inline-start:4px solid var(--accent);padding:12px 15px;background:var(--sand);border-radius:5px}.node.client{border-color:var(--blue);background:var(--blue-soft)}.node.server{border-color:var(--accent);background:var(--sand)}.node.db{border-color:var(--good);background:var(--good-soft)}.node.stop{border-color:var(--bad);background:var(--bad-soft)}.arrow{align-self:center;color:var(--accent);font-size:24px}.tag{display:inline-block;padding:2px 9px;border-radius:20px;background:var(--accent-soft);font-size:13px;font-weight:700;margin:0 3px 5px 0}.tag.client{background:var(--blue-soft);color:var(--blue)}.tag.good{background:var(--good-soft);color:var(--good)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.bad{background:var(--bad-soft);color:var(--bad)}
+.callout{padding:14px 17px;border-right:4px solid var(--accent);background:#f2eadc;margin:16px 0;border-radius:4px}.callout.good{border-color:var(--good);background:var(--good-soft)}.callout.warn{border-color:var(--warn);background:var(--warn-soft)}.callout.bad{border-color:var(--bad);background:var(--bad-soft)}.callout.blue{border-color:var(--blue);background:var(--blue-soft)}
+ul,ol{padding-right:24px;max-width:1000px}li{margin:8px 0}.sql{direction:ltr;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--code);color:var(--code-ink);padding:15px 18px;border-radius:6px;font:14px/1.5 Consolas,"Cascadia Code",monospace;margin:12px 0;max-height:300px;overflow:auto}.small{font-size:15px;color:var(--muted)}.tiny{font-size:13px;color:var(--muted)}.label{font-size:13px;font-weight:700;text-transform:uppercase;color:var(--muted)}.big-number{font-size:34px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}.equation{font-size:clamp(21px,3vw,32px);font-weight:700;direction:ltr;text-align:center;padding:16px 8px;color:var(--accent)}.split{display:grid;grid-template-columns:150px 1fr;gap:10px 18px;align-items:start}.split dt{font-weight:700;color:var(--muted)}.split dd{margin:0}
+.tree{display:grid;gap:11px;max-width:940px}.tree .branch{display:grid;grid-template-columns:minmax(180px,1fr) 42px minmax(220px,1.2fr);align-items:center;gap:8px}.yes{color:var(--good);font-weight:700}.no{color:var(--bad);font-weight:700}.tree .leaf{padding:9px 13px;background:var(--good-soft);border-right:4px solid var(--good);border-radius:4px}.tree .leaf.fail{background:var(--bad-soft);border-color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:16px;margin:12px 0}th,td{text-align:right;vertical-align:top;padding:10px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:14px}.scroll{overflow-x:auto}.status{font-weight:700}.status.pass{color:var(--good)}.status.gap{color:var(--bad)}.status.open{color:var(--warn)}code{direction:ltr;unicode-bidi:embed;font: .92em Consolas,monospace;background:rgba(128,82,56,.09);padding:1px 4px;border-radius:3px}
+.controls{display:flex;justify-content:center;gap:12px;padding:12px 18px 24px}.controls button{font:inherit;font-size:16px;background:var(--accent);color:white;border:0;border-radius:5px;padding:10px 22px;min-width:110px;cursor:pointer}.controls button:disabled{opacity:.4;cursor:not-allowed}.controls button.secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}.hint{text-align:center;color:var(--muted);font-size:13px;padding-bottom:18px}.sectionline{height:1px;background:var(--line);margin:17px 0}
+@media(max-width:760px){body{font-size:16px}.cols,.cols.three{grid-template-columns:1fr}.slide{min-height:auto}.tree .branch{grid-template-columns:1fr}.tree .arrow{transform:rotate(-90deg);justify-self:center}.split{grid-template-columns:1fr;gap:2px}.split dd{margin-bottom:8px}.sql{font-size:12px;max-height:250px}.bar{gap:8px;padding-inline:12px}.brand{font-size:12px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="deck">
+<header class="bar"><span class="brand">ZIS · מסלול רכישה ומלאי</span><div class="progress" aria-hidden="true"><i id="progress"></i></div><span id="count" class="count" aria-live="polite"></span></header>
+<main id="slides">
+<section class="slide" aria-label="שקף 1">
+<p class="eyebrow">סקירת קוד · 04.11.2026</p>
+<h1>מהעגלה עד ההזמנה שמגיעה לתפעול</h1>
+<p class="lede">מתי המערכת בודקת מלאי, מה נשלח מהדפדפן, מה השרת מאמת, אילו שאילתות SQL רצות, ואיפה הקוד חורג או עדיין לא אומת.</p>
+<div class="callout blue">קהל: מפתחים · תחום: לקוחה, API, DB, אישור ניסוי ותפעול מנהלת · ניווט: חצים במקלדת או הכפתורים למטה</div>
+<p class="source">מקורות בסיס: apps/storefront/src/features/checkout/checkout.store.ts · zis-api/src/commerce · zis-api/src/operations · zis-api/src/dashboard</p>
+</section>
+
+<section class="slide" aria-label="שקף 2" hidden>
+<p class="eyebrow">01 · תמונת מצב</p><h2>הזמנה עוברת ארבע בדיקות מלאי</h2>
+<div class="row">
+<div class="node client"><b>קטלוג ועגלה</b><br>הדפדפן מציג יתרה שנטענה קודם ומונע הוספה מעבר לה.</div><span class="arrow">←</span>
+<div class="node server"><b>Availability</b><br>שרת קורא יתרה נוכחית ומחזיר כמה Sets אפשר לבקש.</div><span class="arrow">←</span>
+<div class="node server"><b>Quote והזמנה</b><br>בדיקה נוספת; ההזמנה נשמרת pending בלי הפחתה ובלי שריון.</div><span class="arrow">←</span>
+<div class="node db"><b>אישור תשלום ניסוי</b><br>נעילה, בדיקה מחדש והפחתה בטרנזקציה אחת.</div>
+</div>
+<p class="small"><b>אחריות:</b> Client שולח כוונה ומציג תוצאה · Server מאמת ומחשב · DB שומר מקור אמת, Snapshot והיסטוריה.</p>
+<div class="callout warn"><b>המשמעות:</b> מלאי שנראה זמין בעגלה אינו מובטח עד לאישור התשלום. תשלום אמיתי עדיין אינו מחובר; המסלול הקיים מדמה אישור מנהלת ללא חיוב.</div>
+<p class="source">apps/storefront/src/stores/cart.store.ts · checkout.store.ts:185–240 · zis-api/src/commerce/quote.service.ts · order.service.ts · test-payment.service.ts</p>
+</section>
+
+<section class="slide" aria-label="שקף 3" hidden>
+<p class="eyebrow">03 · החלטות מוצריות</p><h2>אלה הכללים שהקוד אמור לאכוף</h2>
+<div class="scroll"><table><thead><tr><th>נושא</th><th>החלטה</th><th>איך מיוצג בקוד</th></tr></thead><tbody>
+<tr><td>מחיר</td><td>תמיד מחיר ליחידה פיזית, גם לווריאציה.</td><td>מחיר Set = מחיר יחידה × גודל Set; השורה × כמות Sets.</td></tr>
+<tr><td>מלאי מוצר פשוט</td><td><code>available_items</code> מונה יחידות פיזיות.</td><td>Sets זמינים = floor(יחידות ÷ set_size); יתרה חלקית אינה Set למכירה.</td></tr>
+<tr><td>מלאי וריאציה</td><td><code>available_sets</code> מונה Sets.</td><td>מושווה לכמות Sets ישירות.</td></tr>
+<tr><td>שריון</td><td>אין שמירת מלאי ב־Quote או בהזמנה ממתינה.</td><td>הפחתה רק באישור תשלום ניסוי; ספק סליקה אמיתי חסר.</td></tr>
+<tr><td>תאריך אספקה</td><td>תאריך קובע אם מותר להזמין, לא מלאי לפי יום עתידי.</td><td>הזמינות נבדקת מול יתרת מלאי נוכחית.</td></tr>
+</tbody></table></div>
+<div class="callout">מקור החלטות: changes2 ותשובות בעלת האתר, 01.11.2026. ההחלטות הן מדיניות; מצב DB חי והחלת מיגרציות לא אומתו.</div>
+<p class="source">docs/planning/DECISIONS.md · docs/INVENTORY_MODEL.md · docs/OWNER_ACTIONS.md · zis-db/migrations/017_variant_price_per_item.sql</p>
+</section>
+
+<section class="slide" aria-label="שקף 4" hidden>
+<p class="eyebrow">04 · לקוחה ועגלה</p><h2>מה קורה לפני שנוגעים בזמינות בשרת</h2>
+<ol><li>הדפדפן קורא מ־localStorage רשימת מזהי מוצר/וריאציה וכמות Sets. מחיר ומלאי לא נשמרים שם כמקור אמת.</li><li>לכל מוצר בעגלה הוא מבקש מחדש <code>GET /products/:id</code>; המידע מתעדכן בזיכרון העגלה.</li><li>בקטלוג פשוט: השרת מחזיר <code>floor(available_items / set_size)</code>. בווריאציה: <code>available_sets</code>.</li><li>הוספה לעגלה ושדה הכמות מוגבלים לפי הנתון האחרון שהתקבל. זהו שער נוחות, לא הגנת תחרות.</li></ol>
+<div class="cols">
+<div class="node client"><b>אם המוצר נעלם / השתנתה וריאציה</b><br>מסומן missing; אי אפשר להמשיך עד הסרה או תיקון.</div>
+<div class="node client"><b>אם הכמות גדולה מהזמינות המקומית</b><br><code>canContinue</code> חוסם. השרת עדיין יבדוק שוב.</div>
+</div>
+<div class="sql">-- שליפת פרטי המוצר והרכבת וריאציות/תמונות
+select p.product_id, p.set_size, p.price_per_item, p.available_items
+from public.products p join public.categories c on c.category_id = p.category_id
+where p.product_id = $1 and p.status = 'active' and not p.is_deleted;
+
+-- שליפות נוספות: product_variants, product_images</div>
+<p class="source">apps/storefront/src/stores/cart.persistence.ts · cart.store.ts:87–161 · zis-api/src/catalog/postgres-catalog.repository.ts:getProduct, attachDetails, mapProduct</p>
+</section>
+
+<section class="slide" aria-label="שקף 5" hidden>
+<p class="eyebrow">05 · אזור ותאריך</p><h2>בחירת יום נבדקת בלי לקרוא מלאי</h2>
+<div class="cols">
+<div><h3>הדפדפן מבקש</h3><ul><li>בטעינת Checkout: <code>GET /store-status</code> ו־<code>GET /shipping/zones</code>.</li><li>אחרי בחירת אזור: <code>GET /delivery-dates?shippingZoneId=…</code>.</li><li>הלקוחה בוחרת יום רק מרשימת התאריכים שהשרת החזיר.</li></ul></div>
+<div><h3>השרת שואל את DB</h3><ul><li><code>store_settings</code> והגדרות <code>system_defaults</code>.</li><li>האם אזור פעיל ויש לו כלל משלוח פעיל.</li><li>סגירות חנות בטווח הימים.</li><li>האפליקציה מסננת יום עבודה, cutoff, טווח הזמנה ופתיחת חנות.</li></ul></div></div>
+<div class="sql">select exists(
+  select 1 from public.shipping_zones z
+  where z.shipping_zone_id=$1 and z.is_active
+    and exists(select 1 from public.shipping_rules r
+      where r.shipping_zone_id=z.shipping_zone_id and r.is_active)
+) as available;
+-- סגירות: generate_series(today, max_date, '1 day')
+-- אין בנתיב הזה קריאה ל-products.available_items או למלאי וריאציה.</div>
+<div class="callout warn">השרת מאמת תאריך שוב בתוך Quote והזמנה. חלון תאריכים תקין אינו אומר שיש מלאי או קיבולת ייצור באותו יום.</div>
+<p class="source">apps/storefront/src/features/checkout/checkout.store.ts:161–183 · zis-api/src/commerce/delivery-dates.ts:8–35 · postgres-commerce.repository.ts:29–61</p>
+</section>
+
+<section class="slide" aria-label="שקף 6" hidden>
+<p class="eyebrow">06 · תחילת בדיקת מלאי</p><h2>ה־Checkout מריץ Availability ואז Quote</h2>
+<div class="row"><div class="node client"><b>reaction בעגלה</b><br>שינוי פריטים / אזור / תאריך מתחיל debounce של 400ms.</div><span class="arrow">←</span><div class="node client"><b>canContinue?</b><br>העגלה נטענה, הפריטים קיימים והכמות אפשרית לפי הנתון המקומי.</div><span class="arrow">←</span><div class="node server"><b>preview()</b><br><code>POST /availability</code> → אם זמין, <code>POST /quote</code>.</div></div>
+<ul><li>Availability בודק מלאי נוכחי ומחזיר לכל פריט requestedSets, availableSets, shortageSets.</li><li>רק אם כולם זמינים, הלקוח מבקש Quote. Quote עושה בדיקה נפרדת מול DB.</li><li>המשך חסום עד שפרטי הלקוחה תקינים, קיים Quote והוא תואם בדיוק לעגלה/אזור/תאריך הנוכחיים.</li></ul>
+<div class="callout blue">שינוי בפרטי הצעה מבטל Quote ישן. טעינת המחיר מחדש אינה מתבצעת בזמן כל הקלדה; היא מושהית כדי לא לשלוח קריאה על כל שינוי מהיר.</div>
+<p class="source">apps/storefront/src/pages/CheckoutPage.tsx:12–28, 84–94 · checkout.store.ts:140–200</p>
+</section>
+
+<section class="slide" aria-label="שקף 7" hidden>
+<p class="eyebrow">07 · SQL של Availability</p><h2>המלאי הפשוט מומר ל־Sets; וריאציה כבר ב־Sets</h2>
+<pre class="sql">-- מוצר פשוט: מחיר Set וזמינות Sets שלמים
+select p.product_id, null::uuid as product_variant_id,
+       (p.price_per_item * p.set_size)::text as price_per_set,
+       (p.available_items / p.set_size) as available_sets
+from public.products p
+join public.categories c on c.category_id=p.category_id
+where p.product_id=any($1::uuid[])
+  and p.status='active' and not p.is_deleted
+  and c.status='active' and not c.is_deleted
+  and not exists(select 1 from public.product_variants v
+                 where v.product_id=p.product_id and not v.is_deleted)
+  and exists(select 1 from public.product_images i
+             where i.product_id=p.product_id and i.product_variant_id is null
+               and i.image_type='primary' and not i.is_deleted)
+union all
+-- וריאציה: available_sets נשאר ישיר
+select p.product_id, v.product_variant_id,
+       (v.price_per_item * p.set_size)::text, v.available_sets
+from public.product_variants v
+join public.products p on p.product_id=v.product_id
+join public.categories c on c.category_id=p.category_id
+where v.product_variant_id=any($2::uuid[])
+  and v.status='active' and not v.is_deleted
+  and p.status='active' and not p.is_deleted
+  and c.status='active' and not c.is_deleted;</pre>
+<p><b>אחרי SQL:</b> השרת מצמיד לפי productId + variantId. פריט שלא חזר מהשאילתה מקבל availableSets=0. חוסר = max(requestedSets − availableSets, 0).</p>
+<p class="source">zis-api/src/commerce/postgres-commerce.repository.ts:63–75, 156–171 · אותו SQL משמש גם לבניית הקשר של Quote</p>
+</section>
+
+<section class="slide" aria-label="שקף 8" hidden>
+<p class="eyebrow">08 · SQL של Quote</p><h2>Quote מאמת עסקית, מחשב מחיר ומשלוח — בלי שריון</h2>
+<div class="cols"><div><h3>קריאות DB בקירוב של הקוד</h3><ol><li><code>store_settings</code> עם <code>FOR SHARE</code>.</li><li><code>system_defaults</code>: אזור זמן, cutoff, ימי עבודה, תקרה, dispatch, tax.</li><li><code>store_closures</code> עבור יום האספקה.</li><li><code>shipping_zones</code> פעיל עם <code>FOR SHARE</code>.</li><li>אותה שליפת מוצרים/וריאציות ומלאי של Availability.</li><li><code>shipping_rules</code> פעילים לאזור עם <code>FOR SHARE</code>.</li></ol></div>
+<div><h3>חישוב ב־QuoteService</h3><ul><li>החנות פתוחה והתאריך מותר לפי אזור זמן, ימי עבודה, cutoff וסגירות.</li><li>כל פריט פעיל, ייחודי, בכמות שלמה ובמלאי.</li><li>מחיר Set × Sets; מינימום חל על סכום מוצרים בלבד.</li><li>כלל משלוח נבחר לפי סך Sets.</li><li>Tax מחושב כרכיב הכלול בסכום; אינו מתווסף פעם נוספת.</li></ul></div></div>
+<div class="sql">select r.base_price, r.size_from_sets, r.size_to_sets,
+       r.size_surcharge, r.time_surcharge, r.urgency_surcharge
+from public.shipping_rules r
+where r.shipping_zone_id=$1 and r.is_active=true
+for share of r;</div>
+<div class="callout good">התשובה מסמנת reservationCreated=false. הזמנה ממתינה עדיין לא תפסה מלאי.</div>
+<p class="source">zis-api/src/commerce/postgres-commerce.repository.ts:84–154 · quote.service.ts:35–114 · delivery-policy.ts</p>
+</section>
+
+<section class="slide" aria-label="שקף 9" hidden>
+<p class="eyebrow">09 · יצירת הזמנה</p><h2>השרת מחשב מחדש ושומר Snapshot — אין הפחתת מלאי</h2>
+<ol><li>הדפדפן שולח פריטים, תאריך/אזור, פרטי לקוחה ו־<code>Idempotency-Key</code>. הוא לא שולח מחיר, סטטוס תשלום או יתרת מלאי.</li><li>השרת בודק הגדרות, מבנה, UUID, כתובת מול אזור, מוצר/תמונה/מחיר ומלאי; מחשב Quote מחדש בתוך טרנזקציה.</li><li>מפתח זהה עם אותו גוף מחזיר הזמנה קיימת. אותו מפתח עם גוף שונה נדחה.</li><li>הזמנה חדשה נשמרת <code>status=ordered</code>, <code>payment_status=pending</code>.</li></ol>
+<div class="cols">
+<div class="node db"><b>נכתבים באותה טרנזקציה</b><br><code>orders</code> · <code>order_items</code> עם שם/מחיר Set/גודל Set Snapshot · <code>order_status_history</code> · hash של אישור · <code>order_creation_requests</code>.</div>
+<div class="node stop"><b>לא מתרחש בשלב הזה</b><br>אין חיוב כרטיס, אין עדכון <code>available_items</code>, אין עדכון <code>available_sets</code>, ואין תנועת מלאי.</div>
+</div>
+<div class="sql">begin;
+insert into public.orders (... status, payment_status, ...)
+values (..., 'ordered', 'pending', ...);
+insert into public.order_items (... set_size_snapshot,
+  unit_set_price_snapshot, quantity_sets, line_total) ...;
+insert into public.order_status_history (...);
+insert into public.order_confirmation_tokens (order_id, token_hash, expires_at) ...;
+update public.order_creation_requests set order_id=$2 ...;
+commit;</div>
+<p class="source">zis-api/src/commerce/order.service.ts:9–27 · postgres-order.repository.ts:27–31, 66–106, 119–154</p>
+</section>
+
+<section class="slide" aria-label="שקף 10" hidden>
+<p class="eyebrow">10 · הזמנה ממתינה</p><h2>אפשר לשנות פריטים עד תחילת התשלום</h2>
+<p>לפני תשלום הלקוחה יכולה לשנות כמות, להוסיף, להסיר או להחליף. הבקשה מכילה את הרשימה הסופית, <code>expectedVersion</code>, אסימון אישור ו־Idempotency key.</p>
+<div class="cols"><div><h3>השרת קורא ונועל</h3><ul><li>מזהה אסימון hash בתוקף ומבצע <code>FOR UPDATE OF o,t</code>.</li><li>מוודא ordered/pending ואין תשלום pending/authorized/paid.</li><li>קורא את שורות <code>order_items</code> עם נעילה.</li><li>טוען מחדש מוצר/זמינות ומחשב Quote ומינימום.</li></ul></div><div><h3>שומר בטרנזקציה</h3><ul><li>מחיר Snapshot של שורה קיימת נשמר גם אם מחיר הקטלוג השתנה.</li><li>מחיר חדש נקרא לפריט חדש בלבד.</li><li>עדכון שורות, סכומים, version והיסטוריה.</li><li>claim ותשובת metadata נשמרים ב־<code>order_pending_edit_requests</code>.</li></ul></div></div>
+<div class="callout warn">דרושה מיגרציה 016. אם הטבלה חסרה, העריכה נעצרת ב־503. אחרי התנגשות גרסה ה־UI דורש טעינה מפורשת של הפריטים העדכניים.</div>
+<p class="source">apps/storefront/src/features/checkout/checkout.store.ts:48–108, 132–139 · zis-api/src/commerce/order.service.ts:updatePending · pending-order.repository.ts · pending-edit-requests.repository.ts · zis-db/migrations/016_pending_order_edit_requests.sql</p>
+</section>
+
+<section class="slide" aria-label="שקף 11" hidden>
+<p class="eyebrow">11 · תשלום בפועל ומסלול ניסוי</p><h2>מסך האשראי אינו מחבר ספק סליקה</h2>
+<div class="cols">
+<div class="node"><span class="tag warn">רגיל</span><h3>הזמנה רגילה</h3><p>כפתור הסיום יוצר הזמנה ממתינה. נתוני הכרטיס לא נשלחים ולא נשמרים. אין webhook או ספק סליקה מחובר.</p><p class="small">השדות ב־DemoCredit מקבלים רק מספרים סינתטיים ונמחקים במעבר.</p></div>
+<div class="node"><span class="tag">TEST</span><h3>הזמנת ניסוי מנהלת</h3><p>רק משתמשת operations_manager יכולה ליצור/לאשר. ההזמנה מסומנת is_test ונרשם Audit.</p><p class="small">תשלום אפס, provider=admin_test, is_simulated=true, charged=false.</p></div>
+</div>
+<div class="callout">תשלום ניסוי הוא הדרך היחידה בקוד הנוכחי להפעיל את ההפחתה האטומית. אין להציג אותו כחיוב אמיתי או לכלול אותו בהכנסות.</div>
+<p class="source">apps/storefront/src/features/checkout/DemoCredit.tsx · checkout.store.ts:109–139, 211–232 · zis-api/src/routes/admin-test-orders.routes.ts · controllers/admin-test-orders.controller.ts</p>
+</section>
+
+<section class="slide" aria-label="שקף 12" hidden>
+<p class="eyebrow">12 · נקודת הפחתת מלאי</p><h2>אישור ניסוי: נועלים, מאמתים, מפחיתים ושומרים Audit</h2>
+<ol><li><code>BEGIN</code>; מאמתים מנהלת פעילה והרשאת operations_manager.</li><li>נועלים שורת הזמנה <code>FOR UPDATE</code>; בודקים is_test, pending, expectedVersion וכפילויות אישור.</li><li>קוראים order_items. נועלים כל מוצר/וריאציה <code>FOR UPDATE</code>.</li><li>מריצים שוב את בדיקות Quote ואת מחיר ההזמנה. מחיר שונה או מלאי חסר → rollback.</li><li>מפחיתים מלאי, רושמים תנועת stock_before/stock_after, אישור ניסוי, payment מדומה, סטטוס paid, היסטוריה ו־Audit.</li><li><code>COMMIT</code>. כל כשל לפניו מבטל גם את ההפחתה.</li></ol>
+<div class="sql">-- וריאציה
+update public.product_variants
+set available_sets = available_sets - $2
+where product_variant_id=$1 and available_sets >= $2
+returning available_sets as after;
+
+-- מוצר פשוט: quantity = quantity_sets * set_size_snapshot
+update public.products
+set available_items = available_items - $2
+where product_id=$1 and available_items >= $2
+returning available_items as after;</div>
+<p class="source">zis-api/src/commerce/test-payment.service.ts:12–42, 44–70 · postgres-commerce.repository.ts:84–120 · migrations/015_checkout_faq_and_test_orders.sql</p>
+</section>
+
+<section class="slide" aria-label="שקף 13" hidden>
+<p class="eyebrow">13 · דוגמת יחידות ומעבר לתפעול</p><h2>מוצר פשוט: 23 יחידות פירושן 3 Sets למכירה</h2>
+<div class="cols"><div><div class="equation">23 יחידות ÷ 6 לסט = 3 Sets מלאים</div><p>אם אושרו 2 Sets, ההפחתה היא 12 יחידות. יתרה חדשה: 11 יחידות, כלומר Set אחד זמין ועוד 5 יחידות שלא יוצרות Set.</p></div><div><div class="equation">וריאציה: 3 Sets − 2 Sets = 1 Set</div><p>מלאי וריאציה והיסטוריית התנועה נמדדים ב־Sets. מלאי מוצר פשוט ותנועתו נמדדים ביחידות פיזיות.</p></div></div>
+<div class="sectionline"></div>
+<h3>אחרי paid: תהליך Admin</h3>
+<p>Dashboard/Orders קוראים הזמנות לפי delivery_date. רשימת הייצור כוללת paid בסטטוס ordered או in_preparation ומסכמת quantity_sets. סטטוס מתקדם ordered → in_preparation → packed → in_transit → delivered → approved. המעבר הראשון דורש payment_status=paid; נהג משלוחים יכול רק in_transit → delivered.</p>
+<div class="sql">select oi.product_variant_id, oi.product_name_snapshot,
+       oi.variant_name_snapshot, sum(oi.quantity_sets) as required_sets
+from public.orders o join public.order_items oi on oi.order_id=o.order_id
+where o.delivery_date=$1 and o.payment_status='paid'
+  and o.status in ('ordered','in_preparation')
+group by oi.product_variant_id, oi.product_name_snapshot,
+         oi.variant_name_snapshot;</div>
+<p class="source">zis-api/src/dashboard/postgres-dashboard.repository.ts:getProductionWithClient · operations/order-status.service.ts · operations/postgres-order-status.repository.ts</p>
+</section>
+
+<section class="slide" aria-label="שקף 14" hidden>
+<p class="eyebrow">14 · עץ החלטה</p><h2>מתי עוברים, מתי עוצרים?</h2>
+<div class="tree">
+<div class="branch"><div class="node client">העגלה נטענה והפריטים קיימים?</div><span class="arrow">←</span><div class="leaf fail"><span class="no">לא</span> הסרת פריט חסר / טעינה מחדש; לא עוברים.</div></div>
+<div class="branch"><div class="node client">כמות העגלה אפשרית לפי הקטלוג?</div><span class="arrow">←</span><div class="leaf fail"><span class="no">לא</span> שינוי כמות/מוצר; זמינות עדיין תאומת שוב בשרת.</div></div>
+<div class="branch"><div class="node server">תאריך, אזור, חנות ומינימום תקינים?</div><span class="arrow">←</span><div class="leaf fail"><span class="no">לא</span> תיקון פרטי משלוח או סכום; אין יצירת הזמנה.</div></div>
+<div class="branch"><div class="node server">Availability ואז Quote עברו ותואמים לעגלה?</div><span class="arrow">←</span><div class="leaf fail"><span class="no">לא</span> חוסר/403/שינוי נתונים → שגיאה; העגלה נשמרת.</div></div>
+<div class="branch"><div class="node db">יצירת הזמנה/Idempotency הצליחו?</div><span class="arrow">←</span><div class="leaf fail"><span class="no">לא</span> ניסיון חוזר בטוח רק עם אותו מפתח וגוף.</div></div>
+<div class="branch"><div class="node db">אישור ניסוי: גרסה, מחיר ומלאי עדיין תקינים?</div><span class="arrow">←</span><div class="leaf fail"><span class="no">לא</span> rollback; אין הפחתה או paid.</div></div>
+<div class="leaf"><span class="yes">כן בכל השערים</span> הושלמה ההזמנה; רק אישור הניסוי מפחית מלאי.</div>
+</div>
+<p class="source">העץ מסכם את תנאי Checkout ב־apps/storefront/src/features/checkout/checkout.store.ts ואת שערי השרת ב־zis-api/src/commerce/*</p>
+</section>
+
+<section class="slide" aria-label="שקף 15" hidden>
+<p class="eyebrow">15 · פערים וגבולות הראיות</p><h2>מה הקוד אומר, ומה עדיין צריך לברר</h2>
+<div class="scroll"><table><thead><tr><th>ממצא</th><th>ראיה בקוד</th><th>מצב</th></tr></thead><tbody>
+<tr><td>בדיקת מלאי פשוטה ב־Checkout קיבלה 403 בצילום.</td><td><code>/availability</code> הוא מסלול ציבורי; ה־controller לא דורש Admin. לא זוהה מקור 403 במסלול בקוד שנבדק. צילום ה־Network אינו כולל JSON של <code>error.code</code>.</td><td class="status open">לא מאובחן בריצה</td></tr>
+<tr><td>הודעת Checkout מסתירה את סיבת 403.</td><td>ה־UI ממיר שגיאות לא מטופלות להודעה כללית, במקום להציג code/requestId למפתחת.</td><td class="status gap">פער אבחון</td></tr>
+<tr><td>עדכון מלאי מוצר פשוט דרך Admin.</td><td><code>updateProduct</code> כותב <code>products.available_items</code> ו־admin_audit_log; אינו מוסיף inventory_movements.</td><td class="status gap">היסטוריית מלאי לא אחידה</td></tr>
+<tr><td>מסך היסטוריית מלאי.</td><td>קריאות Admin ב־inventory-admin מסננות <code>product_variant_id</code>; אינן מציגות תנועות מוצר פשוט.</td><td class="status gap">כיסוי מוצר פשוט חסר</td></tr>
+<tr><td>הודעת מלאי נמוך.</td><td>בזרימת אישור הניסוי נוצרת התראה רק לענף וריאציה, שלו יש threshold ב־Sets.</td><td class="status open">צריך החלטה לגבי סף למוצר פשוט</td></tr>
+<tr><td>בדיקת זמינות לפי תאריך.</td><td>Availability משווה ליתרה עכשיו; לא נראית הקצאת מלאי/קיבולת לפי יום אספקה.</td><td class="status open">מדיניות קיימת; אין יכולת קיבולת יומית</td></tr>
+</tbody></table></div>
+<p class="source">zis-api/src/middleware/cors.ts · routes/commerce.routes.ts · controllers/commerce.controller.ts · checkout.store.ts · catalog/postgres-catalog-management.repository.ts · inventory-admin/postgres-inventory-admin.repository.ts · commerce/test-payment.service.ts</p>
+</section>
+
+<section class="slide" aria-label="שקף 16" hidden>
+<p class="eyebrow">16 · מסקנות מעשיות</p><h2>שלושה דברים מפרידים בין קוד שנראה נכון למערכת מאומתת</h2>
+<div class="cols">
+<div><span class="tag bad">לבדיקת קוד</span><h3>היסטוריית מלאי פשוט</h3><p>לחבר שינוי מלאי ידני ולוג היסטוריה, ואז לחשוף תנועות מוצר פשוט במסך Admin. הסכמה מ־015 כבר מאפשרת product_id בתנועת מלאי; יש לאמת התאמה ל־DB הפעיל.</p></div>
+<div><span class="tag warn">לבדיקת שרת</span><h3>403 בצילום</h3><p>לפתוח Response ולשמור error.code / requestId; לוודא שהפורט 5174 מפנה לשרת מה־checkout הנוכחי וש־Origin מוגדר. ה־403 אינו מוסבר על ידי מסלול availability שנבדק.</p></div>
+</div>
+<div class="callout warn"><b>מיגרציות:</b> 015 נדרשת ל־test approval/stock movement של simple products; 016 נדרשת לעריכת pending; 017 נדרשת לשמות עמודות מחיר וריאציה החדשים. המצב בפועל לא אומת. לפי כללי המאגר: לא מריצים מיגרציות מהקוד; בעלת האתר מחילה ידנית בתהליך המאושר.</div>
+<div class="callout blue"><b>מה לא מאומת:</b> DB/ledger, קוד שרץ בפועל ב־5174, RLS/הרשאות, דפדפן בזמן אמת, תחרות בין קונים, webhook/סליקה אמיתיים, ותפעול Production.</div>
+<p class="source">docs/OPEN_ISSUES.md · docs/OWNER_ACTIONS.md · zis-db/migrations/015_checkout_faq_and_test_orders.sql · 016_pending_order_edit_requests.sql · 017_variant_price_per_item.sql</p>
+</section>
+</main>
+<nav class="controls" aria-label="ניווט במצגת"><button class="secondary" id="prev" type="button">הקודם</button><button id="next" type="button">הבא</button></nav>
+<p class="hint">ניווט מקלדת: ← הקודם · → הבא · Home להתחלה · End לסיום</p>
+</div>
+<script>
+(function(){
+  var slides=Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  var count=document.getElementById("count");
+  var progress=document.getElementById("progress");
+  var prev=document.getElementById("prev");
+  var next=document.getElementById("next");
+  var current=0;
+  function show(index){
+    current=Math.max(0,Math.min(slides.length-1,index));
+    slides.forEach(function(slide,i){slide.hidden=i!==current;slide.setAttribute("aria-hidden",i===current?"false":"true");});
+    count.textContent=(current+1)+" / "+slides.length;
+    progress.style.width=((current+1)*100/slides.length)+"%";
+    prev.disabled=current===0;next.disabled=current===slides.length-1;
+    document.title=(current+1)+"/"+slides.length+" · מסלול רכישה, מלאי ותפעול — ZIS";
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  prev.addEventListener("click",function(){show(current-1);});
+  next.addEventListener("click",function(){show(current+1);});
+  document.addEventListener("keydown",function(event){
+    if(event.altKey||event.ctrlKey||event.metaKey)return;
+    if(event.key==="ArrowRight"||event.key==="PageDown"||event.key===" "){event.preventDefault();show(current+1);}
+    if(event.key==="ArrowLeft"||event.key==="PageUp"){event.preventDefault();show(current-1);}
+    if(event.key==="Home"){event.preventDefault();show(0);}
+    if(event.key==="End"){event.preventDefault();show(slides.length-1);}
+  });
+  show(0);
+})();
+</script>
+</body>
+</html>

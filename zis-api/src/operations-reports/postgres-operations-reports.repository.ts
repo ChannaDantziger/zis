@@ -33,7 +33,7 @@ export function createPostgresOperationsReportsRepository(factory: SqlClientFact
            select o.order_id as "orderId", o.order_number as "orderNumber", o.status,
                   extract(epoch from o.updated_at)::text as version,
                   to_char(o.delivery_date, 'YYYY-MM-DD') as "deliveryDate",
-                  o.customer_name as "customerName", o.customer_phone as "customerPhone",
+                  o.customer_name as "customerName", o.customer_phone as "customerPhone", coalesce(o.delivery_phone,o.customer_phone) as "deliveryPhone", o.is_test as "isTest",
                   jsonb_build_object('city', o.delivery_address->>'city', 'neighborhood', o.delivery_address->>'neighborhood',
                     'street', o.delivery_address->>'street', 'houseNumber', o.delivery_address->>'houseNumber',
                     'apartment', o.delivery_address->>'apartment', 'postalCode', o.delivery_address->>'postalCode') as address,

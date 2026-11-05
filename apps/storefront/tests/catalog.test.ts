@@ -7,10 +7,10 @@ import type { CatalogProduct, CatalogVariant } from '../src/entities/product/typ
 
 const primary = { imageId: 'primary', url: 'https://media.invalid/p', altText: 'Primary', imageType: 'primary' as const, sortOrder: 0 };
 const second = { ...primary, imageId: 'second', imageType: 'gallery' as const, sortOrder: 1 };
-const variant: CatalogVariant = { productVariantId: 'variant', name: 'Available', productCode: 'TEST', pricePerSet: '12.50',
+const variant: CatalogVariant = { productVariantId: 'variant', name: 'Available', productCode: 'TEST', pricePerUnit: '12.50',
   availableSets: 5, isDefault: false, attributes: null, primaryImage: null, gallery: [] };
 const product: CatalogProduct = { productId: 'product', name: 'Test product', description: null,
-  category: { categoryId: 'category', name: 'Test category', slug: 'test' }, setSize: 6,
+  category: { categoryId: 'category', name: 'Test category', slug: 'test' }, setSize: 6, pricePerUnit: '12.50', availableSets: 5, displayOrder: 10,
   primaryImage: primary, gallery: [primary, second], variants: [{ ...variant, productVariantId: 'unavailable', availableSets: 0, isDefault: true }, variant] };
 
 test('catalog URL parser normalizes malformed pages, sorting and excessive search', () => {

@@ -61,7 +61,7 @@ export class CatalogMediaStore {
           if (generation !== this.generation) return;
           runInAction(() => { this.uploaded = uploaded; });
         }
-        await request(`/admin/products/${productId}/images`, { method: 'POST', body: JSON.stringify({ storagePath: this.uploaded!.storagePath, productVariantId: this.productVariantId, altText: this.altText, sortOrder: this.sortOrder, isPrimary: this.isPrimary }) });
+        await request(`/admin/products/${productId}/images`, { method: 'POST', body: JSON.stringify({ storagePath: this.uploaded!.storagePath, productVariantId: this.productVariantId, altText: this.altText || catalogStore.product?.name || '', sortOrder: this.sortOrder, isPrimary: this.isPrimary }) });
       }
       if (generation !== this.generation) return;
       runInAction(() => { this.metadataSaved = true; });

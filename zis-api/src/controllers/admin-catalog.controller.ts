@@ -36,8 +36,8 @@ export function createAdminCatalogController(service: AdminCatalogService, resol
         productId: readUuid(request.params.productId, 'productId'),
         categoryId: readUuid(body.categoryId, 'categoryId'), name: readText(body.name, 'name'),
         description: readNullableText(body.description, 'description'),
-        setSize: readPositiveInteger(body.setSize, 'setSize'), pricePerSet: body.pricePerSet === null ? null : readMoney(body.pricePerSet, 'pricePerSet'),
-        availableSets: readNonNegativeInteger(body.availableSets, 'availableSets'), displayOrder: readNonNegativeInteger(body.displayOrder, 'displayOrder'),
+        setSize: readPositiveInteger(body.setSize, 'setSize'), pricePerUnit: body.pricePerUnit === null ? null : readMoney(body.pricePerUnit, 'pricePerUnit'),
+        availableItems: readNonNegativeInteger(body.availableItems, 'availableItems'), displayOrder: readNonNegativeInteger(body.displayOrder, 'displayOrder'),
         status: readEnum(body.status, ['draft', 'active', 'hidden', 'sold_out', 'archived'] as const, 'status'),
         version: readText(body.version, 'version'),
       }, actor));
@@ -46,7 +46,7 @@ export function createAdminCatalogController(service: AdminCatalogService, resol
       const body = asRecord(request.body);
       response.json(await service.updateVariant({
         productVariantId: readUuid(request.params.productVariantId, 'productVariantId'),
-        name: readText(body.name, 'name'), pricePerSet: readMoney(body.pricePerSet, 'pricePerSet'),
+        name: readText(body.name, 'name'), pricePerUnit: readMoney(body.pricePerUnit, 'pricePerUnit'),
         lowStockThresholdSets: readNonNegativeInteger(body.lowStockThresholdSets, 'lowStockThresholdSets'),
         defaultProductionQuantitySets: readPositiveInteger(body.defaultProductionQuantitySets, 'defaultProductionQuantitySets'),
         status: readEnum(body.status, ['active', 'hidden', 'sold_out', 'archived'] as const, 'status'),
@@ -59,8 +59,8 @@ export function createAdminCatalogController(service: AdminCatalogService, resol
         categoryId: readUuid(body.categoryId, 'categoryId'),
         name: readText(body.name, 'name'),
         description: readNullableText(body.description, 'description'),
-        setSize: readPositiveInteger(body.setSize, 'setSize'), pricePerSet: readMoney(body.pricePerSet, 'pricePerSet'),
-        availableSets: readNonNegativeInteger(body.availableSets, 'availableSets'), displayOrder: readNonNegativeInteger(body.displayOrder, 'displayOrder'),
+        setSize: readPositiveInteger(body.setSize, 'setSize'), pricePerUnit: readMoney(body.pricePerUnit, 'pricePerUnit'),
+        availableItems: readNonNegativeInteger(body.availableItems, 'availableItems'), displayOrder: readNonNegativeInteger(body.displayOrder, 'displayOrder'),
       }, adminUserId);
       response.status(201).json(result);
     }),
@@ -71,7 +71,7 @@ export function createAdminCatalogController(service: AdminCatalogService, resol
         productId,
         name: readText(body.name, 'name'),
         productCode: readText(body.productCode, 'productCode'),
-        pricePerSet: readMoney(body.pricePerSet, 'pricePerSet'),
+        pricePerUnit: readMoney(body.pricePerUnit, 'pricePerUnit'),
         availableSets: readNonNegativeInteger(body.availableSets, 'availableSets'),
         lowStockThresholdSets: readNonNegativeInteger(body.lowStockThresholdSets, 'lowStockThresholdSets'),
         defaultProductionQuantitySets: readPositiveInteger(body.defaultProductionQuantitySets, 'defaultProductionQuantitySets'),
@@ -143,7 +143,9 @@ export function createAdminCatalogController(service: AdminCatalogService, resol
 
 async function withImageUrls(catalog: ManagedCatalog, storage?: StorageService): Promise<ManagedCatalog> {
   if (!storage) return catalog;
-  return { ...catalog, data: await Promise.all(catalog.data.map(async (product) => ({
+  return { ...catalog, categories:await Promise.all(catalog.categories.map(async category=>({...category,
+    previewImages:await Promise.all((category.previewImages??[]).map(async image=>({...image,url:(await storage.createSignedUrl(PRODUCT_MEDIA_BUCKET,image.storagePath)).url}))),
+  }))), data: await Promise.all(catalog.data.map(async (product) => ({
     ...product,
     images: await Promise.all(product.images.map(async (image) => ({
       ...image,

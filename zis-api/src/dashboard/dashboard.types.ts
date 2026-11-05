@@ -5,7 +5,9 @@ import type { DeliveryAddress } from '../contracts/commerce.contracts.js';
 export interface AdminOrderDetails {
   orderId: string; orderNumber: string; status: OrderStatus; paymentStatus: string;
   deliveryDate: string; total: string; version: string;
-  customerName: string; customerPhone: string; customerEmail: string;
+  customerName: string; customerPhone: string;
+  deliveryPhone?: string;
+  isTest?: boolean; customerEmail: string;
   deliveryAddress: DeliveryAddress; venueName: string | null;
   dedicationText: string | null; customerNotes: string | null;
   items: Array<{ orderItemId: string; productName: string; variantName: string; quantitySets: number; unitSetPrice: string; lineTotal: string }>;

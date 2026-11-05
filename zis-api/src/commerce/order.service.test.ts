@@ -4,7 +4,7 @@ import { createOrderService } from './order.service.js';
 import { readOrderInput } from './order-validation.js';
 import type { OrderRepository, OrderTransaction } from './order.types.js';
 import type { CreateOrderInput, OrderCreatedResponse } from '../contracts/commerce.contracts.js';
-const input:CreateOrderInput={customerName:'Example',customerPhone:'0501234567',customerEmail:'a@example.invalid',deliveryAddress:{city:'Jerusalem',street:'Street',houseNumber:'1'},deliveryDate:'2026-10-11',shippingZoneId:'00000000-0000-0000-0000-000000000001',shippingMethodId:'00000000-0000-0000-0000-000000000002',items:[{productId:'00000000-0000-4000-8000-000000000004',productVariantId:'00000000-0000-4000-8000-000000000003',quantitySets:2}]};
+const input:CreateOrderInput={customerName:'Example',customerPhone:'0501234567',customerEmail:'a@example.invalid',deliveryAddress:{city:'Jerusalem',street:'Street',houseNumber:'1'},deliveryDate:'2026-10-11',shippingZoneId:'00000000-0000-0000-0000-000000000001',items:[{productId:'00000000-0000-4000-8000-000000000004',productVariantId:'00000000-0000-4000-8000-000000000003',quantitySets:2}]};
 const config={confirmationTokenTtlSeconds:3600,confirmationTokenSecret:'test-only-secret-32-characters-long'};
 const now=new Date('2026-10-09T08:00:00Z');
 function fixture() {
@@ -34,3 +34,17 @@ test('bad dates/contact, duplicates and authoritative overrides reject',()=>{
 test('invalid key rejects before transaction',async()=>{const f=fixture();await assert.rejects(createOrderService(f.repository,config).create(input,'short',now),{code:'VALIDATION_ERROR'});assert.deepEqual(f.calls,[]);});
 test('confirmation rejects invalid or expired credentials with same404',async()=>{const f=fixture();const service=createOrderService(f.repository,config);await assert.rejects(service.confirmation('invalid'),{code:'NOT_FOUND'});await assert.rejects(service.confirmation('a'.repeat(43)),{code:'NOT_FOUND'});});
 test('closed store creates no order',async()=>{const f=fixture();const context=await f.tx.getContext(input);context.deliveryPolicy.storeOpen=false;f.tx.getContext=async()=>context;f.calls.length=0;await assert.rejects(createOrderService(f.repository,config).create(input,'abcdefghijklmnop',now),{code:'BUSINESS_RULE_VIOLATION'});assert.ok(!f.calls.includes('save'));assert.ok(!f.calls.includes('commit'));});
+
+test('telephone formats normalize both contacts and malformed email/privileged test flags reject',()=>{
+ for(const phone of ['050-1234567','050.1234567','050 1234567','021234567']) assert.equal(readOrderInput({...input,deliveryPhone:phone}).deliveryPhone,phone.replace(/[ .-]/g,''));
+ for(const changes of [{customerPhone:'12345678'},{deliveryPhone:'12345678901'},{deliveryPhone:'+972501234567'},{customerEmail:'a@b'},{customerEmail:'a@-bad.test'},{isTest:true},{is_test:true}]) assert.throws(()=>readOrderInput({...input,...changes}),{code:'VALIDATION_ERROR'});
+});
+test('test creation prefixes stored identity and binds request hash to manager before commit',async()=>{
+ const f=fixture();let savedInput:CreateOrderInput|undefined;let claimedHash='';
+ f.tx.claimRequest=async(_key,hash)=>{claimedHash=hash;return null;};
+ const save=f.tx.save;f.tx.save=async(value,...rest)=>{savedInput=value;await save(value,...rest);};
+ f.tx.markTest=async(id,actor)=>{assert.equal(actor,'manager');assert.ok(id);f.calls.push('test');return '123.45';};
+ const result=await createOrderService(f.repository,config).createTest!(input,'abcdefghijklmnop','manager',now);
+ assert.equal(result.isTest,true);assert.equal(result.version,'123.45');assert.match(savedInput!.customerName,/^ניסוי /);assert.match(savedInput!.deliveryAddress.street,/^ניסוי /);assert.ok(f.calls.indexOf('test')<f.calls.indexOf('commit'));
+ let publicHash='';f.tx.claimRequest=async(_key,hash)=>{publicHash=hash;return null;};await createOrderService(f.repository,config).create(input,'abcdefghijklmnop',now);assert.notEqual(publicHash,claimedHash);
+});

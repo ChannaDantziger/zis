@@ -1,4 +1,4 @@
-> מפרט תכנון, לא אישור לסכמה חיה. [מפת ERD](../ERD_SCHEMA.md) · [אינדקס](../PLAN_INDEX.md) · [פערים](../OPEN_ISSUES.md).
+> מפרט ותיאור יעד לסכמה לאחר [מיגרציה 014](../../zis-db/migrations/014_single_shipping_method.sql); המיגרציה טרם הוחלה. [מפת ERD](../ERD_SCHEMA.md) · [אינדקס](../PLAN_INDEX.md) · [פערים](../OPEN_ISSUES.md).
 > יש לקרוא יחד עם [עדכוני הסכמה](POLICIES_AND_UPDATES.md) ו־[מודל המלאי](../INVENTORY_MODEL.md); שדות 003/004 אינם משוכפלים בכל טבלה.
 
 ## טבלאות משלוחים והגדרות חנות
@@ -23,23 +23,7 @@
 - אינדקס `idx_shipping_zones_lookup` על `(city, neighborhood, is_active)`.
 - רצוי `UNIQUE (city, neighborhood)` כאשר אין כפילויות עסקיות.
 
-### `shipping_methods`
-
-סוגי משלוח, ללא אפשרות איסוף עצמי.
-
-| שדה | סוג | חובה | הסבר |
-|---|---|---:|---|
-| `shipping_method_id` | `uuid` | כן | Primary Key |
-| `name` | `text` | כן | שם שיטת המשלוח |
-| `code` | `text` | כן | מזהה פנימי |
-| `is_active` | `boolean` | כן | זמינות השיטה |
-| `created_at` | `timestamptz` | כן | זמן יצירה |
-| `updated_at` | `timestamptz` | כן | זמן עדכון |
-
-אילוצים:
-
-- `UNIQUE (code)`.
-- אין להכניס רשומה מסוג `pickup`.
+לאחר 014 לא קיימת טבלת `shipping_methods`: בחנות יש שירות משלוח יחיד ואין לנהל או לבחור מזהה עבורו. מחיר מחושב לפי אזור וטווח כמויות.
 
 ### `shipping_rules`
 
@@ -49,7 +33,6 @@
 |---|---|---:|---|
 | `shipping_rule_id` | `uuid` | כן | Primary Key |
 | `shipping_zone_id` | `uuid` | כן | FK ל־`shipping_zones.shipping_zone_id` |
-| `shipping_method_id` | `uuid` | כן | FK ל־`shipping_methods.shipping_method_id` |
 | `base_price` | `numeric(12,2)` | כן | מחיר בסיס |
 | `size_from_sets` | `integer` | כן | תחילת טווח הגודל |
 | `size_to_sets` | `integer` | לא | סוף טווח; null ללא הגבלה |
@@ -62,11 +45,11 @@
 
 אילוצים ואינדקסים:
 
-- FK ל־`shipping_zones` ול־`shipping_methods`.
+- FK ל־`shipping_zones` בלבד לאחר 014.
 - `CHECK (base_price >= 0 AND size_surcharge >= 0 AND time_surcharge >= 0 AND urgency_surcharge >= 0)`.
 - `CHECK (size_from_sets >= 1)`.
 - `CHECK (size_to_sets IS NULL OR size_to_sets >= size_from_sets)`.
-- אינדקס `idx_shipping_rules_calculation` על `(shipping_zone_id, shipping_method_id, is_active, size_from_sets, size_to_sets)`.
+- אינדקס `idx_shipping_rules_calculation` על `(shipping_zone_id, is_active, size_from_sets, size_to_sets)` לאחר 014.
 
 ### `store_settings`
 

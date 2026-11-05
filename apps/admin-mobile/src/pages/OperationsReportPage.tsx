@@ -84,7 +84,7 @@ const OperationsReportPage = observer(function OperationsReportPage({ kind }: { 
         {kind === 'delivery' && (index === 0 || report.orders[index - 1].address.city !== order.address.city) && <Title order={2} className="delivery-city-heading">{order.address.city || 'עיר לא צוינה'}</Title>}
         <Paper className={`operations-report-order${index === 0 ? ' operations-report-first' : ''}`} withBorder p="lg" radius="md">
           <Group justify="space-between" align="start">
-            <Group><Image src={LOGO_PATH} alt="לוגו זיס" w={70} h={45} fit="contain" /><Title order={2}>הזמנה {order.orderNumber}</Title></Group>
+            <Group><Image src={LOGO_PATH} alt="לוגו זיס" w={70} h={45} fit="contain" /><Title order={2}>הזמנה {order.orderNumber}</Title>{order.isTest && <Badge color="orange">הזמנת ניסוי</Badge>}</Group>
             <Checkbox className="operations-report-controls" aria-label={`בחירת הזמנה ${order.orderNumber}`} checked={ui.selected.has(order.orderId)} onChange={(event) => ui.toggle(order.orderId, event.currentTarget.checked)} />
           </Group>
           <Group mt="sm"><Badge color={order.status === 'cancelled' ? 'red' : 'blue'}>{statusLabels[order.status]}</Badge><Text size="sm">{kind === 'packing' ? 'נארזה' : 'יצאה'}: {formatTime(order.transitionedAt)}</Text></Group>
@@ -97,7 +97,7 @@ const OperationsReportPage = observer(function OperationsReportPage({ kind }: { 
             {kind === 'packing' && <Text className="packing-fold-label" size="xs" c="dimmed">קו קיפול · פרטי אספקה</Text>}
             <Text fw={600}>תאריך אספקה: {order.deliveryDate}</Text><Text>{formatAddress(order)}</Text>
             {order.venueName && <Text>אולם: {order.venueName}</Text>}
-            <Text>איש קשר: {order.customerName} · <span dir="ltr">{order.customerPhone}</span></Text>
+            <Text>מזמין: {order.customerName} · טלפון המזמין: <span dir="ltr">{order.customerPhone}</span></Text><Text>טלפון זמין לקבלת המשלוח: <span dir="ltr">{order.deliveryPhone || order.customerPhone}</span></Text>
             {order.customerNotes && <Text style={{ whiteSpace: 'pre-wrap' }}>הערות: {order.customerNotes}</Text>}
           </div>
         </Paper>

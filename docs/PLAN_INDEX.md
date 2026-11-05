@@ -1,6 +1,6 @@
 # אינדקס מרכזי — ZIS
 
-עודכן ב־18.10.2026. זהו שער הכניסה לכל מסמכי העבודה במאגר.
+עודכן ב־04.11.2026. זהו שער הכניסה לכל מסמכי העבודה במאגר.
 כל קישור מציין מה קוראים ולשם מה; תיקיות שטרם קיימות מסומנות כתכנון בלבד.
 
 ## מתחילים כאן
@@ -38,6 +38,11 @@
 | מסמך | מה הוא מכיל | סוג |
 |---|---|---|
 | [README](../README.md) | תקציר מצב וקישור לאינדקס | כניסה |
+| [changes](../changes/changes.md) | 30 בקשות ושאלות בעלת האתר מ־26.10; תכנון בלבד | דרישות חדשות |
+| [changes1](../changes/changes1.md) | תשע בקשות שינוי בחנות מ־29.10; דרישות מוצריות | דרישות חדשות |
+| [changes2](../changes/changes2.md) | בקשות שינוי נוספות בחנות מ־01.11; תשובות A ותוכנית חלוקת עבודה | דרישות חדשות ותוכנית |
+| [changes3](../changes/changes3.md) | מסמך שינויים נוסף; טרם נסקר או הוכנס לתוכנית העבודה |
+| [CHANGES1_EXECUTION_PLAN](CHANGES1_EXECUTION_PLAN.md) | חלוקת תשע בקשות changes1.md לסוכנים, תחומי אחריות ותיעוד סטטוס ביצוע | תוכנית ומסירה 29.10 |
 | [PLAN_INDEX](PLAN_INDEX.md) | מסמכי המאגר ומפת ניווט | אינדקס ראשי |
 | [AGENTS](../AGENTS.md) | בטיחות, ניווט ותחזוקת תיעוד | מחייב |
 | [GUIDELINES](GUIDELINES.md) | עותק מקומי להנחיות Frontend/Backend/general | מחייב |
@@ -90,15 +95,15 @@
 | [DOCS_INDEX](DOCS_INDEX.md) | מימוש קיים ותיעוד סופי עתידי |
 | [SYSTEM_AUDIT](SYSTEM_AUDIT.md) | ראיות מהסקירה, HTML, guidelines ובדיקות |
 | [IMPLEMENTATION_PROGRESS](IMPLEMENTATION_PROGRESS.md) | מצב עבודה מאומת ותוצאות אחרונות |
-| [ORDER_CREATION](ORDER_CREATION.md) | יצירת הזמנה אטומית, Idempotency ואישור אורח; מיגרציה 010 ותצורה טרם הופעלו |
-| [STOREFRONT_CHECKOUT](STOREFRONT_CHECKOUT.md) | מסך הזמנה, חישוב שרת וניסיון חוזר; ללא ספק תשלום |
+| [ORDER_CREATION](ORDER_CREATION.md) | יצירה אטומית ועריכת פריטי pending עם Idempotency נפרד; 016 דורשת החלה ידנית, השינוי טרם אומת מול DB |
+| [STOREFRONT_CHECKOUT](STOREFRONT_CHECKOUT.md) | מסך הזמנה, מינימום, עריכת pending וטעינת פריטים מפורשת בהתנגשות גרסאות; 016 מוכנה בלבד, ללא ספק תשלום |
 | [STOREFRONT_IMPLEMENTATION](STOREFRONT_IMPLEMENTATION.md) | בית, קטלוג, מוצר, עגלה וגלריות מ־09.10; אימות מקומי וגבולות P3/P4 |
 | [Storefront README](../apps/storefront/README.md) | התקנה, הרצה ואימות יישום החנות העצמאי |
 | [ADMIN_VERIFICATION](ADMIN_VERIFICATION.md) | סדר עבודה שחולץ, תיקוני Admin, בדיקות מקומיות וגבולות האימות מ־08.10 |
 | [ADMIN_NOTIFICATIONS](ADMIN_NOTIFICATIONS.md) | תיבת התראות אישית, העדפות ו־Audit; בדיקות מקומיות, אימות חי פתוח |
 | [ADMIN_INVENTORY](ADMIN_INVENTORY.md) | מלאי זמין, קיבולת, היסטוריה וטופס התאמה; מילוי שבועי טרם מומש |
 | [ADMIN_CATALOG](ADMIN_CATALOG.md) | ניהול מוצרים פשוטים/מורכבים, קטגוריות, תמונות וגלריה כללית; typecheck ובדיקות ממוקדות, אימות DB/Storage ופריסה פתוחים |
-| [ADMIN_UX_SIMPLIFICATION](ADMIN_UX_SIMPLIFICATION.md) | פישוט קטלוג עם פירורי לחם, עריכה רגילה/מתקדמת, הגדרות ומסכים יומיומיים; אימות מקומי 21.10, דפדפן חי פתוח |
+| [ADMIN_UX_SIMPLIFICATION](ADMIN_UX_SIMPLIFICATION.md) | פישוט קטלוג/ניהול והסרת בחירת שיטת משלוח; קוד ובדיקות מקומיות 21.10, DB חי פתוח |
 | [ADMIN_OPERATION_REPORTS](ADMIN_OPERATION_REPORTS.md) | תוויות אריזה ורשימת אספקה, בחירה מדויקת והדפסה; בדיקות מקומיות, אימות חי פתוח |
 | [ADMIN_QUALITY_AUDIT](ADMIN_QUALITY_AUDIT.md) | הרשאות מנהל, התראות אישיות, בידוד Session ותאריכים; בדיקות ממוקדות מקומיות |
 | [ADMIN_PRODUCTION_REPORT](ADMIN_PRODUCTION_REPORT.md) | רשימת ייצור להדפסה/שמירה כ־PDF בדפדפן; תצוגה ריקה ופתיחת הדפסה אומתו, PDF עם נתונים פתוח |
@@ -107,9 +112,11 @@
 | [BACKEND_IMPLEMENTATION](BACKEND_IMPLEMENTATION.md) | רכיבי API, מגבלות וחיבור מותנה למסד |
 | [LIVE_CONNECTION_RUNBOOK](LIVE_CONNECTION_RUNBOOK.md) | סדר חיבור DB/Supabase/API ודגשי אימות | Runbook |
 | [INVENTORY_AND_STATUS](INVENTORY_AND_STATUS.md) | ההתנהגות הנוכחית של מלאי וסטטוסים |
+| [מצגת מסלול רכישה, מלאי ותפעול](checkout-inventory-flow.html) | 16 שקפים: Client/Server/DB, בדיקות מלאי, SQL, אישור ניסוי, תפעול ופערים |
 | [zis-api README](../zis-api/README.md) | פקודות הרצה וגבולות השרת |
-| [zis-db README](../zis-db/README.md) | שלוש עשרה מיגרציות forward-only; 012–013 הוחלו לפי דיווח בעלת האתר, 010–011 טרם אומתו |
+| [zis-db README](../zis-db/README.md) | שבע עשרה מיגרציות forward-only; 016 לעריכת pending ו־017 למחיר וריאציה ליחידה הוכנו ודורשות החלה ידנית; מצב DB וה־ledger טרם אומתו |
 | [scripts README](../scripts/README.md) | הכנת קבצים ובדיקת התיעוד |
+| [פקודות הרצה](../פקודות%20הרצה.md) | פקודות הפעלת ה־API, החנות וממשק הניהול המקומי |
 | [.codex README](../.codex/README.md) | תיאור פרופיל הרשאות מקומי |
 
 ## Skills מקומיים
@@ -118,6 +125,7 @@
 |---|---|
 | [product-photo-studio](../product-photo-studio/SKILL.md) | עיבוד תמונות מוצר באופן נאמן ועדין |
 | [product-photo-studio README](../product-photo-studio/README.md) | סקירה ותפעול של מיומנות עיבוד תמונות מוצר |
+| [פרומפט יצירת סט 4 במבנה 2x2](../תמונות מעוצבות/פרומפט יצירת סט 4 במבנה 2x2.md) | פרומפט עיצובי שמור ליצירת סט תמונות |
 | [product-description-from-photo](../product-description-from-photo/SKILL.md) | כתיבת תיאור מוצר בשפה פשוטה מתוך תמונה ופרטים מאומתים |
 | [product-description-from-photo README](../product-description-from-photo/README.md) | סקירה ותפעול של מיומנות כתיבת תיאור מוצר |
 
@@ -137,6 +145,10 @@
 | [source-standalone.html](../prototypes/zis-review/source-standalone.html) | עותק במאגר של מקור התצוגה היחיד שנבחר ב־24.09; קובץ המקור החיצוני לא נערך |
 | [001](../zis-db/migrations/001_initial_zis_schema.sql), [002](../zis-db/migrations/002_seed_base_data.sql), [003](../zis-db/migrations/003_business_decisions.sql), [004](../zis-db/migrations/004_inventory_history_without_delta.sql), [005](../zis-db/migrations/005_event_gallery_images.sql), [006](../zis-db/migrations/006_operations_delivery_and_admin.sql), [007](../zis-db/migrations/007_p1_storage_and_confirmation.sql), [008](../zis-db/migrations/008_admin_commerce_settings.sql), [009](../zis-db/migrations/009_initialize_store_settings.sql), [010](../zis-db/migrations/010_order_creation_idempotency.sql), [011](../zis-db/migrations/011_simple_products_catalog_media.sql), [012](../zis-db/migrations/012_minimum_product_subtotal.sql), [013](../zis-db/migrations/013_event_gallery_featured_image.sql) | SQL; דורש אימות ledger ב־Production ושינוי מאושר לפני הרצה |
 | [010](../zis-db/migrations/010_order_creation_idempotency.sql) | Idempotency ביצירת הזמנה; נוסף למאגר בלבד, טרם הורץ |
+| [014](../zis-db/migrations/014_single_shipping_method.sql) | הסרת ישות שיטת משלוח; הוכנה בלבד ודורשת בדיקת preflight ידנית |
+| [015](../zis-db/migrations/015_checkout_faq_and_test_orders.sql) | שדות Checkout, FAQ ואישור הזמנת ניסוי; הוכנה בלבד |
+| [016](../zis-db/migrations/016_pending_order_edit_requests.sql) | מפתחות עריכה מרובים ל־pending בטבלה נפרדת, FK/RLS והרשאות שרת; הוכנה בלבד ודורשת החלה ידנית לפני הפעלת API העריכה |
+| [017](../zis-db/migrations/017_variant_price_per_item.sql) | המרת מחיר וריאציה ממחיר Set למחיר ליחידה, רק ללא שינוי סכום; הוכנה ודורשת בדיקת ledger והחלה ידנית |
 | [package.json](../zis-api/package.json) | תלויות וסקריפטים ל־API |
 | [prepare-file-for-llm](../scripts/prepare-file-for-llm.ps1) | הכנת עותק בטוח; קוראים רק PreparedPath |
 | [check-docs](../scripts/check-docs.ps1) | בדיקת אורכים, קישורים וכיסוי כל MD באינדקס |

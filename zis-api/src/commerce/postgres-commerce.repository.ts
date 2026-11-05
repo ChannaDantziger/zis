@@ -3,9 +3,9 @@ import type {
   AvailabilityResponse,
   ShippingQuoteInput,
   ShippingZoneResponse,
-  ShippingMethodResponse,
   StoreStatusResponse,
 } from '../contracts/commerce.contracts.js';
+import { readDeliveryDates } from './delivery-dates.js';
 import { ApiError } from '../http/api-error.js';
 import type { SqlClient, SqlClientFactory } from '../inventory/postgres-inventory.repository.js';
 import type { CommerceRepository } from './commerce.types.js';
@@ -19,9 +19,9 @@ interface RuleRow { [key: string]: unknown; base_price: string; size_from_sets: 
 
 export function createPostgresCommerceRepository(factory: SqlClientFactory): CommerceRepository {
   return {
+    getDeliveryDates: (zone,now) => readDeliveryDates(factory,zone,now),
     getStoreStatus: () => getStoreStatus(factory),
     listShippingZones: () => listShippingZones(factory),
-    listShippingMethods: () => listShippingMethods(factory),
     getAvailability: (input) => getAvailability(factory, input),
     getContext: (input) => getQuoteContext(factory, input),
   };
@@ -33,6 +33,7 @@ async function getStoreStatus(factory: SqlClientFactory): Promise<StoreStatusRes
     const settings = await readSettings(client);
     return {
       storeOpen: settings.storeOpen && settings.lockMode === 'open',
+      minimumProductSubtotal: settings.minimumProductSubtotal,
       lockMode: settings.lockMode,
       lockMessage: settings.lockMessage,
       timezone: settings.timezone,
@@ -107,34 +108,32 @@ export async function readQuoteContext(client: SqlClient, input: ShippingQuoteIn
     const ruleResult = await client.query<RuleRow>(
       `select r.base_price, r.size_from_sets, r.size_to_sets, r.size_surcharge,
               r.time_surcharge, r.urgency_surcharge
-         from public.shipping_rules r join public.shipping_methods m on m.shipping_method_id = r.shipping_method_id
-        where r.shipping_zone_id = $1 and r.shipping_method_id = $2 and r.is_active = true and m.is_active = true and m.code <> 'urgent' for share of r,m`,
-      [input.shippingZoneId, input.shippingMethodId],
+         from public.shipping_rules r
+        where r.shipping_zone_id = $1 and r.is_active = true for share of r`,
+      [input.shippingZoneId],
     );
     return {
       deliveryPolicy,
       minimumProductSubtotal: settings.minimumProductSubtotal,
       currency: 'ILS',
-      taxRate: readTaxRate(settings.taxRate),
       variants: variantResult.rows.map(mapVariant),
       shippingRules: ruleResult.rows.map(mapRule),
     };
 }
 
-async function readSettings(client: SqlClient) {
+export async function readSettings(client: SqlClient) {
   const store = await client.query<{ store_open: boolean; lock_mode: 'open' | 'closed' | 'scheduled'; lock_message: string | null; minimum_product_subtotal: string }>(
     `select store_open, lock_mode, lock_message, minimum_product_subtotal from public.store_settings where store_setting_id = 1 for share`,
   );
   const defaults = await client.query<DefaultRow>(
       `select default_key, default_value from public.system_defaults
-      where default_key in ('business_timezone', 'same_day_cutoff_time', 'max_advance_days', 'working_days', 'dispatch_time', 'block_holiday_eves', 'tax_rate') for share`,
+      where default_key in ('business_timezone', 'same_day_cutoff_time', 'max_advance_days', 'working_days', 'dispatch_time', 'block_holiday_eves') for share`,
   );
   const row = store.rows[0];
   if (!row) throw new ApiError(500, 'INTERNAL_ERROR', 'Store settings are not configured');
   // node-postgres already decodes JSONB; preserve scalar strings such as "09:00".
   const values = new Map(defaults.rows.map((item) => [item.default_key, item.default_value]));
   return {
-    taxRate: values.get('tax_rate'),
     storeOpen: row.store_open,
     lockMode: row.lock_mode,
     lockMessage: row.lock_message,
@@ -156,14 +155,14 @@ async function loadSellableItems(client: SqlClient, items: Array<{ productId: st
   const productIds = items.map((item) => item.productId);
   const variantIds = items.flatMap((item) => item.productVariantId ? [item.productVariantId] : []);
   const result = await client.query<VariantRow>(`select p.product_id, null::uuid as product_variant_id,
-      p.price_per_item::text as price_per_set, p.available_items as available_sets
+      (p.price_per_item * p.set_size)::text as price_per_set, (p.available_items / p.set_size) as available_sets
     from public.products p join public.categories c on c.category_id=p.category_id
     where p.product_id=any($1::uuid[]) and p.status='active' and not p.is_deleted and c.status='active' and not c.is_deleted
       and not exists (select 1 from public.product_variants any_variant where any_variant.product_id=p.product_id and not any_variant.is_deleted)
       and p.price_per_item is not null
       and exists(select 1 from public.product_images i where i.product_id=p.product_id and i.product_variant_id is null and i.image_type='primary' and not i.is_deleted)
     union all
-    select p.product_id, v.product_variant_id, v.price_per_set::text, v.available_sets
+    select p.product_id, v.product_variant_id, (v.price_per_item * p.set_size)::text, v.available_sets
     from public.product_variants v join public.products p on p.product_id=v.product_id join public.categories c on c.category_id=p.category_id
     where v.product_variant_id=any($2::uuid[]) and v.status='active' and not v.is_deleted
       and p.status='active' and not p.is_deleted and c.status='active' and not c.is_deleted
@@ -193,15 +192,3 @@ function readWorkingDays(value: unknown): number[] {
   return value.filter((day): day is string => typeof day === 'string' && day in dayNumbers).map((day) => dayNumbers[day]);
 }
 
-async function listShippingMethods(factory:SqlClientFactory):Promise<ShippingMethodResponse[]> {
-  const client=await factory();
-  try {
-    const result=await client.query<{shipping_method_id:string;name:string;code:string}>("select shipping_method_id,name,code from public.shipping_methods where is_active=true and code <> 'urgent' order by name,shipping_method_id");
-    return result.rows.map(row=>({shippingMethodId:row.shipping_method_id,name:row.name,code:row.code}));
-  } finally { client.release?.(); }
-}
-function readTaxRate(value:unknown):string {
-  const rate=typeof value==='number'||typeof value==='string' ? String(value) : '';
-  if (!/^\d{1,3}(\.\d{1,2})?$/.test(rate)) throw new ApiError(503,'COMMERCE_TAX_NOT_CONFIGURED','Tax rate is not configured');
-  return Number(rate).toFixed(2);
-}

@@ -3,8 +3,8 @@ import { request } from '../../shared/api/http-client.js';
 import type { ManagedCatalog, ManagedProduct, ManagedVariant } from './catalog.types.js';
 import type { ManagedCategory } from './catalog.types.js';
 
-const EMPTY_PRODUCT = { productId: '', categoryId: '', name: '', description: null as string | null, setSize: 1, pricePerSet: '0.00', availableSets: 0, displayOrder: 10, status: 'active' as const, version: '', isVisible: false, visibilityReasons: ['המוצר טרם נשמר'], variants: [], images: [] };
-const EMPTY_VARIANT = { productVariantId: '', name: '', productCode: '', pricePerSet: '0.00', availableSets: 0, lowStockThresholdSets: 0, defaultProductionQuantitySets: 1, isDefault: false, status: 'hidden' as const, version: '' };
+const EMPTY_PRODUCT = { productId: '', categoryId: '', name: '', description: null as string | null, setSize: 1, pricePerUnit: '0.00', availableItems: 0, displayOrder: 10, status: 'active' as const, version: '', isVisible: false, visibilityReasons: ['המוצר טרם נשמר'], variants: [], images: [] };
+const EMPTY_VARIANT = { productVariantId: '', name: '', productCode: '', pricePerUnit: '0.00', availableSets: 0, lowStockThresholdSets: 0, defaultProductionQuantitySets: 1, isDefault: false, status: 'hidden' as const, version: '' };
 
 export class CatalogStore {
   private generation = 0;
@@ -104,6 +104,6 @@ export class CatalogStore {
     finally { runInAction(() => { if (generation === this.generation) this.saving = false; }); }
   }
 }
-function snapshot(product: ManagedProduct) { return JSON.stringify([product.name, product.categoryId, product.description, product.pricePerSet, product.availableSets, product.setSize, product.displayOrder, product.status]); }
+function snapshot(product: ManagedProduct) { return JSON.stringify([product.name, product.categoryId, product.description, product.pricePerUnit, product.availableItems, product.setSize, product.displayOrder, product.status]); }
 function message(error: unknown) { return error instanceof Error ? error.message : 'הפעולה נכשלה'; }
 export const catalogStore = new CatalogStore();

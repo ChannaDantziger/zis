@@ -1,10 +1,10 @@
-import { Alert, Anchor, Badge, Button, Group, Modal, NumberInput, Select, Skeleton, Stack, Text, Title } from '@mantine/core';
+import { Alert, Anchor, Button, Group, Modal, NumberInput, Select, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useProductQuery } from '../entities/product/api';
-import { formatPrice } from '../entities/product/format';
+import { formatPurchasePrice } from '../entities/product/format';
 import { ImageGallery } from '../features/product-gallery/ImageGallery';
 import { ProductSelection } from '../features/product-gallery/ProductSelection';
 import { ApiError } from '../shared/api/http-client';
@@ -35,7 +35,8 @@ export const ProductPage = observer(function ProductPage() {
     </Alert><Anchor component={Link} to="/catalog" onClick={close}>חזרה לקטלוג</Anchor></Stack>;
   else {
     const simpleProduct = product.variants.length === 0;
-    const currentPrice = variant?.pricePerSet ?? product.pricePerSet;
+    const currentPrice = variant?.pricePerUnit ?? product.pricePerUnit;
+    const purchasePrice = formatPurchasePrice(currentPrice, product.setSize, selection.quantitySets);
     const currentAvailable = variant?.availableSets ?? product.availableSets;
     const validQuantity = (simpleProduct || Boolean(variant)) && Number.isInteger(selection.quantitySets)
       && selection.quantitySets >= 1 && selection.quantitySets <= currentAvailable;
@@ -43,7 +44,7 @@ export const ProductPage = observer(function ProductPage() {
       <Text c="var(--zis-accent)" size="sm">{product.category.name}</Text>
       <Title order={1}>{product.name}</Title>
       {product.description && <Text className="product-description">{product.description}</Text>}
-      <Text size="sm" fw={600} className="product-set-size">בכל יחידת קנייה יש {product.setSize} יחידות</Text>
+      <Text size="sm" c="dimmed" className="product-set-size">מגיע {product.setSize} יחידות בסט</Text>
       {product.variants.length > 1 && <Select label="בחירת אפשרות" value={selection.variantId || null} allowDeselect={false}
         data={product.variants.map((item) => ({ value: item.productVariantId,
           label: `${item.name}${item.availableSets < 1 ? ' (לא זמין)' : ''}`, disabled: item.availableSets < 1 }))}
@@ -52,23 +53,26 @@ export const ProductPage = observer(function ProductPage() {
     const purchase = <Stack gap="sm" className="product-purchase">
       {(variant || simpleProduct) && <>
         <Group justify="space-between" align="end" className="product-price-row">
-          <Text size="sm" c="dimmed">מחיר ליחידת קנייה</Text>
-          <Text size="xl" fw={700}>{formatPrice(currentPrice)}</Text>
+          <Text size="sm">{purchasePrice.setDetail}</Text>
         </Group>
-        {currentAvailable < 1 ? <Badge color="gray">לא זמין כרגע</Badge> : <>
-          <NumberInput label="מספר יחידות קנייה" min={1} max={currentAvailable} allowDecimal={false}
-            allowNegative={false} value={selection.quantitySets} onChange={(value) => selection.setQuantity(typeof value === 'number' ? value : 0)} />
-        </>}
       </>}
-      <Button size="lg" disabled={!validQuantity || storeStatus.data?.storeOpen !== true} onClick={() => {
+      <Group align="end" justify="space-between" wrap="nowrap">
+      <NumberInput w={120} label="כמות סטים" min={1} max={Math.max(1, currentAvailable)} allowDecimal={false}
+        disabled={currentAvailable < 1} allowNegative={false} value={selection.quantitySets}
+        onChange={(value) => selection.setQuantity(typeof value === 'number' ? value : 0)} />
+      <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
+      <Text fw={700} aria-live="polite">סה״כ: {purchasePrice.total}</Text><Text size="xs" c="dimmed">{purchasePrice.detail}</Text>
+      <Button size="sm" disabled={!validQuantity || storeStatus.data?.storeOpen !== true} onClick={() => {
         if (validQuantity && storeStatus.data?.storeOpen === true) {
           if (cartStore.addItem(product, variant ?? null, selection.quantitySets)) { setNotice(''); close(); cartStore.open(); }
           else setNotice('לא ניתן להוסיף את הכמות המבוקשת. בדקו את הכמות שכבר נמצאת בעגלה.');
         }
-      }}>הוספה לסל</Button>
+      }}>הוסף לסל</Button>
+      </Stack>
+      </Group>
       {storeStatus.data?.storeOpen !== true && <Text size="sm" c="dimmed" role="status">הוספה לסל תתאפשר כשהחנות פתוחה וזמינותה מאומתת.</Text>}
       {notice && <Alert color="orange" role="alert">{notice}</Alert>}
-      <Text size="xs" c="dimmed">המחיר והזמינות ייבדקו מחדש לפני ההזמנה.</Text>
+      <Text size="xs" c="dimmed">סכום ההזמנה כולל המשלוח יוצג לפני התשלום.</Text>
     </Stack>;
     const gallery = <div className="product-detail-gallery"><ImageGallery images={images} title={product.name} productLayout /></div>;
     content = <>

@@ -1,3 +1,7 @@
+import { createFaqRouter } from './routes/faq.routes.js';
+import type { FaqService } from './faq/faq.service.js';
+import { createAdminTestOrdersRouter } from './routes/admin-test-orders.routes.js';
+import type { TestPaymentService } from './commerce/test-payment.service.js';
 import express from 'express';
 import { createOrderRouter } from './routes/order.routes.js';
 import type { OrderService } from './commerce/order.types.js';
@@ -39,6 +43,8 @@ import type { EventGalleryService } from './event-gallery/event-gallery.types.js
 import { createEventGalleryRouter } from './routes/event-gallery.routes.js';
 
 export interface AppDependencies {
+  faqService?: FaqService;
+  testPaymentService?: TestPaymentService;
   orderService?: OrderService;
   notificationsService?: NotificationsService;
   inventoryAdminService?: InventoryAdminService;
@@ -115,6 +121,8 @@ export function createApp(dependencies: AppDependencies = {}) {
     app.use(createAdminInventoryReadRouter(dependencies.inventoryAdminService, dependencies.resolveAdminUserId));
   }
   if (dependencies.orderService) app.use(createOrderRouter(dependencies.orderService));
+  if(dependencies.faqService && dependencies.resolveAdminUserId) app.use(createFaqRouter(dependencies.faqService,dependencies.resolveAdminUserId));
+  if(dependencies.orderService?.createTest && dependencies.testPaymentService && dependencies.resolveAdminUserId) app.use(createAdminTestOrdersRouter(dependencies.orderService,dependencies.testPaymentService,dependencies.resolveAdminUserId));
   app.use(notFoundHandler);
   app.use(errorHandler);
 

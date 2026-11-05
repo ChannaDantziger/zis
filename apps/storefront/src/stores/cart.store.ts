@@ -13,6 +13,7 @@ interface CartDetails {
 
 type CartStorage = Pick<Storage, 'getItem' | 'setItem'>;
 type ProductLoader = (id: string) => Promise<CatalogProduct>;
+export const OUT_OF_STOCK_MESSAGE = 'מצטערים, המלאי אזל. תוכלו לבחור מוצר אחר, לא פחות טעים ומרשים, מאותה קטגוריה.';
 
 export class CartStore {
   items: CartReference[] = [];
@@ -44,9 +45,9 @@ export class CartStore {
     for (const item of this.items) {
       const key = cartKey(item);
       const details = this.details.get(key);
-      const amount = details ? priceInAgorot(details.variant?.pricePerSet ?? details.product.pricePerSet) : null;
-      if (amount === null || this.missing.has(key)) return null;
-      subtotal += amount * item.quantitySets;
+      const amount = details ? priceInAgorot(details.variant?.pricePerUnit ?? details.product.pricePerUnit) : null;
+      if (amount === null || !details || !Number.isSafeInteger(details.product.setSize) || details.product.setSize < 1 || this.missing.has(key)) return null;
+      subtotal += amount * details.product.setSize * item.quantitySets;
       if (!Number.isSafeInteger(subtotal)) return null;
     }
     return subtotal;
@@ -70,10 +71,12 @@ export class CartStore {
     const existing = this.items.find((item) => cartKey(item) === key);
     if (!existing && this.items.length >= MAX_CART_LINES) return false;
     const nextQuantity = (existing?.quantitySets ?? 0) + quantitySets;
-    const price = variant?.pricePerSet ?? product.pricePerSet;
+    const price = variant?.pricePerUnit ?? product.pricePerUnit;
     const available = variant?.availableSets ?? product.availableSets;
     if (nextQuantity > MAX_QUANTITY_SETS || nextQuantity > available) return false;
-    if (priceInAgorot(price) === null) return false;
+    const unitAgorot = priceInAgorot(price);
+    if (unitAgorot === null || !Number.isSafeInteger(product.setSize) || product.setSize < 1
+      || !Number.isSafeInteger(unitAgorot * product.setSize * nextQuantity)) return false;
     if (existing) existing.quantitySets = nextQuantity;
     else this.items.push({ productId: product.productId, productVariantId: variant?.productVariantId ?? null, quantitySets });
     this.details.set(key, { product, variant, priceChanged: false, availabilityChanged: false });
@@ -114,7 +117,7 @@ export class CartStore {
             }
             return;
           }
-          this.refreshError = 'לא ניתן לבדוק כרגע את המחירים והזמינות. נסו שוב לפני המשך ההזמנה.';
+          this.refreshError = 'לא ניתן לטעון כרגע את פרטי העגלה. נסו שוב לפני המשך ההזמנה.';
           return;
         }
         for (const item of references) {
@@ -129,7 +132,8 @@ export class CartStore {
           const previous = this.details.get(key);
           this.details.set(key, {
             product, variant,
-            priceChanged: Boolean(previous && priceInAgorot(previous.variant?.pricePerSet ?? previous.product.pricePerSet) !== priceInAgorot(variant?.pricePerSet ?? product.pricePerSet)),
+            priceChanged: Boolean(previous && (priceInAgorot(previous.variant?.pricePerUnit ?? previous.product.pricePerUnit) !== priceInAgorot(variant?.pricePerUnit ?? product.pricePerUnit)
+              || previous.product.setSize !== product.setSize)),
             availabilityChanged: Boolean(previous && (previous.variant?.availableSets ?? previous.product.availableSets) !== (variant?.availableSets ?? product.availableSets)),
           });
           this.missing.delete(key);

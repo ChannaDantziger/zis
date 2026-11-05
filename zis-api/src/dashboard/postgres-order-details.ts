@@ -7,7 +7,7 @@ export async function readOrderDetails(client: SqlClient, orderId: string): Prom
     `select order_id as "orderId", order_number as "orderNumber", status, payment_status as "paymentStatus",
             to_char(delivery_date, 'YYYY-MM-DD') as "deliveryDate", total::text,
             extract(epoch from updated_at)::text as version,
-            customer_name as "customerName", customer_phone as "customerPhone", customer_email as "customerEmail",
+            customer_name as "customerName", customer_phone as "customerPhone", coalesce(delivery_phone,customer_phone) as "deliveryPhone", is_test as "isTest", customer_email as "customerEmail",
             jsonb_build_object('city', delivery_address->>'city', 'neighborhood', delivery_address->>'neighborhood',
               'street', delivery_address->>'street', 'houseNumber', delivery_address->>'houseNumber',
               'apartment', delivery_address->>'apartment', 'postalCode', delivery_address->>'postalCode') as "deliveryAddress",
