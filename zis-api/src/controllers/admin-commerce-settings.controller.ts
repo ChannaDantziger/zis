@@ -28,7 +28,7 @@ export function createAdminCommerceSettingsController(service: CommerceSettingsS
     }),
     createZone: withManager(resolveAdminUserId, async (request, response, adminUserId) => {
       const body = asRecord(request.body);
-      response.status(201).json(await service.createShippingZone({ name: requiredText(body.name, 'name'), city: requiredText(body.city, 'city'), neighborhood: nullableText(body.neighborhood, 'neighborhood'), dispatchTime: nullableTime(body.dispatchTime, 'dispatchTime'), isActive: requiredBoolean(body.isActive, 'isActive') }, adminUserId));
+      response.status(201).json(await service.createShippingZone({ name: requiredText(body.name, 'name'), city: requiredText(body.city, 'city'), basePrice: money(body.basePrice, 'basePrice'), neighborhood: nullableText(body.neighborhood, 'neighborhood'), dispatchTime: nullableTime(body.dispatchTime, 'dispatchTime'), isActive: requiredBoolean(body.isActive, 'isActive') }, adminUserId));
     }),
     updateZone: withManager(resolveAdminUserId, async (request, response, adminUserId) => {
       const body = asRecord(request.body);
@@ -66,7 +66,7 @@ function readRule(body: Record<string, unknown>) {
   const sizeToSets = body.sizeToSets === undefined || body.sizeToSets === null ? null : nonNegativeInteger(body.sizeToSets, 'sizeToSets');
   const sizeFromSets = positiveInteger(body.sizeFromSets, 'sizeFromSets');
   if (sizeToSets !== null && sizeToSets < sizeFromSets) throw invalid('sizeToSets must be greater than or equal to sizeFromSets');
-  return { shippingZoneId: uuid(body.shippingZoneId, 'shippingZoneId'), basePrice: money(body.basePrice, 'basePrice'), sizeFromSets, sizeToSets, sizeSurcharge: money(body.sizeSurcharge, 'sizeSurcharge'), timeSurcharge: money(body.timeSurcharge, 'timeSurcharge'), urgencySurcharge: money(body.urgencySurcharge, 'urgencySurcharge'), isActive: requiredBoolean(body.isActive, 'isActive') };
+  return { shippingZoneId: uuid(body.shippingZoneId, 'shippingZoneId'), basePrice: money(body.basePrice, 'basePrice'), sizeFromSets, sizeToSets, sizeSurcharge: money(body.sizeSurcharge || '0', 'sizeSurcharge'), timeSurcharge: money(body.timeSurcharge || '0', 'timeSurcharge'), urgencySurcharge: money(body.urgencySurcharge || '0', 'urgencySurcharge'), isActive: requiredBoolean(body.isActive, 'isActive') };
 }
 
 function withAdmin(resolve: AdminUserResolver, handler: (request: Request, response: Response, adminUserId: string) => Promise<Response | void>) {

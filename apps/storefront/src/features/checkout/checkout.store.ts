@@ -137,11 +137,7 @@ export class CheckoutStore {
       });
       await this.refreshConfirmation();
     } catch (error) { runInAction(() => {
-      this.confirmationError = error instanceof ApiError && error.code === 'ORDER_ITEM_UNITS_MISSING'
-        ? 'בהזמנה הישנה חסר מספר היחידות הפיזיות בכל סט. יש לבדוק או ליצור מחדש את הזמנת הניסוי לפני אישור; לא בוצע חיוב או שינוי מלאי.'
-        : error instanceof ApiError && error.code === 'ORDER_PRODUCT_CHANGED'
-          ? 'מספר היחידות בסט השתנה מאז שמירת ההזמנה. יש לבדוק או ליצור מחדש את הזמנת הניסוי לפני אישור; לא בוצע חיוב או שינוי מלאי.'
-          : 'לא ניתן לאמת את אישור הניסוי. אפשר לנסות שוב את אותה פעולה.';
+      this.confirmationError = testPaymentError(error);
     }); }
     finally { runInAction(() => { this.busy = false; }); }
   }
@@ -163,23 +159,23 @@ export class CheckoutStore {
     if (this.locked) return;
     this[field] = value;
     this.invalidateQuote();
-    if (field === 'shippingZoneId') { this.deliveryDate = ''; void this.loadDates(); }
   }
   async loadDates() {
     const version = ++this.datesVersion;
     this.availableDates = []; this.datesError = ''; this.datesLoading = false;
-    if (!this.shippingZoneId || !this.api.dates) return;
+    if (!this.api.dates) return;
     this.datesLoading = true;
     try {
-      const result = await this.api.dates(this.shippingZoneId);
+      const result = await this.api.dates();
       runInAction(() => { if (version === this.datesVersion) this.availableDates = result.availableDates; });
-    } catch { runInAction(() => { if (version === this.datesVersion) this.datesError = 'לא ניתן לטעון תאריכי משלוח. בחרו שוב את האזור.'; }); }
+    } catch { runInAction(() => { if (version === this.datesVersion) this.datesError = 'לא ניתן לטעון תאריכי משלוח. נסו שוב.'; }); }
     finally { runInAction(() => { if (version === this.datesVersion) this.datesLoading = false; }); }
   }
   invalidateQuote() { this.version++; this.busy = false; this.quote = null; this.quotedInput = ''; this.error = ''; }
   async load() {
     const version = ++this.loadVersion;
     this.loading = true; this.error = ''; this.quote = null;
+    void this.loadDates();
     try {
       const [status, zones] = await Promise.all([this.api.status(), this.api.zones()]);
       runInAction(() => {
@@ -282,7 +278,23 @@ export class CheckoutStore {
       items: items.map(({ productId, productVariantId, quantitySets }) => ({ productId, productVariantId, quantitySets })) };
   }
 }
+function testPaymentError(error: unknown): string {
+  if (!(error instanceof ApiError)) return 'לא ניתן לאמת את אישור הניסוי. אפשר לנסות שוב את אותה פעולה.';
+  const messages: Record<string, string> = {
+    ORDER_ITEM_UNITS_MISSING: 'בהזמנה הישנה חסר מספר היחידות בכל סט. יש לבדוק או ליצור מחדש את הזמנת הניסוי.',
+    ORDER_PRODUCT_CHANGED: 'מספר היחידות בסט השתנה מאז שמירת ההזמנה. יש לבדוק או ליצור מחדש את הזמנת הניסוי.',
+    ORDER_CHANGED: 'ההזמנה השתנתה. רעננו את האישור הפרטי לפני ניסיון נוסף.',
+    ORDER_PRICE_CHANGED: 'מחיר ההזמנה השתנה. יש לבדוק או ליצור מחדש את הזמנת הניסוי.',
+    STOCK_UNAVAILABLE: 'המלאי אינו מספיק לאישור הזמנת הניסוי. בדקו את הפריטים והכמויות.',
+    BUSINESS_RULE_VIOLATION: 'תאריך האספקה או מחיר המשלוח אינם זמינים עוד. בדקו את ההזמנה.',
+    INVALID_PAYMENT_STATE: 'מצב ההזמנה השתנה. רעננו את האישור הפרטי.',
+    OPERATIONS_MANAGER_REQUIRED: 'הרשאת המנהלת אינה תקפה. יש להתחבר שוב למצב ניסוי.',
+  };
+  const reference = error.requestId ? ` מזהה פנייה: ${error.requestId}.` : '';
+  return (messages[error.code] ?? 'לא ניתן לאמת את אישור הניסוי. אפשר לנסות שוב את אותה פעולה.') + reference;
+}
 function message(error: unknown, uncertain: boolean) {
+  const reference = error instanceof ApiError && error.requestId ? ` מזהה פנייה: ${error.requestId}.` : '';
   if (error instanceof ApiError && error.code === 'ORIGIN_NOT_ALLOWED') {
     const requestReference = error.requestId ? ` מזהה פנייה: ${error.requestId}.` : '';
     return `החנות אינה מורשית לפנות לשרת מהכתובת הנוכחית.${requestReference} יש לבדוק את הגדרת CORS ולהפעיל מחדש את השרת.`;
@@ -293,11 +305,10 @@ function message(error: unknown, uncertain: boolean) {
   if (error instanceof ApiError && error.code === 'ORDER_NOT_EDITABLE') return 'כבר התחיל תשלום להזמנה זו או שההזמנה אינה ממתינה. לא ניתן לשנות אותה כאן.';
   if (error instanceof ApiError && error.code === 'ORDER_CHANGED') return 'ההזמנה השתנתה במקביל. טענו את פרטי ההזמנה העדכניים כדי להמשיך לעריכה או לתשלום.';
   if (error instanceof ApiError && error.code === 'MINIMUM_ORDER_NOT_MET') return 'סכום המוצרים נמוך ממינימום ההזמנה. הוסיפו מוצרים לעגלה כדי להמשיך; דמי המשלוח אינם נכללים במינימום.';
-  if (error instanceof ApiError && error.status === 503) return 'יצירת הזמנות אינה זמינה כרגע. לא בוצע חיוב. אפשר לנסות שוב את אותה בקשה לאחר חזרת השירות.';
+  if (error instanceof ApiError && error.status === 503) return `מצטערים, יש תקלה זמנית בחנות. נשמח לראותכם מאוחר יותר.${reference} אפשר לנסות שוב את אותה בקשה לאחר חזרת השירות.`;
   if (uncertain) return 'לא ניתן לאמת אם ההזמנה נשמרה. נסו שוב כאן עם אותה בקשה; אל תפתחו הזמנה נוספת ואל תרעננו את הדף.';
-  if (error instanceof ApiError && error.status === 503) return 'יצירת הזמנות אינה זמינה כרגע. לא בוצע חיוב.';
   if (error instanceof ApiError && error.status === 422) return 'לא ניתן להזמין במועד, באזור או בכמות שבחרתם. בדקו את פרטי המשלוח, המינימום והזמינות.';
-  return 'לא ניתן להשלים את ההזמנה. בדקו את הפרטים ונסו שוב. הפריטים נשארים בעגלה.';
+  return `מצטערים, יש תקלה בחנות. נשמח לראותכם מאוחר יותר.${reference} הפריטים נשארים בעגלה.`;
 }
 
 export const checkoutStore = new CheckoutStore();

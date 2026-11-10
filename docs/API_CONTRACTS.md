@@ -39,6 +39,7 @@
 |---|---|---|
 | `GET /store-status` | ציבורי | פתיחה, הודעת סגירה, אזור זמן, שעת יציאה ו־`minimumProductSubtotal` כמחרוזת כספית |
 | `GET /shipping/zones` | ציבורי | אזורים פעילים בלבד |
+| `GET /delivery-dates` | ציבורי | תאריכים כלליים ללא `shippingZoneId`; שישי ושבת חסומים גם אם הוגדרו כימי עבודה. מימוש מקומי 08.11; DB חי טרם אומת |
 | `POST /availability` | ציבורי | `AvailabilityRequest` → `AvailabilityResponse` |
 | `POST /quote` | ציבורי | `ShippingQuoteInput` → `QuotePreview` |
 
@@ -80,7 +81,7 @@
 
 | `GET /admin/commerce/settings` | Admin פעיל | הגדרות עסק, אזורי משלוח, כללי תמחור וסגירות |
 | `PATCH /admin/commerce/settings` | מנהל תפעול | cutoff, שעת יציאה כללית, טווח הזמנה, סגירת חנות ומינימום סכום מוצרים להזמנה (ללא דמי משלוח) |
-| `POST/PATCH /admin/shipping/zones/:id` | מנהל תפעול | יצירה/עדכון אזור ושעת יציאה אזורית |
+| `POST/PATCH /admin/shipping/zones/:id` | מנהל תפעול | יצירת אזור מחייבת מחיר בסיס באותה פעולה; תוספות וכללי כמות ברירת מחדל מירושלים, ערך תוספת חסר = 0. עדכון אזור ושעת יציאה אזורית |
 | `POST/PATCH /admin/shipping/rules/:id` | מנהל תפעול | כלל מחיר לפי אזור וטווח Sets |
 | `POST/PATCH /admin/store-closures/:id` | מנהל תפעול | חלון סגירה מתוזמן; עדכון לוגי באמצעות `isActive` |
 

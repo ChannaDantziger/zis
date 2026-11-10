@@ -98,10 +98,19 @@ async function updateBusinessSettings(factory: SqlClientFactory, input: UpdateBu
 
 async function createShippingZone(factory: SqlClientFactory, input: CreateShippingZoneInput, adminUserId: string): Promise<AdminShippingZone> {
   return withTransaction(factory, async (client) => {
+    if (!/^\d+(?:\.\d{1,2})?$/.test(input.basePrice)) throw new ApiError(400, 'VALIDATION_ERROR', 'מחיר משלוח בסיסי חובה');
     const result = await client.query<ZoneRow>(`insert into public.shipping_zones (name, city, neighborhood, dispatch_time, is_active) values ($1, $2, $3, $4, $5) returning shipping_zone_id, name, city, neighborhood, dispatch_time::text, is_active`, [input.name, input.city, input.neighborhood, input.dispatchTime, input.isActive]);
     const row = result.rows[0];
     if (!row) throw new Error('Shipping zone was not created');
     const after = mapZone(row);
+    await client.query(`insert into public.shipping_rules (shipping_zone_id, base_price, size_from_sets, size_to_sets, size_surcharge, time_surcharge, urgency_surcharge, is_active) values ($1,$2,1,null,0,0,0,true)`, [after.shippingZoneId, input.basePrice]);
+    // Jerusalem supplies quantity bands and surcharges; the new zone retains its own required base price.
+    await client.query(`insert into public.shipping_rules (shipping_zone_id, base_price, size_from_sets, size_to_sets, size_surcharge, time_surcharge, urgency_surcharge, is_active)
+      select $1, $2, r.size_from_sets, r.size_to_sets, coalesce(r.size_surcharge,0), coalesce(r.time_surcharge,0), coalesce(r.urgency_surcharge,0), true
+      from public.shipping_rules r where r.shipping_zone_id = (
+        select z.shipping_zone_id from public.shipping_zones z where z.city = 'ירושלים' and z.neighborhood is null and z.is_active
+        order by z.shipping_zone_id limit 1
+      ) and r.is_active and (r.size_from_sets <> 1 or r.size_to_sets is not null or r.size_surcharge <> 0 or r.time_surcharge <> 0 or r.urgency_surcharge <> 0)`, [after.shippingZoneId, input.basePrice]);
     await audit(client, adminUserId, 'create', 'shipping_zone', after.shippingZoneId, null, after);
     return after;
   });
@@ -110,6 +119,8 @@ async function createShippingZone(factory: SqlClientFactory, input: CreateShippi
 async function updateShippingZone(factory: SqlClientFactory, input: UpdateShippingZoneInput, adminUserId: string): Promise<AdminShippingZone> {
   return withTransaction(factory, async (client) => {
     const before = await readZone(client, input.shippingZoneId);
+    const base = await client.query<{ available: boolean }>(`select exists(select 1 from public.shipping_rules where shipping_zone_id=$1 and is_active and size_from_sets=1 and size_to_sets is null and size_surcharge=0 and time_surcharge=0 and urgency_surcharge=0) as available`, [input.shippingZoneId]);
+    if (!base.rows[0]?.available) throw new ApiError(422, 'SHIPPING_BASE_PRICE_REQUIRED', 'יש לשמור מחיר משלוח בסיסי לפני שמירת האזור');
     const result = await client.query<ZoneRow>(`update public.shipping_zones set name = coalesce($1, name), city = coalesce($2, city), neighborhood = $3, dispatch_time = $4, is_active = coalesce($5, is_active) where shipping_zone_id = $6 returning shipping_zone_id, name, city, neighborhood, dispatch_time::text, is_active`, [input.name ?? null, input.city ?? null, input.neighborhood === undefined ? before.neighborhood : input.neighborhood, input.dispatchTime === undefined ? before.dispatchTime : input.dispatchTime, input.isActive ?? null, input.shippingZoneId]);
     const row = result.rows[0];
     if (!row) throw new Error('Shipping zone was not found');

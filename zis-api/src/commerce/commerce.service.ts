@@ -5,7 +5,7 @@ import type { CommerceRepository, CommerceService } from './commerce.types.js';
 export function createCommerceService(repository: CommerceRepository): CommerceService {
   const quoteService = createQuoteService(repository);
   return {
-    getDeliveryDates: (zone,now) => repository.getDeliveryDates!(zone,now),
+    getDeliveryDates: (now) => repository.getDeliveryDates!(now),
     getStoreStatus: () => repository.getStoreStatus(),
     listShippingZones: () => repository.listShippingZones(),
     getAvailability: (input: AvailabilityRequest) => repository.getAvailability(input),

@@ -19,7 +19,7 @@ export interface OrderCreated { version?: string; orderId: string; orderNumber: 
 export interface Confirmation { items?: CheckoutItem[]; version?: string; orderNumber: string; status: string; paymentStatus: string; deliveryDate: string; total: string; currency: 'ILS' }
 export interface CheckoutApi {
   updatePending?(token: string, input: { items: CheckoutItem[]; expectedVersion: string }, key: string): Promise<OrderCreated>;
-  dates?(zoneId: string): Promise<{ timezone: string; today: string; maxDate: string; availableDates: string[] }>;
+  dates?(): Promise<{ timezone: string; today: string; maxDate: string; availableDates: string[] }>;
   status(): Promise<StoreStatus>; zones(): Promise<{ data: ShippingZone[] }>;
   availability(input: Pick<QuoteInput, 'deliveryDate' | 'items'>): Promise<Availability>;
   quote(input: QuoteInput): Promise<Quote>; create(input: OrderInput, key: string): Promise<OrderCreated>;

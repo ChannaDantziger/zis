@@ -67,6 +67,7 @@ export interface UpdateBusinessSettingsInput {
 export interface CreateShippingZoneInput {
   name: string;
   city: string;
+  basePrice: string;
   neighborhood: string | null;
   dispatchTime: string | null;
   isActive: boolean;

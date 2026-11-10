@@ -14,6 +14,10 @@ export function assertDeliveryDateAllowed(date: string, now: Date, policy: Deliv
   const localNow = getLocalParts(now, policy.timezone);
   const today = toUtcDate(localNow.year, localNow.month, localNow.day);
   const daysFromToday = Math.round((requestedDate.getTime() - today.getTime()) / DAY_MS);
+  // Delivery is never offered on Friday or Saturday, even if working_days is misconfigured.
+  if (requestedDate.getUTCDay() === 5 || requestedDate.getUTCDay() === 6) {
+    throw new ApiError(422, 'BUSINESS_RULE_VIOLATION', 'Delivery is unavailable on Friday or Saturday');
+  }
 
   if (!policy.storeOpen) {
     throw new ApiError(422, 'BUSINESS_RULE_VIOLATION', 'Store is closed');

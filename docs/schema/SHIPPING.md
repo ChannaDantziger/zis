@@ -92,7 +92,7 @@
 - `system_defaults.dispatch_time` הוא שעת היציאה הכללית הניתנת לעריכה. `shipping_zones.dispatch_time time` הוא override אזורי אופציונלי; הוא אינו תנאי להפעלת עיר.
 - `shipping_rules` הוא מקור מחירי המשלוח. אזור ללא כלל פעיל תואם נדחה ב־Quote; אין הנחת משלוח חינם implicit.
 - `store_settings.store_open` ו־`lock_message` הם מקור אמת לסגירה כללית. `GET /store-status` מחזיר אותם, הלקוח משבית "הוסף לסל", והשרת דוחה quote/Order גם אם נשלחה קריאה ישירה.
-- זמינות תאריך מחושבת בשרת לפי `business_timezone`, `max_advance_days`, `same_day_cutoff_time`, עיר פעילה וסגירות `store_closures`. לוח חגים אינו מופעל בשלב זה.
+- החלטת בעלת האתר מ־08.11: זמינות תאריך מחושבת בשרת לפי `business_timezone`, `max_advance_days`, `same_day_cutoff_time` וסגירות `store_closures`, ללא תלות באזור. מלאי גם הוא כללי. העיר ואזור המשלוח משמשים כתובת ומחיר בלבד. לוח חגים אינו מופעל בשלב זה; יש לאמת שקוד ו־DB תואמים להחלטה.
 - אין חלונות אישיים למהדורה זו. תאריך היום מושבת אחרי ה־cutoff; התאריך שנבחר נשמר ב־`orders.delivery_date`. שם אולם אופציונלי נשמר בהזמנה, לא באזור המשלוח.
 
 ראו את [תוכנית התפעול](../planning/OPERATIONS_DELIVERY_PLAN.md) לחוזי API, ניסוח הלקוח ועצי בדיקה.

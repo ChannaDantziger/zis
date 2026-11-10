@@ -5,10 +5,8 @@ import type { CommerceService } from '../commerce/commerce.types.js';
 
 export function createCommerceController(service: CommerceService) {
   return {
-    getDeliveryDates: async (request: Request, response: Response) => {
-      const zone=readText(request.query.shippingZoneId,'shippingZoneId');
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(zone)) throw new ApiError(400,'VALIDATION_ERROR','Invalid shippingZoneId');
-      response.json(await service.getDeliveryDates!(zone));
+    getDeliveryDates: async (_request: Request, response: Response) => {
+      response.json(await service.getDeliveryDates!());
     },
     getStoreStatus: async (_request: Request, response: Response) => response.status(200).json(await service.getStoreStatus()),
     listShippingZones: async (_request: Request, response: Response) => response.status(200).json({ data: await service.listShippingZones() }),

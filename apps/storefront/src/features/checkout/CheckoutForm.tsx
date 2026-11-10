@@ -18,6 +18,8 @@ export const CheckoutForm = observer(function CheckoutForm({ store }: { store: C
       data={store.availableDates.map((date) => ({ value: date, label: date.split('-').reverse().join('/') }))}
       onChange={(value) => store.setDelivery('deliveryDate', value ?? '')} />
     {store.datesError && <Text c="red" role="alert">{store.datesError}</Text>}
+    {!store.datesLoading && !store.datesError && !store.availableDates.length && <Text c="red" role="alert">אין כרגע תאריכי אספקה זמינים. אי אפשר להמשיך בהזמנה.</Text>}
+    {!store.datesLoading && !store.datesError && store.availableDates.length > 0 && !store.deliveryDate && <Text c="dimmed" role="status">בחרו תאריך אספקה כדי להמשיך.</Text>}
     <Text size="sm" aria-live="polite">{store.quote ? `עלות משלוח: ${store.quote.shippingTotal} ₪` : store.busy ? 'מחשב עלות משלוח…' : 'עלות המשלוח תוצג לאחר בחירת אזור ותאריך תקינים'}</Text>
     <SimpleGrid cols={{ base: 1, sm: 2 }}>
       {fields.map(([field, label, required, maxLength]) => <TextInput key={field} label={label} required={required}

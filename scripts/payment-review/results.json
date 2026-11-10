@@ -1,0 +1,78 @@
+{
+  "reviewDate": "2026-11-10",
+  "timezone": "Asia/Jerusalem",
+  "engine": "PostgreSQL 18.6 / PGlite 0.5.16",
+  "schema": "Synthetic reduced schema in memory; no project migrations",
+  "applicationCodeChanged": true,
+  "liveDatabaseAccessed": false,
+  "productionIncidentAttribution": "Not independently verified",
+  "sourceDefect": {
+    "file": "zis-api/src/commerce/test-payment.service.ts",
+    "line": 34,
+    "sqlstate": "42P08",
+    "detail": "text versus uuid",
+    "transactionOutcome": "rollback",
+    "candidate": "Explicit UUID cast for first parameter in payment INSERT, applied in application service"
+  },
+  "runs": [
+    {
+      "command": "node --import tsx --test src/commerce/test-payment.service.test.ts",
+      "cwd": "zis-api",
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "command": "npm.cmd test",
+      "cwd": "scripts/payment-review",
+      "passed": 24,
+      "failed": 0,
+      "diagnosticTests": 4,
+      "candidateTests": 20,
+      "durationMs": 84313.8796
+    },
+    {
+      "command": "node --import ../../zis-api/node_modules/tsx/dist/loader.mjs --test acceptance.test.mjs",
+      "cwd": "scripts/payment-review",
+      "passed": 1,
+      "failed": 0,
+      "expectedFailure": false,
+      "output": "acceptance-result.txt",
+      "durationMs": 5025.0344
+    },
+    {
+      "command": "npm.cmd run build",
+      "cwd": "zis-api",
+      "passed": 1,
+      "failed": 0,
+      "exitCode": 0
+    }
+  ],
+  "sourceHashes": [
+    {
+      "path": "zis-api/src/commerce/test-payment.service.ts",
+      "sha256": "A09522CD9BC73868C7050AF8EB3B78C6499BE55B7E811AB92EA7A98EDCB0BE8D"
+    },
+    {
+      "path": "zis-api/src/middleware/error-handler.ts",
+      "sha256": "021B5F62E75EE4712841092709813B388A8F3A15BF4834E742DA454E0D5C71EA"
+    },
+    {
+      "path": "zis-api/src/commerce/postgres-commerce.repository.ts",
+      "sha256": "8D00F72502005275BE6DBD779C5496376F2E6E85985543454658E6AEC7F878CA"
+    },
+    {
+      "path": "zis-api/src/commerce/quote.service.ts",
+      "sha256": "856E057BEDDC712FF9F6BE91567775369A4A01317864CFFEDFB2823B64F8AF7C"
+    },
+    {
+      "path": "scripts/payment-review/fixture.sql",
+      "sha256": "54DD84166A0D62B98BF5A1737778A52EA0A47860862C6D5536FBE8D9AE6884CA"
+    }
+  ],
+  "limitations": [
+    "No Supabase Auth or RLS verification",
+    "Single connection: sequential replay only, no real concurrent lock contention",
+    "No live order or browser storefront confirmation",
+    "No real payment provider connected or contacted"
+  ]
+}

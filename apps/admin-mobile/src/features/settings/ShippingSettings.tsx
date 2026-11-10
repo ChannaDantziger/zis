@@ -3,9 +3,9 @@ import { Accordion, Button, Group, NumberInput, Select, SimpleGrid, Stack, Switc
 import type { AdminCommerceSettings, AdminShippingRule, AdminShippingZone } from '../../entities/admin.types.js';
 
 type SaveShipping = (path: string, method: 'PATCH' | 'POST', body: unknown) => Promise<unknown>;
-type ZoneForm = { name: string; city: string; neighborhood: string | null; dispatchTime: string | null; isActive: boolean };
+type ZoneForm = { name: string; city: string; neighborhood: string | null; dispatchTime: string | null; isActive: boolean; basePrice?: string };
 type RuleForm = Omit<AdminShippingRule, 'shippingRuleId' | 'sizeToSets'> & { sizeToSets: string | number | null };
-const EMPTY_ZONE: ZoneForm = { name: '', city: '', neighborhood: null, dispatchTime: null, isActive: true };
+const EMPTY_ZONE: ZoneForm = { name: '', city: '', neighborhood: null, dispatchTime: null, isActive: true, basePrice: '' };
 const MONEY_PATTERN = '[0-9]+(\\.[0-9]{1,2})?';
 
 export function ShippingSettings({ data, onSave, saving }: { data: AdminCommerceSettings; onSave: SaveShipping; saving: boolean }) {
@@ -62,11 +62,12 @@ function ZoneEditor({ zone, onSave, saving }: { zone?: AdminShippingZone; onSave
       <TextInput label="עיר" required disabled={saving} value={form.city} onChange={(event) => setForm({ ...form, city: event.currentTarget.value })} />
       <TextInput label="שכונה (לא חובה)" disabled={saving} value={form.neighborhood ?? ''} onChange={(event) => setForm({ ...form, neighborhood: event.currentTarget.value || null })} />
     </SimpleGrid>
+    {!zone && <TextInput label="מחיר משלוח בסיסי (₪)" required disabled={saving} inputMode="decimal" pattern={MONEY_PATTERN} value={form.basePrice ?? ''} onChange={(event) => setForm({ ...form, basePrice: event.currentTarget.value })} />}
     <Accordion variant="contained"><Accordion.Item value="advanced"><Accordion.Control>הגדרות מתקדמות</Accordion.Control><Accordion.Panel><Stack>
       <TextInput type="time" label="שעת יציאה מיוחדת לאזור" description="ריק — שימוש בשעת היציאה של החנות" disabled={saving} value={form.dispatchTime ?? ''} onChange={(event) => setForm({ ...form, dispatchTime: event.currentTarget.value || null })} />
       <Switch label="האזור זמין למשלוח" disabled={saving} checked={form.isActive} onChange={(event) => setForm({ ...form, isActive: event.currentTarget.checked })} />
     </Stack></Accordion.Panel></Accordion.Item></Accordion>
-    <Group><Button type="submit" loading={saving} disabled={!form.name.trim() || !form.city.trim()}>{zone ? 'שמירת האזור' : 'הוספת אזור'}</Button></Group>
+    <Group><Button type="submit" loading={saving} disabled={!form.name.trim() || !form.city.trim() || (!zone && !form.basePrice?.trim())}>{zone ? 'שמירת האזור' : 'הוספת אזור'}</Button></Group>
   </Stack></form>;
 }
 
@@ -80,6 +81,7 @@ function PriceEditor({ rule, data, onSave, saving, zoneId }: { zoneId?: string; 
     event.preventDefault();
     if (!saving && validRange) void onSave(rule ? `/admin/shipping/rules/${rule.shippingRuleId}` : '/admin/shipping/rules', rule ? 'PATCH' : 'POST', {
       ...form, sizeToSets: form.sizeToSets === '' || form.sizeToSets === null ? null : Number(form.sizeToSets),
+      sizeSurcharge: form.sizeSurcharge || '0.00', timeSurcharge: form.timeSurcharge || '0.00', urgencySurcharge: form.urgencySurcharge || '0.00',
     }).then(() => { if (!rule) setForm(initial); }).catch(() => {});
   }}><Stack>
     {rule && <Text size="sm" c="dimmed">טווח: {rule.sizeFromSets}–{rule.sizeToSets ?? 'ללא הגבלה'} סטים{[rule.sizeSurcharge, rule.timeSurcharge, rule.urgencySurcharge].some((amount) => Number(amount) > 0) ? ' · מוגדרות תוספות מחיר בעריכה המתקדמת' : ''}</Text>}
@@ -91,9 +93,9 @@ function PriceEditor({ rule, data, onSave, saving, zoneId }: { zoneId?: string; 
       <SimpleGrid cols={{ base: 1, sm: 2 }}>
         <NumberInput label="מכמות של (סטים)" required min={1} allowDecimal={false} disabled={saving} value={form.sizeFromSets} onChange={(value) => set('sizeFromSets', Number(value))} />
         <NumberInput label="עד כמות של (סטים)" description="ריק — ללא הגבלה" min={form.sizeFromSets} allowDecimal={false} disabled={saving} value={form.sizeToSets ?? ''} onChange={(value) => set('sizeToSets', value)} error={!validRange ? 'הכמות צריכה להיות גדולה או שווה לכמות ההתחלה' : undefined} />
-        <TextInput label="תוספת גודל (₪)" required disabled={saving} inputMode="decimal" pattern={MONEY_PATTERN} value={form.sizeSurcharge} onChange={(event) => set('sizeSurcharge', event.currentTarget.value)} />
-        <TextInput label="תוספת זמן (₪)" required disabled={saving} inputMode="decimal" pattern={MONEY_PATTERN} value={form.timeSurcharge} onChange={(event) => set('timeSurcharge', event.currentTarget.value)} />
-        <TextInput label="תוספת דחיפות (₪)" required disabled={saving} inputMode="decimal" pattern={MONEY_PATTERN} value={form.urgencySurcharge} onChange={(event) => set('urgencySurcharge', event.currentTarget.value)} />
+        <TextInput label="תוספת גודל (₪)" description="ריק — 0 ₪" disabled={saving} inputMode="decimal" pattern={MONEY_PATTERN} value={form.sizeSurcharge} onChange={(event) => set('sizeSurcharge', event.currentTarget.value)} />
+        <TextInput label="תוספת זמן (₪)" description="ריק — 0 ₪" disabled={saving} inputMode="decimal" pattern={MONEY_PATTERN} value={form.timeSurcharge} onChange={(event) => set('timeSurcharge', event.currentTarget.value)} />
+        <TextInput label="תוספת דחיפות (₪)" description="ריק — 0 ₪" disabled={saving} inputMode="decimal" pattern={MONEY_PATTERN} value={form.urgencySurcharge} onChange={(event) => set('urgencySurcharge', event.currentTarget.value)} />
       </SimpleGrid>
       <Switch label="מחיר זה פעיל" disabled={saving} checked={form.isActive} onChange={(event) => set('isActive', event.currentTarget.checked)} />
     </Stack></Accordion.Panel></Accordion.Item></Accordion>

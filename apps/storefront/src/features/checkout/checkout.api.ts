@@ -4,7 +4,7 @@ const json = (body: unknown): RequestInit => ({ method: 'POST', body: JSON.strin
 export const checkoutApi: CheckoutApi = {
   updatePending: (token, input, key) => apiRequest('/orders/pending', { method: 'PATCH', cache: 'no-store', body: JSON.stringify(input),
     headers: { Authorization: 'Bearer ' + token, 'Idempotency-Key': key } }),
-  dates: (zoneId) => apiRequest('/delivery-dates?shippingZoneId=' + encodeURIComponent(zoneId), { cache: 'no-store' }),
+  dates: () => apiRequest('/delivery-dates', { cache: 'no-store' }),
   status: () => apiRequest('/store-status', { cache: 'no-store' }),
   zones: () => apiRequest('/shipping/zones'),
   availability: (input) => apiRequest('/availability', json(input)),

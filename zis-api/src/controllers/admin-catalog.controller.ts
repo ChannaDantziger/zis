@@ -64,22 +64,8 @@ export function createAdminCatalogController(service: AdminCatalogService, resol
       }, adminUserId);
       response.status(201).json(result);
     }),
-    createVariant: withAdmin(resolveAdminUserId, async (request, response, adminUserId) => {
-      const body = asRecord(request.body);
-      const productId = readUuid(request.params.productId, 'productId');
-      const result = await service.createVariant({
-        productId,
-        name: readText(body.name, 'name'),
-        productCode: readText(body.productCode, 'productCode'),
-        pricePerUnit: readMoney(body.pricePerUnit, 'pricePerUnit'),
-        availableSets: readNonNegativeInteger(body.availableSets, 'availableSets'),
-        lowStockThresholdSets: readNonNegativeInteger(body.lowStockThresholdSets, 'lowStockThresholdSets'),
-        defaultProductionQuantitySets: readPositiveInteger(body.defaultProductionQuantitySets, 'defaultProductionQuantitySets'),
-        attributes: readAttributes(body.attributes),
-        isDefault: readBoolean(body.isDefault, 'isDefault'),
-        status: readEnum(body.status, ['active', 'hidden'] as const, 'status'),
-      }, adminUserId);
-      response.status(201).json(result);
+    createVariant: withAdmin(resolveAdminUserId, async () => {
+      throw new ApiError(422, 'VARIANTS_DISABLED', 'יצירת וריאציות חדשות אינה זמינה כעת; יש ליצור מוצר פשוט');
     }),
     createImage: withAdmin(resolveAdminUserId, async (request, response, adminUserId) => {
       const body = asRecord(request.body);

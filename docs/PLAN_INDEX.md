@@ -42,6 +42,7 @@
 | [changes1](../changes/changes1.md) | תשע בקשות שינוי בחנות מ־29.10; דרישות מוצריות | דרישות חדשות |
 | [changes2](../changes/changes2.md) | בקשות שינוי נוספות בחנות מ־01.11; תשובות A ותוכנית חלוקת עבודה | דרישות חדשות ותוכנית |
 | [changes3](../changes/changes3.md) | מסמך שינויים נוסף; טרם נסקר או הוכנס לתוכנית העבודה |
+| [changes4](../changes/changes4.md) | בקשות שינוי 4 ומצב קיים, פערים וחסימות; ללא תוכנית פיתוח |
 | [CHANGES1_EXECUTION_PLAN](CHANGES1_EXECUTION_PLAN.md) | חלוקת תשע בקשות changes1.md לסוכנים, תחומי אחריות ותיעוד סטטוס ביצוע | תוכנית ומסירה 29.10 |
 | [PLAN_INDEX](PLAN_INDEX.md) | מסמכי המאגר ומפת ניווט | אינדקס ראשי |
 | [AGENTS](../AGENTS.md) | בטיחות, ניווט ותחזוקת תיעוד | מחייב |
@@ -97,6 +98,11 @@
 | [IMPLEMENTATION_PROGRESS](IMPLEMENTATION_PROGRESS.md) | מצב עבודה מאומת ותוצאות אחרונות |
 | [ORDER_CREATION](ORDER_CREATION.md) | יצירה אטומית ועריכת פריטי pending עם Idempotency נפרד; 016 דורשת החלה ידנית, השינוי טרם אומת מול DB |
 | [STOREFRONT_CHECKOUT](STOREFRONT_CHECKOUT.md) | מסך הזמנה, מינימום, עריכת pending וטעינת פריטים מפורשת בהתנגשות גרסאות; 016 מוכנה בלבד, ללא ספק תשלום |
+| [ORDER_TEST_BROWSER_REPORT](ORDER_TEST_BROWSER_REPORT.md) | בדיקת הזמנת ניסוי בדפדפן 08.11: גם בבית שמש יצירה הצליחה, אישור תשלום מדומה נכשל, המשך תפעולי חסום |
+| [PAYMENTS_CODE_REVIEW](PAYMENTS_CODE_REVIEW.html) | סקירת תשלום ואישור ניסוי מקצה לקצה: Client, Server, Admin, ממצאים ומקרי קצה |
+| [PAYMENT_TEST_RESULTS](PAYMENT_TEST_RESULTS.md) | בדיקות 10.11: כשל SQLSTATE 42P08 שוחזר ב־PostgreSQL מבודד; תיקון הוכח בבדיקות בלבד, היישום טרם שונה |
+| [ORDER_FLOW_UX_REVIEW](ORDER_FLOW_UX_REVIEW.md) | הצעות שימושיות מרוכזות למסלול ההזמנה והניהול, מנקודת מבט לא טכנולוגית |
+| [SITE_SCREENSHOTS](SITE_SCREENSHOTS.md) | שבעה צילומי דפדפן נקיים ומסודרים למצגת שימוש באתר מ־08.11.2026 |
 | [STOREFRONT_IMPLEMENTATION](STOREFRONT_IMPLEMENTATION.md) | בית, קטלוג, מוצר, עגלה וגלריות מ־09.10; אימות מקומי וגבולות P3/P4 |
 | [Storefront README](../apps/storefront/README.md) | התקנה, הרצה ואימות יישום החנות העצמאי |
 | [ADMIN_VERIFICATION](ADMIN_VERIFICATION.md) | סדר עבודה שחולץ, תיקוני Admin, בדיקות מקומיות וגבולות האימות מ־08.10 |
@@ -152,5 +158,7 @@
 | [package.json](../zis-api/package.json) | תלויות וסקריפטים ל־API |
 | [prepare-file-for-llm](../scripts/prepare-file-for-llm.ps1) | הכנת עותק בטוח; קוראים רק PreparedPath |
 | [check-docs](../scripts/check-docs.ps1) | בדיקת אורכים, קישורים וכיסוי כל MD באינדקס |
+| [ORDER_TEST_DIAGNOSTICS](ORDER_TEST_DIAGNOSTICS.sql) | שאילתות קריאה בלבד לאבחון כשל אישור הניסוי וכללי משלוח חסרים; להרצה ידנית בלבד |
+| [ORDER_TEST_DIAGNOSTICS_BEIT_SHEMESH](ORDER_TEST_DIAGNOSTICS_BEIT_SHEMESH.sql) | בדיקות קריאה בלבד להזמנת הניסוי החדשה בבית שמש; להרצה ידנית בלבד |
 
 קישורי המקור החיצוניים מקומיים למחשב זה; עותק ההנחיות ועותקי HTML לבדיקה נמצאים במאגר. שני קובצי לוגו זיס נבדקו ושולבו בתצוגה ב־22–23.09. יתר נכסי המקור ו־Word/PDF לא נבדקו כמקורות דרישות מחייבים.

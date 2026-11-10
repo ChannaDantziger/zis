@@ -31,7 +31,7 @@ export function createTestPaymentService(factory:SqlClientFactory):TestPaymentSe
       if(quote.total!==order.total) throw new ApiError(409,'ORDER_PRICE_CHANGED','Prices changed; create a new test order');
       for(const item of items.rows) await consumeStock(client,item,orderId,actor);
       await client.query(`insert into public.test_payment_approvals(order_id,admin_user_id,reason) values($1,$2,$3)`,[orderId,actor,reason]);
-      await client.query(`insert into public.payments(order_id,provider,provider_transaction_id,amount,status,is_simulated,provider_payload) values($1,'admin_test',$1::text,0,'paid',true,'{"charged":false,"simulated":true}'::jsonb)`,[orderId]);
+      await client.query(`insert into public.payments(order_id,provider,provider_transaction_id,amount,status,is_simulated,provider_payload) values($1::uuid,'admin_test',$1::text,0,'paid',true,'{"charged":false,"simulated":true}'::jsonb)`,[orderId]);
       const updated=await client.query<{version:string}>(`update public.orders set payment_status='paid',payment_confirmed_at=$2,updated_at=clock_timestamp() where order_id=$1 returning extract(epoch from updated_at)::text as version`,[orderId,now]);
       await client.query(`insert into public.order_status_history(order_id,from_status,to_status,changed_by,note) values($1,'ordered','ordered',$2,'ניסוי: תשלום מדומה אושר ללא חיוב; ניתן להמשיך להכנה')`,[orderId,actor]);
       await insertAudit(client,actor,'test_order.payment_simulated','orders',orderId,{paymentStatus:'pending'},{paymentStatus:'paid',isTest:true,charged:false,reason});

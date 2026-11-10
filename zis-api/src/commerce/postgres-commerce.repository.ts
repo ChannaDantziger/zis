@@ -19,7 +19,7 @@ interface RuleRow { [key: string]: unknown; base_price: string; size_from_sets: 
 
 export function createPostgresCommerceRepository(factory: SqlClientFactory): CommerceRepository {
   return {
-    getDeliveryDates: (zone,now) => readDeliveryDates(factory,zone,now),
+    getDeliveryDates: (now) => readDeliveryDates(factory,now),
     getStoreStatus: () => getStoreStatus(factory),
     listShippingZones: () => listShippingZones(factory),
     getAvailability: (input) => getAvailability(factory, input),

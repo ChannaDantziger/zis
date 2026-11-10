@@ -9,14 +9,14 @@ import type {
 import type { QuoteContext, QuoteRepository } from './quote.service.js';
 
 export interface CommerceRepository extends QuoteRepository {
-  getDeliveryDates?(shippingZoneId: string, now?: Date): Promise<{timezone:string;today:string;maxDate:string;availableDates:string[]}>;
+  getDeliveryDates?(now?: Date): Promise<{timezone:string;today:string;maxDate:string;availableDates:string[]}>;
   getStoreStatus(): Promise<StoreStatusResponse>;
   listShippingZones(): Promise<ShippingZoneResponse[]>;
   getAvailability(input: AvailabilityRequest): Promise<AvailabilityResponse>;
 }
 
 export interface CommerceService {
-  getDeliveryDates?(shippingZoneId: string, now?: Date): Promise<{timezone:string;today:string;maxDate:string;availableDates:string[]}>;
+  getDeliveryDates?(now?: Date): Promise<{timezone:string;today:string;maxDate:string;availableDates:string[]}>;
   getStoreStatus(): Promise<StoreStatusResponse>;
   listShippingZones(): Promise<ShippingZoneResponse[]>;
   getAvailability(input: AvailabilityRequest): Promise<AvailabilityResponse>;

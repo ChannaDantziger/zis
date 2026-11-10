@@ -50,8 +50,7 @@ export const CatalogProductEditor = observer(function CatalogProductEditor() {
     </Stack></Card>
     {form.productId && <CatalogMediaEditor />}
     {advanced && <Card withBorder radius="lg"><Stack>
-      <Group justify="space-between"><div><Title order={2} size="h3">וריאציות — אפשרויות לבחירה</Title><Text c="dimmed" size="sm">למשל טעמים או גדלים, עם מחיר ומלאי לכל אפשרות.</Text></div>
-        {form.productId && <Button disabled={disabled || store.productHasChanges} variant="light" onClick={() => store.editVariant()}>הוספת וריאציה</Button>}</Group>
+      <Group justify="space-between"><div><Title order={2} size="h3">וריאציות קיימות</Title><Text c="dimmed" size="sm">יצירת וריאציות חדשות הושהתה. רשומות קיימות נשמרות לטיפול בהזמנות קודמות.</Text></div></Group>
       {store.productHasChanges && form.productId && <Text size="sm" c="dimmed">שמרי קודם את השינויים בפרטי המוצר כדי לערוך וריאציות.</Text>}
       {!form.productId ? <Text c="dimmed">שמרי את המוצר כדי להוסיף לו וריאציות.</Text> : <>
         {form.variants.length === 0 && <Text c="dimmed">למוצר אין וריאציות. אפשר להשאיר אותו כמוצר רגיל.</Text>}
