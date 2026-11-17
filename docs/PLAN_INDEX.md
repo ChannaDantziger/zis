@@ -103,6 +103,7 @@
 | [DOCS_INDEX](DOCS_INDEX.md) | מימוש קיים ותיעוד סופי עתידי |
 | [SYSTEM_AUDIT](SYSTEM_AUDIT.md) | ראיות מהסקירה, HTML, guidelines ובדיקות |
 | [CODE_REVIEW_FINDINGS_2026-11-17](CODE_REVIEW_FINDINGS_2026-11-17.md) | ממצאי שלוש סקירות ממוקדות: שינוי מקומי, אבטחה וזרימת הזמנה; ראיות וגבולות אימות 17.11.2026 |
+| [CODE_REVIEW_RERUN_2026-11-17](CODE_REVIEW_RERUN_2026-11-17.md) | סקירה חוזרת לאחר שינויי מוצרים פשוטים; סטטוס ממצאים קודמים, כשלי בדיקות ופערי הזמנה 17.11.2026 |
 | [IMPLEMENTATION_PROGRESS](IMPLEMENTATION_PROGRESS.md) | מצב עבודה מאומת ותוצאות אחרונות |
 | [ORDER_CREATION](ORDER_CREATION.md) | יצירה אטומית ועריכת פריטי pending עם Idempotency נפרד; 016 דורשת החלה ידנית, השינוי טרם אומת מול DB |
 | [STOREFRONT_CHECKOUT](STOREFRONT_CHECKOUT.md) | מסך הזמנה, מינימום, עריכת pending וטעינת פריטים מפורשת בהתנגשות גרסאות; 016 מוכנה בלבד, ללא ספק תשלום |

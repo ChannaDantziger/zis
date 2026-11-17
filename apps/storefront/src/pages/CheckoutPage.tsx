@@ -40,7 +40,7 @@ export const CheckoutPage = observer(function CheckoutPage() {
     return <Container size="sm" py="xl"><Stack>
       <Title order={1}>הזמנה {result.orderNumber}</Title>
       <Alert color="yellow" title={store.simulatedPaid ? "הזמנת הניסוי נשמרה ואושרה" : "ההזמנה נשמרה — התשלום עדיין לא זמין"} role="status">
-        לא בוצע חיוב אשראי. הפריטים נשארים בעגלה.
+        לא בוצע חיוב אשראי. הסל מתנקה רק אחרי שהאישור הפרטי נטען בהצלחה.
       </Alert>
       {store.testAuthorized && <Alert color={store.simulatedPaid ? 'green' : 'orange'} title="הזמנת ניסוי בלבד">
         {store.simulatedPaid ? 'הניסוי סומן כשולם והועבר לתהליך התפעול. לא בוצע חיוב אשראי.' : 'אפשר לאשר תשלום ניסוי בהרשאת מנהלת בלבד.'}
@@ -52,7 +52,7 @@ export const CheckoutPage = observer(function CheckoutPage() {
       {store.confirmation && <Text>תאריך אספקה: {store.confirmation.deliveryDate}</Text>}
       {store.confirmationError && <Alert color="orange">{store.confirmationError}</Alert>}
       <Button variant="light" disabled={!store.hasPrivateConfirmation} onClick={() => void store.refreshConfirmation()}>רענון האישור הפרטי</Button>
-      <Text size="sm" c="dimmed">האישור ועריכת הכמות זמינים במפגש הנוכחי בלבד. אין ליצור שוב את אותה הזמנה מהעגלה.</Text>
+      <Text size="sm" c="dimmed">אפשר לטעון שוב את האישור הפרטי גם אחרי רענון באותו דפדפן. אין ליצור שוב את אותה הזמנה מהעגלה.</Text>
       <Button component={Link} to="/catalog" variant="subtle">חזרה לקטלוג</Button>
     </Stack></Container>;
   }

@@ -8,6 +8,8 @@ import { emptyCustomer, type CheckoutApi, type CheckoutItem, type Confirmation, 
 import type { StoreStatus } from '../../shared/store-status';
 import { cartKey, cartStore, OUT_OF_STOCK_MESSAGE } from '../../stores/cart.store';
 import { isQuantity, MAX_CART_LINES } from '../../stores/cart.persistence';
+import { checkoutErrorMessage, testPaymentError } from './checkout.errors';
+import { clearCheckoutRecovery, readCheckoutRecovery, writeCheckoutRecovery } from './checkout.recovery';
 
 export class CheckoutStore {
   status: StoreStatus | null = null;
@@ -91,7 +93,7 @@ export class CheckoutStore {
         if (error instanceof ApiError && error.code === 'ORDER_CHANGED') this.pendingConflict = true;
         this.confirmationError = error instanceof ApiError && error.code === 'MINIMUM_ORDER_NOT_MET'
           ? 'סכום המוצרים נמוך ממינימום ההזמנה. הגדילו כמות או הוסיפו מוצרים להזמנה כדי לשמור את השינוי; דמי המשלוח אינם נכללים במינימום.'
-          : definitive ? message(error, false) : 'לא ניתן לאמת אם שינוי ההזמנה נשמר. נסו שוב כאן עם אותה בקשה לפני תשלום.';
+        : definitive ? checkoutErrorMessage(error, false) : 'לא ניתן לאמת אם שינוי ההזמנה נשמר. נסו שוב כאן עם אותה בקשה לפני תשלום.';
       });
     } finally { runInAction(() => { if (version === this.version) this.busy = false; }); }
   }
@@ -136,7 +138,7 @@ export class CheckoutStore {
         }
       });
       await this.refreshConfirmation();
-    } catch (error) { runInAction(() => {
+      } catch (error) { runInAction(() => {
       this.confirmationError = testPaymentError(error);
     }); }
     finally { runInAction(() => { this.busy = false; }); }
@@ -175,6 +177,15 @@ export class CheckoutStore {
   async load() {
     const version = ++this.loadVersion;
     this.loading = true; this.error = ''; this.quote = null;
+    if (!this.created) {
+      const recovery = readCheckoutRecovery();
+      if (recovery) {
+        this.token = recovery.token;
+        this.created = recovery.order;
+        this.pendingItems = [];
+        this.pendingCartKeys.clear();
+      }
+    }
     void this.loadDates();
     try {
       const [status, zones] = await Promise.all([this.api.status(), this.api.zones()]);
@@ -184,6 +195,7 @@ export class CheckoutStore {
       });
     } catch { runInAction(() => { if (version === this.loadVersion) { this.status = null; this.error = 'לא ניתן לטעון את אפשרויות ההזמנה. נסו שוב.'; } }); }
     finally { runInAction(() => { if (version === this.loadVersion) this.loading = false; }); }
+    if (version === this.loadVersion && this.token) await this.refreshConfirmation();
   }
   async preview(items: CheckoutItem[]) {
     if (!this.canQuote || !items.length) return;
@@ -199,7 +211,7 @@ export class CheckoutStore {
         if (quote.availability !== 'available') { this.error = OUT_OF_STOCK_MESSAGE; return; }
         this.quote = quote; this.quotedInput = JSON.stringify(input);
       });
-    } catch (error) { runInAction(() => { if (version === this.version) this.error = message(error, false); }); }
+    } catch (error) { runInAction(() => { if (version === this.version) this.error = checkoutErrorMessage(error, false); }); }
     finally { runInAction(() => { if (version === this.version) this.busy = false; }); }
   }
   async submit(items: CheckoutItem[]) {
@@ -231,9 +243,9 @@ export class CheckoutStore {
         this.pendingCartKeys = new Set(this.pendingItems.map(cartKey)); this.removedPendingItems = [];
         this.savedPendingItems = JSON.stringify(this.pendingItems);
         this.created = created; this.token = confirmationToken;
+        writeCheckoutRecovery(confirmationToken, created);
         if ('version' in response) { this.testOrderVersion = String(response.version); this.simulatedPaid = response.paymentStatus === 'paid'; } this.customer = emptyCustomer();
         this.attempt = null; this.quote = null;
-        cartStore.clear();
       });
       if (version === this.version) await this.refreshConfirmation();
     } catch (error) {
@@ -242,7 +254,7 @@ export class CheckoutStore {
         const definitive = error instanceof ApiError && ([400, 401, 403, 404, 422].includes(error.status)
           || (error.status === 503 && error.code === 'ORDER_CREATION_NOT_CONFIGURED'));
         if (definitive) { this.attempt = null; this.quote = null; }
-        this.error = message(error, !definitive);
+        this.error = checkoutErrorMessage(error, !definitive);
       });
     } finally { runInAction(() => { if (version === this.version) this.busy = false; }); }
   }
@@ -256,6 +268,12 @@ export class CheckoutStore {
       runInAction(() => {
         if (version !== this.version || request !== this.confirmationVersion) return;
         this.confirmation = confirmation;
+        cartStore.clear();
+        if (this.created?.paymentStatus === 'pending' && !this.pendingItems.length && confirmation.items?.length) {
+          this.pendingItems = confirmation.items.map(item => ({ productId: item.productId, quantitySets: item.quantitySets }));
+          this.savedPendingItems = JSON.stringify(this.pendingItems);
+          this.pendingItems.forEach(item => this.pendingCartKeys.add(cartKey(item)));
+        }
         if (this.created) this.created.status = confirmation.status;
         if (this.created?.paymentStatus === 'pending' && confirmation.paymentStatus === 'pending' && !this.simulatedPaid
           && this.created.version && confirmation.version && confirmation.version !== this.created.version) {
@@ -263,11 +281,13 @@ export class CheckoutStore {
         }
         if (this.created && confirmation.version) { this.created.version = confirmation.version; this.testOrderVersion = confirmation.version; }
         if (this.created && confirmation.paymentStatus === 'paid') this.created.paymentStatus = 'paid';
+        if (this.created) writeCheckoutRecovery(this.token, this.created);
       });
     } catch { runInAction(() => { if (version === this.version && request === this.confirmationVersion) this.confirmationError = 'ההזמנה נשמרה, אך לא ניתן לרענן את האישור הפרטי כרגע.'; }); }
   }
-  leave() { if (this.retryPending || this.pendingUpdate || (this.created?.paymentStatus === 'pending' && !this.simulatedPaid)) return; this.adminToken = ''; this.token = ''; this.customer = emptyCustomer(); if (!this.created) this.dispose(); }
+  leave() { if (this.retryPending || this.pendingUpdate || (this.created?.paymentStatus === 'pending' && !this.simulatedPaid)) return; this.adminToken = ''; this.token = ''; clearCheckoutRecovery(); this.customer = emptyCustomer(); if (!this.created) this.dispose(); }
   dispose() {
+    clearCheckoutRecovery();
     this.version++; this.loadVersion++; this.confirmationVersion++; this.datesVersion++; this.availableDates = []; this.datesLoading = false; this.customer = emptyCustomer(); this.attempt = null; this.token = '';
     this.adminToken = ''; this.testOrderVersion = ''; this.simulatedPaid = false; this.created = null; this.confirmation = null; this.quote = null; this.busy = false; this.loading = false;
     this.pendingItems = []; this.savedPendingItems = ''; this.pendingUpdate = null;
@@ -280,35 +300,4 @@ export class CheckoutStore {
   }
 }
 function testPaymentError(error: unknown): string {
-  if (!(error instanceof ApiError)) return 'לא ניתן לאמת את אישור הניסוי. אפשר לנסות שוב את אותה פעולה.';
-  const messages: Record<string, string> = {
-    ORDER_ITEM_UNITS_MISSING: 'בהזמנה הישנה חסר מספר היחידות בכל סט. יש לבדוק או ליצור מחדש את הזמנת הניסוי.',
-    ORDER_PRODUCT_CHANGED: 'מספר היחידות בסט השתנה מאז שמירת ההזמנה. יש לבדוק או ליצור מחדש את הזמנת הניסוי.',
-    ORDER_CHANGED: 'ההזמנה השתנתה. רעננו את האישור הפרטי לפני ניסיון נוסף.',
-    ORDER_PRICE_CHANGED: 'מחיר ההזמנה השתנה. יש לבדוק או ליצור מחדש את הזמנת הניסוי.',
-    STOCK_UNAVAILABLE: 'המלאי אינו מספיק לאישור הזמנת הניסוי. בדקו את הפריטים והכמויות.',
-    BUSINESS_RULE_VIOLATION: 'תאריך האספקה או מחיר המשלוח אינם זמינים עוד. בדקו את ההזמנה.',
-    INVALID_PAYMENT_STATE: 'מצב ההזמנה השתנה. רעננו את האישור הפרטי.',
-    OPERATIONS_MANAGER_REQUIRED: 'הרשאת המנהלת אינה תקפה. יש להתחבר שוב למצב ניסוי.',
-  };
-  const reference = error.requestId ? ` מזהה פנייה: ${error.requestId}.` : '';
-  return (messages[error.code] ?? 'לא ניתן לאמת את אישור הניסוי. אפשר לנסות שוב את אותה פעולה.') + reference;
-}
-function message(error: unknown, uncertain: boolean) {
-  const reference = error instanceof ApiError && error.requestId ? ` מזהה פנייה: ${error.requestId}.` : '';
-  if (error instanceof ApiError && error.code === 'ORIGIN_NOT_ALLOWED') {
-    const requestReference = error.requestId ? ` מזהה פנייה: ${error.requestId}.` : '';
-    return `החנות אינה מורשית לפנות לשרת מהכתובת הנוכחית.${requestReference} יש לבדוק את הגדרת CORS ולהפעיל מחדש את השרת.`;
-  }
-  if (error instanceof ApiError && error.code === 'PENDING_ORDER_EDIT_NOT_CONFIGURED') return 'עריכת ההזמנה אינה זמינה עד השלמת עדכון המסד בידי מנהלת החנות. לא נשמר שינוי ולא בוצע חיוב.';
-  if (error instanceof ApiError && error.code === 'STOCK_UNAVAILABLE') return OUT_OF_STOCK_MESSAGE;
-  if (error instanceof ApiError && error.code === 'ORDER_NOT_EDITABLE') return 'כבר התחיל תשלום להזמנה זו או שההזמנה אינה ממתינה. לא ניתן לשנות אותה כאן.';
-  if (error instanceof ApiError && error.code === 'ORDER_CHANGED') return 'ההזמנה השתנתה במקביל. טענו את פרטי ההזמנה העדכניים כדי להמשיך לעריכה או לתשלום.';
-  if (error instanceof ApiError && error.code === 'MINIMUM_ORDER_NOT_MET') return 'סכום המוצרים נמוך ממינימום ההזמנה. הוסיפו מוצרים לעגלה כדי להמשיך; דמי המשלוח אינם נכללים במינימום.';
-  if (error instanceof ApiError && error.status === 503) return `מצטערים, יש תקלה זמנית בחנות. נשמח לראותכם מאוחר יותר.${reference} אפשר לנסות שוב את אותה בקשה לאחר חזרת השירות.`;
-  if (uncertain) return 'לא ניתן לאמת אם ההזמנה נשמרה. נסו שוב כאן עם אותה בקשה; אל תפתחו הזמנה נוספת ואל תרעננו את הדף.';
-  if (error instanceof ApiError && error.status === 422) return 'לא ניתן להזמין במועד, באזור או בכמות שבחרתם. בדקו את פרטי המשלוח, המינימום והזמינות.';
-  return `מצטערים, יש תקלה בחנות. נשמח לראותכם מאוחר יותר.${reference} הפריטים נשארים בעגלה.`;
-}
-
 export const checkoutStore = new CheckoutStore();
