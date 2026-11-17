@@ -1,6 +1,6 @@
 export interface AdminNotification {
   notificationId: string; notificationType: string; title: string; body: string;
-  orderId: string | null; productVariantId: string | null;
+  orderId: string | null;
   deliveryStatus: 'pending' | 'sent' | 'failed'; readAt: string | null; createdAt: string;
 }
 export interface NotificationPage {

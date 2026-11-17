@@ -1,8 +1,8 @@
 import type { OrderStatus } from '../../entities/admin.types.js';
 
 export interface HomeItem {
-  orderItemId: string; productName: string; variantName: string; quantitySets: number;
-  categoryName: string; productId: string | null; productVariantId: string | null;
+  orderItemId: string; productName: string; quantitySets: number;
+  categoryName: string; productId: string | null;
   imageUrl: string | null;
 }
 export interface HomeOrder {

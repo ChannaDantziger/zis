@@ -12,7 +12,6 @@ export class CatalogMediaStore {
   dimensions = '';
   imageId = '';
   version = '';
-  productVariantId: string | null = null;
   isPrimary = false;
   altText = '';
   sortOrder = 0;
@@ -26,7 +25,7 @@ export class CatalogMediaStore {
     this.generation++; this.metadataSaved = false; this.saving = false;
     if (this.preview) URL.revokeObjectURL(this.preview);
     this.file = null; this.preview = ''; this.dimensions = ''; this.imageId = ''; this.version = ''; this.uploaded = null;
-    this.productVariantId = null; this.isPrimary = false; this.altText = ''; this.sortOrder = (catalogStore.product?.images.length ?? 0) * 10;
+    this.isPrimary = false; this.altText = ''; this.sortOrder = (catalogStore.product?.images.length ?? 0) * 10;
     this.error = ''; this.success = '';
   }
   selectFile(file: File | null) {
@@ -43,7 +42,7 @@ export class CatalogMediaStore {
   }
   edit(image: ManagedImage) {
     this.reset(); this.imageId = image.imageId; this.version = image.version; this.altText = image.altText;
-    this.sortOrder = image.sortOrder; this.productVariantId = image.productVariantId;
+    this.sortOrder = image.sortOrder;
   }
   async save() {
     const productId = catalogStore.product?.productId;
@@ -61,7 +60,7 @@ export class CatalogMediaStore {
           if (generation !== this.generation) return;
           runInAction(() => { this.uploaded = uploaded; });
         }
-        await request(`/admin/products/${productId}/images`, { method: 'POST', body: JSON.stringify({ storagePath: this.uploaded!.storagePath, productVariantId: this.productVariantId, altText: this.altText || catalogStore.product?.name || '', sortOrder: this.sortOrder, isPrimary: this.isPrimary }) });
+        await request(`/admin/products/${productId}/images`, { method: 'POST', body: JSON.stringify({ storagePath: this.uploaded!.storagePath, altText: this.altText || catalogStore.product?.name || '', sortOrder: this.sortOrder, isPrimary: this.isPrimary }) });
       }
       if (generation !== this.generation) return;
       runInAction(() => { this.metadataSaved = true; });

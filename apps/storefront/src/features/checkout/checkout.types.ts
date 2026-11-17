@@ -1,5 +1,5 @@
 import type { StoreStatus } from '../../shared/store-status';
-export interface CheckoutItem { productId: string; productVariantId: string | null; quantitySets: number }
+export interface CheckoutItem { productId: string; quantitySets: number }
 export interface ShippingZone { shippingZoneId: string; name: string; city: string; neighborhood: string | null }
 export interface QuoteInput { deliveryDate: string; shippingZoneId: string; items: CheckoutItem[] }
 export interface Quote { subtotal: string; shippingTotal: string; taxTotal: string; total: string; currency: 'ILS';

@@ -61,6 +61,7 @@ npm.cmd --prefix apps/admin-mobile run dev
 ## קישורי עבודה
 
 - [תוכנית עבודה מלאה](docs/IMPLEMENTATION_PLAN.md) — מקור האמת לשלבים, תלויות ותנאי קבלה עד השקה ותיעוד סופי.
+- [תוכנית העלאה לפרודקשן](docs/PRODUCTION_DEPLOYMENT_PLAN.md) — מדריך שלבים מפורט לזרימת Git → Docker/Registry → Hosting, עם חלוקת אחריות, שערי קבלה, Staging, Production, מיגרציות וחזרה לאחור. זהו מסמך תוכנית; הוא אינו מעיד שפריסה כבר הוכנה או בוצעה.
 - [דרישות חנות ושליפת נתונים ותמונות](docs/planning/STOREFRONT_REQUIREMENTS.md).
 - [נושאים פתוחים ותיקונים נדרשים](docs/OPEN_ISSUES.md).
 - [המשימות וההחלטות שלך](docs/OWNER_ACTIONS.md) — תוכן, חשבונות, Docker, אירוח ואישור השקה.

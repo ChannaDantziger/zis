@@ -3,6 +3,8 @@
 [אינדקס](../PLAN_INDEX.md) · [P8/P9 בתוכנית](../IMPLEMENTATION_PLAN.md) · [מעורבות שלך](../OWNER_ACTIONS.md).
 מצב: מתוכנן. אין כרגע Dockerfile/Compose/CI במאגר; מסמך זה אינו מדריך הרצה של תשתית קיימת.
 
+לרצף עבודה מפורט לפי אחריות, Git → Docker/Registry → Hosting, הקמת Staging, שער Production ו־rollback, ראו [תוכנית העלאה לפרודקשן](../PRODUCTION_DEPLOYMENT_PLAN.md).
+
 ## הכנה טכנית — אחריות הפיתוח
 
 | תחום | תוצר נדרש | בדיקת קבלה |

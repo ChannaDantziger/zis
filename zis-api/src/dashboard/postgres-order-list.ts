@@ -9,7 +9,7 @@ export async function listOrdersWithClient(client: SqlClient, query: AdminOrders
     `select o.order_id as "orderId", o.order_number as "orderNumber", o.status, o.payment_status as "paymentStatus", o.is_test as "isTest", o.total::text,
             coalesce(o.delivery_address->>'city', '') as location, coalesce(o.delivery_address->>'city', '') as city,
             to_char(o.delivery_date, 'YYYY-MM-DD') as "deliveryDate", min(oi.product_variant_id::text) as "productVariantId",
-            string_agg(distinct oi.product_name_snapshot || ' · ' || oi.variant_name_snapshot, ', ' order by (oi.product_name_snapshot || ' · ' || oi.variant_name_snapshot)) as "itemSummary",
+            string_agg(distinct oi.product_name_snapshot, ', ' order by oi.product_name_snapshot) as "itemSummary",
             exists (select 1 from public.admin_tasks task where task.order_id = o.order_id and task.status = 'open') as "hasOpenTask",
             extract(epoch from o.updated_at)::text as version
        from public.orders o join public.order_items oi on oi.order_id = o.order_id

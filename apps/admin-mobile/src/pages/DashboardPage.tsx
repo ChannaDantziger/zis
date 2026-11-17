@@ -27,7 +27,7 @@ export function DashboardPage() {
       <Metric label="הזמנות היום" value={data.todayOrderCount} />
       {data.cancelledOrderCount > 0 && <Metric label="בוטלו" value={data.cancelledOrderCount} tone="red" />}
       <Metric label="דורש טיפול" value={data.openTaskCount ?? data.openTasks.length} tone="orange" />
-      <Metric label="וריאציות לייצור" value={data.production.length} tone="teal" />
+      <Metric label="מוצרים לייצור" value={new Set(data.production.map((item) => item.productName)).size} tone="teal" />
     </SimpleGrid>
     <Group aria-label="חלוקה לפי שלב תפעולי">{data.statusCounts.map(({ status, count }) => <Badge key={status} variant="light">{statusLabels[status]} · {count}</Badge>)}</Group>
     <Group><Button component={Link} to="/tasks" variant="light">כל משימות התפעול</Button></Group>

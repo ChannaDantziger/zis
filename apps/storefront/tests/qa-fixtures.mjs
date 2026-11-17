@@ -5,9 +5,7 @@ const products = Array.from({ length: 27 }, (_, index) => ({
   productId: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`, category, name: `מוצר בדיקה ${index + 1}`,
   description: 'נתון בדיקה מבודד. אינו מוצר למכירה.', setSize: 1, pricePerUnit: '25.00', availableSets: 10, displayOrder: index * 10,
   primaryImage: image(index), gallery: [image(index), image(index + 100)],
-  variants: [{ productVariantId: `00000000-0000-4000-9000-${String(index).padStart(12, '0')}`, name: 'אפשרות בדיקה', productCode: `QA${index}`,
-    pricePerUnit: '25.00', availableSets: 10, isDefault: true, attributes: null,
-    primaryImage: image(index), gallery: [image(index), image(index + 100)] }],
+  variants: [],
 }));
 
 export function getQaResponse(url, mode) {

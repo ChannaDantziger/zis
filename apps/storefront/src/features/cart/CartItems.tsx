@@ -21,9 +21,9 @@ export const CartItems = observer(function CartItems() {
         const key = cartKey(item);
         const details = cartStore.details.get(key);
         const missing = cartStore.missing.has(key);
-        const quantityInvalid = details && item.quantitySets > (details.variant?.availableSets ?? details.product.availableSets);
-        const image = details?.variant?.primaryImage ?? details?.product.primaryImage;
-        const purchasePrice = details ? formatPurchasePrice(details.variant?.pricePerUnit ?? details.product.pricePerUnit, details.product.setSize, item.quantitySets) : null;
+        const quantityInvalid = details && item.quantitySets > details.product.availableSets;
+        const image = details?.product.primaryImage;
+        const purchasePrice = details ? formatPurchasePrice(details.product.pricePerUnit, details.product.setSize, item.quantitySets) : null;
         return (
           <Card key={key} withBorder radius={0} p="md" className="cart-line">
             <Stack gap="sm">
@@ -32,7 +32,6 @@ export const CartItems = observer(function CartItems() {
                 <Stack gap={4} style={{ flex: 1 }}>
                   {details ? <>
                     <Text component={Link} to={`/products/${item.productId}`} fw={700} onClick={cartStore.close}>{details.product.name}</Text>
-                    {details.variant && <Text size="sm">{details.variant.name}</Text>}
                     <Text size="sm" c="dimmed">{item.quantitySets} יחידות קנייה × {details.product.setSize} יח׳ בכל יחידה</Text>
                     <Text size="sm">{purchasePrice?.setDetail}</Text>
                     <Text fw={700}>{purchasePrice?.total ?? 'ממתין למחיר'} <Text span size="sm" fw={400}>({purchasePrice?.detail})</Text></Text>
@@ -46,7 +45,7 @@ export const CartItems = observer(function CartItems() {
               </Alert>}
               <Group justify="space-between" align="end">
                 <NumberInput
-                  label="מספר יחידות קנייה" aria-label={`כמות יחידות קנייה עבור ${details?.product.name ?? 'מוצר בעגלה'} ${details?.variant?.name ?? ''}`}
+                  label="מספר יחידות קנייה" aria-label={`כמות יחידות קנייה עבור ${details?.product.name ?? 'מוצר בעגלה'}`}
                   value={item.quantitySets} min={1} max={MAX_QUANTITY_SETS} allowDecimal={false} allowNegative={false}
                   w={130}
                   onChange={(value) => { if (typeof value === 'number') cartStore.setQuantity(key, value); }}

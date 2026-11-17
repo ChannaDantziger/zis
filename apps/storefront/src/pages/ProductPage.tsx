@@ -1,12 +1,11 @@
-import { Alert, Anchor, Button, Group, Modal, NumberInput, Select, Skeleton, Stack, Text, Title } from '@mantine/core';
+import { Alert, Anchor, Button, Group, Modal, NumberInput, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useProductQuery } from '../entities/product/api';
 import { formatPurchasePrice } from '../entities/product/format';
 import { ImageGallery } from '../features/product-gallery/ImageGallery';
-import { ProductSelection } from '../features/product-gallery/ProductSelection';
 import { ApiError } from '../shared/api/http-client';
 import { cartStore } from '../stores/cart.store';
 import { useStoreStatus } from '../shared/store-status';
@@ -20,11 +19,9 @@ export const ProductPage = observer(function ProductPage() {
   const result = useProductQuery(productId);
   const storeStatus = useStoreStatus();
   const [notice, setNotice] = useState('');
-  const [selection] = useState(() => new ProductSelection());
+  const [quantitySets, setQuantitySets] = useState(1);
   const product = result.data;
-  useEffect(() => { if (product) selection.initialize(product); }, [product, selection]);
-  const variant = product?.variants.find((item) => item.productVariantId === selection.variantId);
-  const images = useMemo(() => product ? getProductImages(product, variant) : [], [product, variant]);
+  const images = useMemo(() => product ? getProductImages(product) : [], [product]);
   const close = () => navigate('/catalog');
 
   let content: ReactNode;
@@ -35,36 +32,31 @@ export const ProductPage = observer(function ProductPage() {
     </Alert><Anchor component={Link} to="/catalog" onClick={close}>חזרה לקטלוג</Anchor></Stack>;
   else {
     const simpleProduct = product.variants.length === 0;
-    const currentPrice = variant?.pricePerUnit ?? product.pricePerUnit;
-    const purchasePrice = formatPurchasePrice(currentPrice, product.setSize, selection.quantitySets);
-    const currentAvailable = variant?.availableSets ?? product.availableSets;
-    const validQuantity = (simpleProduct || Boolean(variant)) && Number.isInteger(selection.quantitySets)
-      && selection.quantitySets >= 1 && selection.quantitySets <= currentAvailable;
+    const purchasePrice = simpleProduct ? formatPurchasePrice(product.pricePerUnit, product.setSize, quantitySets) : null;
+    const currentAvailable = product.availableSets;
+    const validQuantity = simpleProduct && Number.isInteger(quantitySets)
+      && quantitySets >= 1 && quantitySets <= currentAvailable;
     const productCopy = <Stack gap="sm" className="product-detail-copy">
       <Text c="var(--zis-accent)" size="sm">{product.category.name}</Text>
       <Title order={1}>{product.name}</Title>
       {product.description && <Text className="product-description">{product.description}</Text>}
-      <Text size="sm" c="dimmed" className="product-set-size">מגיע {product.setSize} יחידות בסט</Text>
-      {product.variants.length > 1 && <Select label="בחירת אפשרות" value={selection.variantId || null} allowDeselect={false}
-        data={product.variants.map((item) => ({ value: item.productVariantId,
-          label: `${item.name}${item.availableSets < 1 ? ' (לא זמין)' : ''}`, disabled: item.availableSets < 1 }))}
-        onChange={(value) => { if (value) { selection.selectVariant(value); selection.setQuantity(1); } }} />}
+      {simpleProduct && <Text size="sm" c="dimmed" className="product-set-size">מגיע {product.setSize} יחידות בסט</Text>}
     </Stack>;
-    const purchase = <Stack gap="sm" className="product-purchase">
-      {(variant || simpleProduct) && <>
+    const purchase = simpleProduct ? <Stack gap="sm" className="product-purchase">
+      <>
         <Group justify="space-between" align="end" className="product-price-row">
-          <Text size="sm">{purchasePrice.setDetail}</Text>
+          <Text size="sm">{purchasePrice?.setDetail}</Text>
         </Group>
-      </>}
+      </>
       <Group align="end" justify="space-between" wrap="nowrap">
       <NumberInput w={120} label="כמות סטים" min={1} max={Math.max(1, currentAvailable)} allowDecimal={false}
-        disabled={currentAvailable < 1} allowNegative={false} value={selection.quantitySets}
-        onChange={(value) => selection.setQuantity(typeof value === 'number' ? value : 0)} />
+        disabled={!simpleProduct || currentAvailable < 1} allowNegative={false} value={quantitySets}
+        onChange={(value) => setQuantitySets(typeof value === 'number' ? value : 0)} />
       <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
-      <Text fw={700} aria-live="polite">סה״כ: {purchasePrice.total}</Text><Text size="xs" c="dimmed">{purchasePrice.detail}</Text>
+      <Text fw={700} aria-live="polite">סה״כ: {purchasePrice?.total}</Text><Text size="xs" c="dimmed">{purchasePrice?.detail}</Text>
       <Button size="sm" disabled={!validQuantity || storeStatus.data?.storeOpen !== true} onClick={() => {
         if (validQuantity && storeStatus.data?.storeOpen === true) {
-          if (cartStore.addItem(product, variant ?? null, selection.quantitySets)) { setNotice(''); close(); cartStore.open(); }
+          if (cartStore.addItem(product, quantitySets)) { setNotice(''); close(); cartStore.open(); }
           else setNotice('לא ניתן להוסיף את הכמות המבוקשת. בדקו את הכמות שכבר נמצאת בעגלה.');
         }
       }}>הוסף לסל</Button>
@@ -73,7 +65,7 @@ export const ProductPage = observer(function ProductPage() {
       {storeStatus.data?.storeOpen !== true && <Text size="sm" c="dimmed" role="status">הוספה לסל תתאפשר כשהחנות פתוחה וזמינותה מאומתת.</Text>}
       {notice && <Alert color="orange" role="alert">{notice}</Alert>}
       <Text size="xs" c="dimmed">סכום ההזמנה כולל המשלוח יוצג לפני התשלום.</Text>
-    </Stack>;
+    </Stack> : <Alert color="gray">המוצר אינו זמין כרגע לרכישה.</Alert>;
     const gallery = <div className="product-detail-gallery"><ImageGallery images={images} title={product.name} productLayout /></div>;
     content = <>
       <div className="product-detail-desktop">

@@ -70,6 +70,7 @@
 | [OWNER_ACTIONS](OWNER_ACTIONS.md) | תוכן, החלטות, חשבונות והשקה | משימות שלך |
 | [STOREFRONT_REQUIREMENTS](planning/STOREFRONT_REQUIREMENTS.md) | כיסוי קטלוג, תמונות, רכישה ותפעול | מפרט |
 | [DELIVERY_AND_DOCUMENTATION](planning/DELIVERY_AND_DOCUMENTATION.md) | Docker, סביבות, CI, גיבוי ותיעוד בסוף | תוכנית מסירה |
+| [PRODUCTION_DEPLOYMENT_PLAN](PRODUCTION_DEPLOYMENT_PLAN.md) | תוכנית מפורטת Git → Docker/Registry → Hosting, חלוקת אחריות, שערי Staging/Production ו־rollback | תוכנית; פריסה טרם מומשה |
 | [START_NEW_CHAT](START_NEW_CHAT.md) | מודל מומלץ, סדר קריאה והוראת המשך מסונכרנת | עזר עבודה |
 
 ## ארכיטקטורה ונתונים
@@ -101,6 +102,7 @@
 | [DEVELOPMENT](DEVELOPMENT.md) | התקנה והרצה ב־DEV, שני טרמינלים, תצורה, בדיקות ובנייה; סקריפטים אומתו ב־08.10 |
 | [DOCS_INDEX](DOCS_INDEX.md) | מימוש קיים ותיעוד סופי עתידי |
 | [SYSTEM_AUDIT](SYSTEM_AUDIT.md) | ראיות מהסקירה, HTML, guidelines ובדיקות |
+| [CODE_REVIEW_FINDINGS_2026-11-17](CODE_REVIEW_FINDINGS_2026-11-17.md) | ממצאי שלוש סקירות ממוקדות: שינוי מקומי, אבטחה וזרימת הזמנה; ראיות וגבולות אימות 17.11.2026 |
 | [IMPLEMENTATION_PROGRESS](IMPLEMENTATION_PROGRESS.md) | מצב עבודה מאומת ותוצאות אחרונות |
 | [ORDER_CREATION](ORDER_CREATION.md) | יצירה אטומית ועריכת פריטי pending עם Idempotency נפרד; 016 דורשת החלה ידנית, השינוי טרם אומת מול DB |
 | [STOREFRONT_CHECKOUT](STOREFRONT_CHECKOUT.md) | מסך הזמנה, מינימום, עריכת pending וטעינת פריטים מפורשת בהתנגשות גרסאות; 016 מוכנה בלבד, ללא ספק תשלום |
@@ -109,17 +111,17 @@
 | [PAYMENT_TEST_RESULTS](PAYMENT_TEST_RESULTS.md) | בדיקות 10.11: כשל SQLSTATE 42P08 שוחזר ב־PostgreSQL מבודד; תיקון הוכח בבדיקות בלבד, היישום טרם שונה |
 | [ORDER_FLOW_UX_REVIEW](ORDER_FLOW_UX_REVIEW.md) | הצעות שימושיות מרוכזות למסלול ההזמנה והניהול, מנקודת מבט לא טכנולוגית |
 | [SITE_SCREENSHOTS](SITE_SCREENSHOTS.md) | שבעה צילומי דפדפן נקיים ומסודרים למצגת שימוש באתר מ־08.11.2026 |
-| [STOREFRONT_IMPLEMENTATION](STOREFRONT_IMPLEMENTATION.md) | בית, קטלוג, מוצר, עגלה וגלריות מ־09.10; אימות מקומי וגבולות P3/P4 |
+| [STOREFRONT_IMPLEMENTATION](STOREFRONT_IMPLEMENTATION.md) | בית, קטלוג מוצרים פשוטים, עגלה וגלריות; עדכון ממשק 17.11 לא אומת |
 | [Storefront README](../apps/storefront/README.md) | התקנה, הרצה ואימות יישום החנות העצמאי |
 | [ADMIN_VERIFICATION](ADMIN_VERIFICATION.md) | סדר עבודה שחולץ, תיקוני Admin, בדיקות מקומיות וגבולות האימות מ־08.10 |
 | [ADMIN_NOTIFICATIONS](ADMIN_NOTIFICATIONS.md) | תיבת התראות אישית, העדפות ו־Audit; בדיקות מקומיות, אימות חי פתוח |
-| [ADMIN_INVENTORY](ADMIN_INVENTORY.md) | מלאי זמין, קיבולת, היסטוריה וטופס התאמה; מילוי שבועי טרם מומש |
-| [ADMIN_CATALOG](ADMIN_CATALOG.md) | ניהול מוצרים פשוטים/מורכבים, קטגוריות, תמונות וגלריה כללית; typecheck ובדיקות ממוקדות, אימות DB/Storage ופריסה פתוחים |
+| [ADMIN_INVENTORY](ADMIN_INVENTORY.md) | מסך מלאי למוצרים פשוטים דרך הקטלוג; נתיבי וריאציות נשארים ב־API בלבד |
+| [ADMIN_CATALOG](ADMIN_CATALOG.md) | ניהול מוצרים פשוטים בלבד, קטגוריות ותמונות; API וריאציות נשמר כאפשרות עתידית; אימות DB/Storage ופריסה פתוחים |
 | [ADMIN_UX_SIMPLIFICATION](ADMIN_UX_SIMPLIFICATION.md) | פישוט קטלוג/ניהול והסרת בחירת שיטת משלוח; קוד ובדיקות מקומיות 21.10, DB חי פתוח |
-| [ADMIN_OPERATION_REPORTS](ADMIN_OPERATION_REPORTS.md) | תוויות אריזה: מספר הזמנה ומתחתיו טבלת מוצרים/וריאציות/כמויות; אספקה: דף נפרד לכל עיר, כתובות ומספרי הזמנה, סכום אריזות מתועדות; הדפסה ובחירה מדויקת; אימות חי פתוח |
+| [ADMIN_OPERATION_REPORTS](ADMIN_OPERATION_REPORTS.md) | תוויות אריזה ודוחות אספקה לפי מוצרים פשוטים, כתובות ומספרי הזמנה; הדפסה ובחירה מדויקת; אימות חי פתוח |
 | [ADMIN_QUALITY_AUDIT](ADMIN_QUALITY_AUDIT.md) | הרשאות מנהל, התראות אישיות, בידוד Session ותאריכים; בדיקות ממוקדות מקומיות |
 | [ADMIN_PRODUCTION_REPORT](ADMIN_PRODUCTION_REPORT.md) | רשימת ייצור להדפסה/שמירה כ־PDF בדפדפן; תצוגה ריקה ופתיחת הדפסה אומתו, PDF עם נתונים פתוח |
-| [ADMIN_ORDERS](ADMIN_ORDERS.md) | עימוד וסינון וריאציה, הרשאות ובדיקות; טעינת הנתיב החדש אומתה במצב ריק; בדיקה עם נתונים פתוחה |
+| [ADMIN_ORDERS](ADMIN_ORDERS.md) | עימוד וסינון לפי תאריך/שלב/עיר, ללא מסנן וריאציה בממשק; API תומך בשדה עתידי; בדיקה עם נתונים פתוחה |
 | [ADMIN_TASKS](ADMIN_TASKS.md) | יצירה וסגירת משימות ידניות, עימוד, הרשאות ו־Audit; אימות DB עדיין פתוח |
 | [BACKEND_IMPLEMENTATION](BACKEND_IMPLEMENTATION.md) | רכיבי API, מגבלות וחיבור מותנה למסד |
 | [LIVE_CONNECTION_RUNBOOK](LIVE_CONNECTION_RUNBOOK.md) | סדר חיבור DB/Supabase/API ודגשי אימות | Runbook |

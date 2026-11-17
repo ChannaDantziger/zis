@@ -24,18 +24,16 @@ export const OrdersPage = observer(function OrdersPage() {
   const [location] = useDebouncedValue(adminUiStore.location.trim(), FILTER_DEBOUNCE_MS);
   const [packageDialogOpen, setPackageDialogOpen] = useState(false);
   const [packageCounts, setPackageCounts] = useState<Record<string, number | string>>({});
-  const { deliveryDate: date, statusFilter, sortBy, sortDirection, productVariantFilter, orderPage: page } = adminUiStore;
+  const { deliveryDate: date, statusFilter, sortBy, sortDirection, orderPage: page } = adminUiStore;
   const params = new URLSearchParams({ deliveryDate: date, sortBy, sortDirection, page: String(page) });
   if (statusFilter) params.set('status', statusFilter);
   if (location) params.set('location', location);
-  if (productVariantFilter) params.set('productVariantId', productVariantFilter);
   const locationPending = location !== adminUiStore.location.trim();
-  const query = useQuery({ queryKey: ['orders', date, statusFilter, location, sortBy, sortDirection, productVariantFilter, page], queryFn: ({ signal }) => request<OrderPageResponse>(`/admin/orders/page?${params}`, { signal }), gcTime: 0 });
+  const query = useQuery({ queryKey: ['orders', date, statusFilter, location, sortBy, sortDirection, page], queryFn: ({ signal }) => request<OrderPageResponse>(`/admin/orders/page?${params}`, { signal }), gcTime: 0 });
   const statusCountQueries = useQueries({ queries: ORDER_STATUSES.map((status) => {
     const countParams = new URLSearchParams({ deliveryDate: date, status, page: '1', pageSize: '1' });
     if (location) countParams.set('location', location);
-    if (productVariantFilter) countParams.set('productVariantId', productVariantFilter);
-    return { queryKey: ['orders-status-count', date, status, location, productVariantFilter], queryFn: () => request<OrderPageResponse>(`/admin/orders/page?${countParams}`), enabled: !locationPending };
+    return { queryKey: ['orders-status-count', date, status, location], queryFn: () => request<OrderPageResponse>(`/admin/orders/page?${countParams}`), enabled: !locationPending };
   }) });
   const statusCounts = Object.fromEntries(ORDER_STATUSES.map((status, index) => [status, statusCountQueries[index]?.data?.page.totalItems ?? null])) as Record<OrderStatus, number | null>;
   const allCount = ORDER_STATUSES.every((status) => statusCounts[status] !== null) ? ORDER_STATUSES.reduce((total, status) => total + (statusCounts[status] ?? 0), 0) : null;
@@ -70,13 +68,11 @@ export const OrdersPage = observer(function OrdersPage() {
     <Group>
       <Button variant="subtle" disabled={busy} onClick={() => adminUiStore.setDeliveryDate(currentBusinessDate())}>היום</Button>
       {adminUiStore.location && <Button size="compact-sm" variant="light" disabled={busy} onClick={() => adminUiStore.setLocation('')}>עיר: {adminUiStore.location} ×</Button>}
-      {productVariantFilter && <Button size="compact-sm" variant="light" disabled={busy} onClick={() => adminUiStore.setProductVariantFilter(null)}>{query.data?.variants.find((variant) => variant.value === productVariantFilter)?.label ?? 'מוצר שנבחר'} ×</Button>}
       {(sortBy !== 'status' || sortDirection !== 'asc') && <Badge>מיון: {sortOptions.find((option) => option.value === sortBy)?.label} · {sortDirection === 'asc' ? 'עולה' : 'יורד'}</Badge>}
     </Group>
     <Accordion variant="contained"><Accordion.Item value="filters"><Accordion.Control>סינון ומיון נוספים</Accordion.Control><Accordion.Panel>
     <SimpleGrid cols={{ base: 1, sm: 2 }}>
       <TextInput label="סינון עיר" value={adminUiStore.location} disabled={busy} onChange={(event) => adminUiStore.setLocation(event.currentTarget.value)} />
-      <Select label="סינון מוצר / וריאציה" searchable clearable value={productVariantFilter} disabled={busy || query.isPending} data={query.data?.variants ?? []} onChange={(value) => adminUiStore.setProductVariantFilter(value)} />
       <Select label="מיון לפי" value={sortBy} disabled={busy} data={sortOptions} onChange={(value) => { if (value) adminUiStore.setSortBy(value); }} />
       <Select label="כיוון מיון" value={sortDirection} disabled={busy} data={[{ value: 'asc', label: 'עולה' }, { value: 'desc', label: 'יורד' }]} onChange={(value) => { if (value) adminUiStore.setSortDirection(value); }} />
     </SimpleGrid>

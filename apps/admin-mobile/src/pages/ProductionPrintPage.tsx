@@ -27,6 +27,12 @@ export function ProductionPrintPage() {
     return () => { document.title = previousTitle; };
   }, [date]);
   const report = query.data;
+  const production = report?.production.reduce((groups, item) => {
+    const existing = groups.get(item.productName);
+    if (existing) { existing.requiredSets += item.requiredSets; existing.hasOpenTask ||= item.hasOpenTask; }
+    else groups.set(item.productName, { productName: item.productName, requiredSets: item.requiredSets, hasOpenTask: item.hasOpenTask });
+    return groups;
+  }, new Map<string, { productName: string; requiredSets: number; hasOpenTask: boolean }>());
   const generatedAt = query.dataUpdatedAt ? new Intl.DateTimeFormat('he-IL', {
     timeZone: 'Asia/Jerusalem', dateStyle: 'short', timeStyle: 'short',
   }).format(new Date(query.dataUpdatedAt)) : '';
@@ -47,21 +53,19 @@ export function ProductionPrintPage() {
           <Text size="sm">נשלף: {generatedAt} · שעון ישראל</Text>
           <Group gap="xl">
             <Text>הזמנות פעילות ליום: {report.todayOrderCount}</Text>
-            <Text>וריאציות להכנה: {report.production.length}</Text>
-            <Text>סך Sets להכנה: {report.production.reduce((total, item) => total + item.requiredSets, 0)}</Text>
+            <Text>מוצרים להכנה: {production?.size ?? 0}</Text>
+            <Text>סך Sets להכנה: {Array.from(production?.values() ?? []).reduce((total, item) => total + item.requiredSets, 0)}</Text>
           </Group>
           <Text size="sm" c="dimmed">סך ההזמנות כולל את כל ההזמנות הפעילות ליום. הרשימה מטה כוללת רק פריטים שנדרשים להכנה לפי המצב הנוכחי.</Text>
-          {report.production.length ? <Table.ScrollContainer minWidth={600} className="production-print-table">
+          {production?.size ? <Table.ScrollContainer minWidth={500} className="production-print-table">
             <Table withTableBorder withColumnBorders striped>
-              <Table.Thead><Table.Tr><Table.Th>מוצר</Table.Th><Table.Th>וריאציה</Table.Th><Table.Th>Sets להכנה</Table.Th><Table.Th>הזמנות לווריאציה</Table.Th><Table.Th>דורש טיפול</Table.Th></Table.Tr></Table.Thead>
-              <Table.Tbody>{report.production.map((item) => <Table.Tr key={item.productVariantId}>
-                <Table.Td>{item.productName}</Table.Td><Table.Td>{item.variantName}</Table.Td>
-                <Table.Td>{item.requiredSets}</Table.Td><Table.Td>{item.orderCount}</Table.Td>
+              <Table.Thead><Table.Tr><Table.Th>מוצר</Table.Th><Table.Th>Sets להכנה</Table.Th><Table.Th>דורש טיפול</Table.Th></Table.Tr></Table.Thead>
+              <Table.Tbody>{[...production.values()].map((item) => <Table.Tr key={item.productName}>
+                <Table.Td>{item.productName}</Table.Td><Table.Td>{item.requiredSets}</Table.Td>
                 <Table.Td>{item.hasOpenTask ? 'משימה פתוחה' : '—'}</Table.Td>
               </Table.Tr>)}</Table.Tbody>
             </Table>
           </Table.ScrollContainer> : <Text fw={600}>אין ייצור נדרש לתאריך זה.</Text>}
-          <Text size="xs" c="dimmed">הזמנה עם כמה וריאציות נספרת בכל שורה מתאימה; אין לחבר את ספירות ההזמנות בשורות.</Text>
         </Stack>
       </Paper>}
   </Stack>;

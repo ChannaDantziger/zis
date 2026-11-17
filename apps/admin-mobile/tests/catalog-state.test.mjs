@@ -98,21 +98,6 @@ test('successful product creation followed by a refresh failure retries only rea
   assert.equal(store.product.productId, 'product'); assert.equal(store.productNeedsRefresh, false);
 });
 
-test('successful variant creation followed by a refresh failure retries only reads', async () => {
-  const store = new CatalogStore(); store.editProduct(product); store.editVariant();
-  const calls = []; let failed = false;
-  globalThis.catalogRequest = async (path, init) => {
-    calls.push(init?.method ?? 'GET');
-    if (init?.method === 'POST') return { productVariantId: 'variant' };
-    if (!failed) { failed = true; throw new Error('network'); }
-    return path.includes('?') ? page(1) : product;
-  };
-  await store.saveVariant(); assert.equal(store.variantNeedsRefresh, true);
-  await store.saveVariant();
-  assert.equal(calls.filter((method) => method === 'POST').length, 1);
-  assert.equal(store.variant, null); assert.equal(store.variantNeedsRefresh, false);
-});
-
 test('uploaded media is reused after failed metadata creation', async () => {
   catalogStore.editProduct(product); const media = new CatalogMediaStore();
   media.file = { type: 'image/png', name: 'fixture.png' };

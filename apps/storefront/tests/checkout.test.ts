@@ -4,7 +4,7 @@ import { CheckoutStore } from '../src/features/checkout/checkout.store';
 import type { CheckoutApi, Quote, OrderInput } from '../src/features/checkout/checkout.types';
 import { ApiError } from '../src/shared/api/http-client';
 
-const items = [{ productVariantId: 'variant-a', quantitySets: 2 }];
+const items = [{ productId: 'product-a', quantitySets: 2 }];
 const quote: Quote = { subtotal: '40.00', shippingTotal: '12.00', taxTotal: '0.00', total: '52.00',
   currency: 'ILS', availability: 'available', reservationCreated: false, warnings: [] };
 const created = { orderId: 'order-a', orderNumber: 'QA-100', status: 'ordered' as const,
@@ -52,14 +52,6 @@ test('origin rejection explains the configuration problem and exposes its reques
   assert.match(store.error, /CORS/);
   assert.match(store.error, /request-reference/);
 });
-test('missing tax configuration explains why the quote cannot be calculated', async () => {
-  const store = setup({ quote: async () => {
-    throw new ApiError('unavailable', 503, 'COMMERCE_TAX_NOT_CONFIGURED');
-  } });
-  await ready(store);
-  assert.equal(store.quote, null);
-  assert.match(store.error, /שיעור מס מאושר/);
-});
 test('cart change rejects previously calculated quote before creating', async () => {
   let calls = 0;
   const store = setup({ create: async () => { calls++; return created; } });
@@ -81,7 +73,7 @@ test('unknown create result retries exact payload and key, not changed form or c
   assert.equal(requests[0].input.deliveryAddress.city, 'ירושלים');
   assert.equal(requests[0].input.deliveryAddress.neighborhood, 'מרכז');
   assert.equal(store.created?.paymentStatus, 'pending'); assert.equal(store.customer.customerName, '');
-  assert.deepEqual(items, [{ productVariantId: 'variant-a', quantitySets: 2 }]);
+  assert.deepEqual(items, [{ productId: 'product-a', quantitySets: 2 }]);
 });
 test('confirmation failure never re-POSTs committed order; retry uses private token', async () => {
   let creates = 0; let confirms = 0;
@@ -135,11 +127,11 @@ test('separator-only phone and oversized name do not enable submission', async (
   store.setCustomer('customerPhone', '0500000000'); store.setCustomer('customerName', 'a'.repeat(151)); assert.equal(store.canCreate, false);
 });
 test('known missing configuration 503 unlocks while generic 503 retains exact attempt', async () => {
-  for (const code of ['ORDER_CREATION_NOT_CONFIGURED', 'COMMERCE_TAX_NOT_CONFIGURED', 'UNKNOWN_SERVICE_FAILURE']) {
+  for (const code of ['ORDER_CREATION_NOT_CONFIGURED', 'UNKNOWN_SERVICE_FAILURE']) {
     const store = setup({ create: async () => { throw new ApiError('unavailable', 503, code); } });
     await ready(store); await store.submit(items);
     assert.equal(store.retryPending, code === 'UNKNOWN_SERVICE_FAILURE');
-    assert.match(store.error, /אינה זמינה/);
+    assert.match(store.error, code === 'UNKNOWN_SERVICE_FAILURE' ? /לא ניתן לאמת/ : /תקלה זמנית/);
   }
 });
 

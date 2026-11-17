@@ -5,10 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { extname, resolve, sep } from 'node:path';
 const root = resolve(fileURLToPath(new URL('../dist-checkout-qa/', import.meta.url)));
 const productId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
-const variantId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const product = { productId, name: 'מוצר בדיקה בלבד', description: 'QA', category: { categoryId: productId, name: 'בדיקות', slug: 'qa' },
-  setSize: 1, pricePerUnit: '20.00', availableSets: 100, displayOrder: 10, primaryImage: null, gallery: [], variants: [{ productVariantId: variantId, name: 'QA',
-    productCode: 'QA', pricePerUnit: '20.00', availableSets: 100, isDefault: true, attributes: null, primaryImage: null, gallery: [] }] };
+  setSize: 1, pricePerUnit: '20.00', availableSets: 100, displayOrder: 10, primaryImage: null, gallery: [], variants: [] };
 const created = { orderId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', orderNumber: 'QA-100', status: 'ordered',
   paymentStatus: 'pending', total: '52.00', currency: 'ILS', confirmationToken: 'qa-private-memory-token' };
 let orderInput; const attempts = new Map();

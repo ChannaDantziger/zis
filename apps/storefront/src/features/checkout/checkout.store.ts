@@ -6,7 +6,7 @@ import { customerErrors } from './customer-validation';
 import { emptyCustomer, type CheckoutApi, type CheckoutItem, type Confirmation, type CustomerForm,
   type OrderCreated, type OrderInput, type Quote, type QuoteInput, type ShippingZone } from './checkout.types';
 import type { StoreStatus } from '../../shared/store-status';
-import { cartKey, OUT_OF_STOCK_MESSAGE } from '../../stores/cart.store';
+import { cartKey, cartStore, OUT_OF_STOCK_MESSAGE } from '../../stores/cart.store';
 import { isQuantity, MAX_CART_LINES } from '../../stores/cart.persistence';
 
 export class CheckoutStore {
@@ -104,7 +104,7 @@ export class CheckoutStore {
       if (!confirmation.version || !confirmation.items?.length) throw new Error('Pending items are unavailable');
       runInAction(() => {
         if (version !== this.version || request !== this.confirmationVersion || !this.created) return;
-        this.pendingItems = confirmation.items!.map(item => ({ ...item }));
+        this.pendingItems = confirmation.items!.map(item => ({ productId: item.productId, quantitySets: item.quantitySets }));
         this.savedPendingItems = JSON.stringify(this.pendingItems);
         this.pendingItems.forEach(item => this.pendingCartKeys.add(cartKey(item))); this.removedPendingItems = [];
         this.created = { ...this.created, version: confirmation.version, total: confirmation.total, status: confirmation.status, paymentStatus: confirmation.paymentStatus };
@@ -227,19 +227,20 @@ export class CheckoutStore {
       runInAction(() => {
         if (version !== this.version) return;
         const { confirmationToken, ...created } = response;
-        this.pendingItems = this.attempt!.input.items.map(item => ({ ...item, productVariantId: item.productVariantId ?? null }));
+        this.pendingItems = this.attempt!.input.items.map(item => ({ ...item }));
         this.pendingCartKeys = new Set(this.pendingItems.map(cartKey)); this.removedPendingItems = [];
         this.savedPendingItems = JSON.stringify(this.pendingItems);
         this.created = created; this.token = confirmationToken;
         if ('version' in response) { this.testOrderVersion = String(response.version); this.simulatedPaid = response.paymentStatus === 'paid'; } this.customer = emptyCustomer();
         this.attempt = null; this.quote = null;
+        cartStore.clear();
       });
       if (version === this.version) await this.refreshConfirmation();
     } catch (error) {
       runInAction(() => {
         if (version !== this.version) return;
         const definitive = error instanceof ApiError && ([400, 401, 403, 404, 422].includes(error.status)
-          || (error.status === 503 && ['ORDER_CREATION_NOT_CONFIGURED', 'COMMERCE_TAX_NOT_CONFIGURED'].includes(error.code)));
+          || (error.status === 503 && error.code === 'ORDER_CREATION_NOT_CONFIGURED'));
         if (definitive) { this.attempt = null; this.quote = null; }
         this.error = message(error, !definitive);
       });
@@ -275,7 +276,7 @@ export class CheckoutStore {
   }
   private quoteInput(items: CheckoutItem[]): QuoteInput {
     return { deliveryDate: this.deliveryDate, shippingZoneId: this.shippingZoneId,
-      items: items.map(({ productId, productVariantId, quantitySets }) => ({ productId, productVariantId, quantitySets })) };
+      items: items.map(({ productId, quantitySets }) => ({ productId, quantitySets })) };
   }
 }
 function testPaymentError(error: unknown): string {
@@ -299,7 +300,6 @@ function message(error: unknown, uncertain: boolean) {
     const requestReference = error.requestId ? ` מזהה פנייה: ${error.requestId}.` : '';
     return `החנות אינה מורשית לפנות לשרת מהכתובת הנוכחית.${requestReference} יש לבדוק את הגדרת CORS ולהפעיל מחדש את השרת.`;
   }
-  if (error instanceof ApiError && error.code === 'COMMERCE_TAX_NOT_CONFIGURED') return 'הצעת המחיר אינה זמינה עד שמנהלת החנות תגדיר שיעור מס מאושר. לא בוצע חיוב.';
   if (error instanceof ApiError && error.code === 'PENDING_ORDER_EDIT_NOT_CONFIGURED') return 'עריכת ההזמנה אינה זמינה עד השלמת עדכון המסד בידי מנהלת החנות. לא נשמר שינוי ולא בוצע חיוב.';
   if (error instanceof ApiError && error.code === 'STOCK_UNAVAILABLE') return OUT_OF_STOCK_MESSAGE;
   if (error instanceof ApiError && error.code === 'ORDER_NOT_EDITABLE') return 'כבר התחיל תשלום להזמנה זו או שההזמנה אינה ממתינה. לא ניתן לשנות אותה כאן.';

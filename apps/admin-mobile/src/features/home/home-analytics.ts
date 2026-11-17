@@ -11,10 +11,10 @@ export function summarizeProduction(orders: HomeOrder[]): ProductGroup[] {
   for (const order of orders) {
     if (order.paymentStatus !== 'paid' || order.status === 'cancelled') continue;
     for (const item of order.items) {
-      const key = `${item.productId ?? item.productName}:${item.productVariantId ?? ''}:${item.productName}:${item.variantName}`;
+      const key = `${item.productId ?? item.productName}:${item.productName}`;
       let group = groups.get(key);
       if (!group) {
-        group = { key, name: [item.productName, item.variantName].filter(Boolean).join(' · '),
+        group = { key, name: item.productName,
           category: item.categoryName, imageUrl: item.imageUrl, orderedSets: 0, remainingSets: 0, lines: [] };
         groups.set(key, group);
       }

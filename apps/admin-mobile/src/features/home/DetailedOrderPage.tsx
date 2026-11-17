@@ -57,7 +57,7 @@ export function DetailedOrderPage({ selectedOrderId, itemImages = [] }: { select
     <Card withBorder radius="lg"><Title order={2} mb="sm">מוצרים ותכולה</Title><Stack>{order.items.map(item => {
       const image = itemImages.find(source => source.orderItemId === item.orderItemId)?.imageUrl;
       return <Group key={item.orderItemId} wrap="nowrap" align="center" justify="space-between" className="home-detail-item">
-        <Group wrap="nowrap">{image && <img className="home-thumb" src={image} alt={item.productName} />}<div><Text fw={700}>{item.productName}</Text><Text size="sm">{item.variantName || 'מוצר רגיל'} · {item.quantitySets} סטים</Text><Text size="xs" c="dimmed">קוד: {item.productCode || missing} · {item.setSize ?? missing} יחידות בסט</Text></div></Group>
+        <Group wrap="nowrap">{image && <img className="home-thumb" src={image} alt={item.productName} />}<div><Text fw={700}>{item.productName}</Text><Text size="sm">{item.quantitySets} סטים</Text><Text size="xs" c="dimmed">קוד: {item.productCode || missing} · {item.setSize ?? missing} יחידות בסט</Text></div></Group>
         <div><Text size="sm">₪{item.unitSetPrice} לסט</Text><Text fw={700}>₪{item.lineTotal}</Text></div>
       </Group>;
     })}</Stack></Card>

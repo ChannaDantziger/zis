@@ -31,7 +31,7 @@ export const PendingOrderItems = observer(function PendingOrderItems() {
       const details = cartStore.details.get(key);
       return <Card key={key} withBorder p="sm">
         <Stack gap="xs">
-          <Text fw={600}>{details?.product.name ?? 'מוצר בהזמנה'}{details?.variant ? ` — ${details.variant.name}` : ''}</Text>
+          <Text fw={600}>{details?.product.name ?? 'מוצר בהזמנה'}</Text>
           <NumberInput label="כמות" aria-label={`כמות ${details?.product.name ?? 'מוצר בהזמנה'}`}
             min={1} max={MAX_QUANTITY_SETS} allowDecimal={false} allowNegative={false} value={item.quantitySets}
             disabled={!store.canEditPending} onChange={value => { if (typeof value === 'number') store.setPendingQuantity(key, value); }} />
@@ -47,7 +47,7 @@ export const PendingOrderItems = observer(function PendingOrderItems() {
         const key = cartKey(item);
         const details = cartStore.details.get(key);
         return <Group key={key} justify="space-between">
-          <Text size="sm">{details?.product.name ?? 'פריט שהוסר'}{details?.variant ? ` — ${details.variant.name}` : ''}</Text>
+          <Text size="sm">{details?.product.name ?? 'פריט שהוסר'}</Text>
           <Button variant="subtle" disabled={!store.canEditPending || store.pendingItems.length >= MAX_CART_LINES}
             onClick={() => store.addPendingItem(item)}>החזרה להזמנה</Button>
         </Group>;
@@ -61,7 +61,7 @@ export const PendingOrderItems = observer(function PendingOrderItems() {
         const key = cartKey(item);
         const details = cartStore.details.get(key);
         return <Group key={key} justify="space-between">
-          <Text size="sm">{details?.product.name ?? 'מוצר בעגלה'}{details?.variant ? ` — ${details.variant.name}` : ''} ({item.quantitySets} יחידות)</Text>
+          <Text size="sm">{details?.product.name ?? 'מוצר בעגלה'} ({item.quantitySets} יחידות)</Text>
           <Button variant="light" disabled={!store.canEditPending || !details || cartStore.missing.has(key) || store.pendingItems.length >= MAX_CART_LINES}
             onClick={() => store.addPendingItem(item)}>הוספה להזמנה</Button>
         </Group>;
