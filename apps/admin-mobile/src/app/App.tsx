@@ -5,9 +5,9 @@ import { useEffect } from 'react';
 import { IconBell, IconBox, IconChecklist, IconHome, IconSettings, IconTruck, IconPhoto } from '@tabler/icons-react';
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
-import { DashboardPage } from '../pages/DashboardPage.js';
+import { HomeDashboardPage } from '../features/home/HomeDashboardPage.js';
 import { OrdersPage } from '../pages/OrdersPage.js';
-import { OrderDetailsPage } from '../pages/OrderDetailsPage.js';
+import { DetailedOrderPage } from '../features/home/DetailedOrderPage.js';
 import { TasksPage } from '../pages/TasksPage.js';
 import { ProductionPage } from '../pages/ProductionPage.js';
 import { PackingReportPage, DeliveryReportPage } from '../pages/OperationsReportPage.js';
@@ -73,7 +73,7 @@ export function AppRoutes() {
   return <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route element={<ProtectedApp />}>
-      <Route path="/" element={<DashboardPage />} />
+      <Route path="/" element={<HomeDashboardPage />} />
       <Route path="/tasks" element={<TasksPage />} />
       <Route path="/notifications" element={<NotificationsPage />} />
       <Route path="/inventory" element={<InventoryPage />} />
@@ -81,7 +81,7 @@ export function AppRoutes() {
       <Route path="/faq" element={<FaqPage />} />
       <Route path="/gallery" element={<GalleryEditor />} />
       <Route path="/orders" element={<OrdersPage />} />
-      <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
+      <Route path="/orders/:orderId" element={<DetailedOrderPage />} />
       <Route path="/production" element={<ProductionPage />} />
       <Route path="/production/print" element={<ProductionPrintPage />} />
       <Route path="/packing" element={<PackingReportPage />} />

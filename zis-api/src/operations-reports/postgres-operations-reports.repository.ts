@@ -33,16 +33,17 @@ export function createPostgresOperationsReportsRepository(factory: SqlClientFact
            select o.order_id as "orderId", o.order_number as "orderNumber", o.status,
                   extract(epoch from o.updated_at)::text as version,
                   to_char(o.delivery_date, 'YYYY-MM-DD') as "deliveryDate",
-                  o.customer_name as "customerName", o.customer_phone as "customerPhone", coalesce(o.delivery_phone,o.customer_phone) as "deliveryPhone", o.is_test as "isTest",
+                  o.customer_name as "customerName", o.customer_phone as "customerPhone", coalesce(o.delivery_phone,o.customer_phone) as "deliveryPhone", o.package_count as "packageCount", o.is_test as "isTest",
                   jsonb_build_object('city', o.delivery_address->>'city', 'neighborhood', o.delivery_address->>'neighborhood',
                     'street', o.delivery_address->>'street', 'houseNumber', o.delivery_address->>'houseNumber',
                     'apartment', o.delivery_address->>'apartment', 'postalCode', o.delivery_address->>'postalCode') as address,
                   o.delivery_venue_name as "venueName", o.dedication_text as "dedicationText",
                   o.customer_notes as "customerNotes", s.transitioned_at::text as "transitionedAt",
-                  coalesce((select jsonb_agg(jsonb_build_object('productName', i.product_name_snapshot,
+                  coalesce((select jsonb_agg(jsonb_build_object('categoryName', coalesce(c.name, 'ללא קטגוריה'), 'productName', i.product_name_snapshot,
                     'variantName', i.variant_name_snapshot, 'quantitySets', i.quantity_sets, 'setSize', i.set_size_snapshot)
                     order by i.product_name_snapshot, i.variant_name_snapshot, i.order_item_id)
-                    from public.order_items i where i.order_id = o.order_id), '[]'::jsonb) as items
+                    from public.order_items i left join public.products p on p.product_id=i.product_id
+                    left join public.categories c on c.category_id=p.category_id where i.order_id = o.order_id), '[]'::jsonb) as items
              from selected s join public.orders o on o.order_id = s.order_id
             order by o.delivery_address->>'city', o.delivery_address->>'street',
                      o.delivery_address->>'houseNumber', s.transitioned_at, o.order_number, o.order_id

@@ -5,6 +5,8 @@ import { request } from '../shared/api/http-client.js';
 import { ErrorState, LoadingState } from '../shared/components/StateMessage.js';
 import { OrderStatusBadge, statusLabels } from '../shared/components/OrderStatusBadge.js';
 import type { BulkStatusResponse, OrderDetails, OrderStatus } from '../entities/admin.types.js';
+import { useState } from 'react';
+import { PackageCountDialog } from '../features/home/PackageCountDialog.js';
 
 const paymentLabels: Record<string, string> = { pending: 'ממתינה לתשלום', authorized: 'אושר אצל הספק', paid: 'שולמה', failed: 'תשלום נכשל' };
 
@@ -12,12 +14,13 @@ export function OrderDetailsPage({ selectedOrderId }: { selectedOrderId?: string
   const params = useParams();
   const orderId = selectedOrderId ?? params.orderId;
   const client = useQueryClient();
+  const [packageDialogOpen, setPackageDialogOpen] = useState(false);
   const query = useQuery({ queryKey: ['order-details', orderId], gcTime: 0, queryFn: ({ signal }) => request<OrderDetails>(`/admin/orders/${encodeURIComponent(orderId ?? '')}`, { signal }) });
   const mutation = useMutation({
-    mutationFn: (targetStatus: OrderStatus) => request<BulkStatusResponse>('/admin/orders/bulk-status', {
-      method: 'POST', body: JSON.stringify({ targetStatus, items: [{ orderId, version: query.data?.version }] }),
+    mutationFn: ({ targetStatus, packageCount }: { targetStatus: OrderStatus; packageCount?: number }) => request<BulkStatusResponse>('/admin/orders/bulk-status', {
+      method: 'POST', body: JSON.stringify({ targetStatus, items: [{ orderId, version: query.data?.version, ...(packageCount ? { packageCount } : {}) }] }),
     }),
-    onSuccess: () => { for (const key of ['order-details', 'orders', 'dashboard', 'production']) client.invalidateQueries({ queryKey: [key] }); },
+    onSuccess: () => { setPackageDialogOpen(false); for (const key of ['order-details', 'orders', 'orders-status-count', 'dashboard', 'production']) client.invalidateQueries({ queryKey: [key] }); },
   });
   if (query.isPending) return <LoadingState />;
   if (query.isError) return <Stack>{!selectedOrderId && <Button component={Link} to="/orders" variant="subtle">חזרה להזמנות</Button>}<ErrorState message={query.error.message} /></Stack>;
@@ -36,6 +39,7 @@ export function OrderDetailsPage({ selectedOrderId }: { selectedOrderId?: string
     <Card withBorder radius="lg"><Title order={2} mb="md">לקוחה ומשלוח</Title><Stack gap="xs"><Text>{order.customerName}</Text><Text>טלפון המזמין: <span dir="ltr">{order.customerPhone}</span></Text><Text>טלפון זמין לקבלת המשלוח: <span dir="ltr">{order.deliveryPhone || order.customerPhone}</span></Text><Text dir="ltr" ta="right">{order.customerEmail}</Text><Text>{[address.city, address.neighborhood, address.street, address.houseNumber].filter(Boolean).join(', ')}</Text>{address.apartment && <Text>דירה: {address.apartment}</Text>}{address.postalCode && <Text>מיקוד: {address.postalCode}</Text>}{order.venueName && <Text>אולם: {order.venueName}</Text>}</Stack></Card>
     {(order.dedicationText || order.customerNotes) && <Card withBorder radius="lg"><Title order={2} mb="md">הקדשה והערות</Title>{order.dedicationText && <Text style={{ whiteSpace: 'pre-wrap' }}>{order.dedicationText}</Text>}{order.customerNotes && <Text mt="sm" style={{ whiteSpace: 'pre-wrap' }}>{order.customerNotes}</Text>}</Card>}
     <Card withBorder radius="lg"><Title order={2} mb="md">היסטוריית סטטוסים</Title><Stack>{order.history.map((entry) => <div key={entry.historyId}><Text>{entry.fromStatus ? `${statusLabels[entry.fromStatus]} ← ` : ''}{statusLabels[entry.toStatus]}</Text><Text size="sm" c="dimmed">{new Date(entry.createdAt).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}</Text>{entry.note && <Text size="sm">{entry.note}</Text>}</div>)}{!order.history.length && <Text c="dimmed">אין שינויי סטטוס מתועדים</Text>}</Stack></Card>
-    <Group>{target && <Button loading={mutation.isPending} onClick={() => mutation.mutate(target)}>העבר ל{statusLabels[target]}</Button>}<Button component={Link} to="/production" variant="light">רשימת ייצור היום</Button></Group>
+    <Group>{target && <Button loading={mutation.isPending} onClick={() => { if (target === 'in_transit') setPackageDialogOpen(true); else if (window.confirm(`לאשר העברת הזמנה ${order.orderNumber} לסטטוס "${statusLabels[target]}"?`)) mutation.mutate({ targetStatus: target }); }}>העבר ל{statusLabels[target]}</Button>}<Button component={Link} to="/production" variant="light">רשימת ייצור היום</Button></Group>
+    {packageDialogOpen && target === 'in_transit' && <PackageCountDialog initialCount={order.packageCount} targetLabel={`העבר ל${statusLabels[target]}`} pending={mutation.isPending} error={mutation.isError ? mutation.error.message : failure?.reason} onClose={() => setPackageDialogOpen(false)} onConfirm={(packageCount) => mutation.mutate({ targetStatus: target, packageCount })} />}
   </Stack>;
 }

@@ -11,6 +11,7 @@ function fixture() {
  const calls:string[]=[];let saved:OrderCreatedResponse|undefined;let hash='';let expiry:Date|undefined;
  const tx:OrderTransaction={
   async claimRequest(){calls.push('claim');return saved??null;},
+  async nextOrderNumber(){calls.push('number');return '1000';},
   async readSnapshots(){calls.push('snapshots');return [{productVariantId:input.items[0]!.productVariantId!,productId:input.items[0]!.productId,productName:'Original',variantName:'Original variant',productCode:'CODE',setSize:6,pricePerSet:'10.25'}];},
   async getContext(){calls.push('quote');return {deliveryPolicy:{timezone:'Asia/Jerusalem',sameDayCutoffTime:'09:00',maxAdvanceDays:7,workingDays:[0,1,2,3,4],holidayDates:new Set(),storeOpen:true},minimumProductSubtotal:'0.00',currency:'ILS',taxRate:'18.00',variants:[{productId:input.items[0]!.productId,productVariantId:input.items[0]!.productVariantId!,pricePerSet:'10.25',availableSets:10,active:true}],shippingRules:[{basePrice:'5.00',sizeFromSets:1,sizeToSets:null,sizeSurcharge:'0.00',timeSurcharge:'0.00',urgencySurcharge:'0.00',active:true}]};},
   async save(_input,_quote,_snapshots,response,value,expires){calls.push('save');saved=response;hash=value;expiry=expires;},async completeRequest(){calls.push('complete');},
@@ -20,7 +21,7 @@ function fixture() {
 }
 test('creation computes authoritative totals and locks snapshots before quote',async()=>{
  const f=fixture();const response=await createOrderService(f.repository,config).create(input,'abcdefghijklmnop',now);
- assert.equal(response.total,'25.50');assert.equal(response.paymentStatus,'pending');assert.equal(response.status,'ordered');assert.deepEqual(f.calls,['begin','claim','snapshots','quote','save','complete','commit']);assert.match(f.hash,/^[a-f0-9]{64}$/);assert.notEqual(f.hash,response.confirmationToken);assert.equal(f.expiry?.toISOString(),'2026-10-09T09:00:00.000Z');
+ assert.equal(response.total,'25.50');assert.equal(response.orderNumber,'1000');assert.equal(response.paymentStatus,'pending');assert.equal(response.status,'ordered');assert.deepEqual(f.calls,['begin','claim','snapshots','quote','number','save','complete','commit']);assert.match(f.hash,/^[a-f0-9]{64}$/);assert.notEqual(f.hash,response.confirmationToken);assert.equal(f.expiry?.toISOString(),'2026-10-09T09:00:00.000Z');
 });
 test('same key replay retains token without recalculating or saving',async()=>{
  const f=fixture();const service=createOrderService(f.repository,config);const first=await service.create(input,'abcdefghijklmnop',now);f.calls.length=0;const second=await service.create(input,'abcdefghijklmnop',new Date('2026-10-20T08:00:00Z'));assert.deepEqual(first,second);assert.deepEqual(f.calls,['begin','claim','commit']);

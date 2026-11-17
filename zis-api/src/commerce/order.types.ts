@@ -9,6 +9,7 @@ export interface OrderTransaction extends QuoteRepository {
   readVersion?(orderId: string): Promise<string>;
   markTest?(orderId: string, actor: string): Promise<string>;
   claimRequest(key: string, hash: string): Promise<OrderCreatedResponse | null>;
+  nextOrderNumber(): Promise<string>;
   readSnapshots(input: CreateOrderInput): Promise<OrderSnapshot[]>;
   save(input: CreateOrderInput, quote: QuotePreview, snapshots: OrderSnapshot[], response: OrderCreatedResponse, tokenHash: string, expiresAt: Date): Promise<void>;
   completeRequest(key: string, orderId: string): Promise<void>;

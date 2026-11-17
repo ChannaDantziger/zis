@@ -17,7 +17,8 @@ export function createOrderService(repository: OrderRepository, config?: OrderCo
         const snapshots=await transaction.readSnapshots(input);
         const quote=await createQuoteService(transaction).calculate(input,now);
         const orderId=randomUUID(); const confirmationToken=tokenFor(orderId);
-        const response={orderId,orderNumber:'ZIS-'+orderId.toUpperCase(),status:'ordered' as const,paymentStatus:'pending' as const,total:quote.total,currency:'ILS' as const,confirmationToken};
+        const orderNumber=await transaction.nextOrderNumber();
+        const response={orderId,orderNumber,status:'ordered' as const,paymentStatus:'pending' as const,total:quote.total,currency:'ILS' as const,confirmationToken};
         await transaction.save(input,quote,snapshots,response,sha256(confirmationToken),new Date(now.getTime()+config!.confirmationTokenTtlSeconds*1000));
         const version = actor ? await transaction.markTest!(orderId, actor) : await transaction.readVersion?.(orderId);
         await transaction.completeRequest(key,orderId);

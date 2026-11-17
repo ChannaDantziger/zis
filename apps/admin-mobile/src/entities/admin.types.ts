@@ -15,7 +15,12 @@ export interface OrderDetails {
   isTest?: boolean; deliveryPhone?: string; customerName: string; customerPhone: string; customerEmail: string;
   deliveryAddress: { city: string; neighborhood?: string | null; street: string; houseNumber: string; apartment?: string | null; postalCode?: string | null };
   venueName: string | null; dedicationText: string | null; customerNotes: string | null;
-  items: Array<{ orderItemId: string; productName: string; variantName: string; quantitySets: number; unitSetPrice: string; lineTotal: string }>;
+  subtotal?: string; shippingTotal?: string; discountTotal?: string; taxTotal?: string; taxRate?: string;
+  shippingZoneName?: string | null; shippingMethod?: string | null; deliveryTimeWindow?: unknown;
+  packageCount?: number | null; courierNotes?: string | null; internalNotes?: string | null;
+  isUrgent?: boolean; paymentConfirmedAt?: string | null; createdAt?: string; updatedAt?: string;
+  payments?: Array<{ provider: string; providerTransactionId: string | null; amount: string; currency: string; status: string; isSimulated: boolean; createdAt: string }>;
+  items: Array<{ orderItemId: string; productName: string; variantName: string; quantitySets: number; unitSetPrice: string; lineTotal: string; productCode?: string | null; setSize?: number | null }>;
   history: Array<{ historyId: string; fromStatus: OrderStatus | null; toStatus: OrderStatus; createdAt: string; note: string | null }>;
   tasks: Array<{ taskId: string; title: string; description: string | null; priority: string }>;
   allowedNextStatuses: OrderStatus[];

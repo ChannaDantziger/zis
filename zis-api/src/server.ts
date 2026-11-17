@@ -24,6 +24,11 @@ import { createPostgresAdminCatalogRepository } from './catalog/postgres-admin-c
 import { createAdminCatalogService } from './catalog/admin-catalog.service.js';
 import { createPostgresDashboardRepository } from './dashboard/postgres-dashboard.repository.js';
 import { createDashboardService } from './dashboard/dashboard.service.js';
+import { createPostgresHomeRepository } from './dashboard/postgres-home.repository.js';
+import { createHomeService } from './dashboard/home.service.js';
+import { createPostgresHomeTasksRepository } from './tasks/postgres-home-tasks.repository.js';
+import { createHomeTasksService } from './tasks/home-tasks.service.js';
+import { createOrderCorrectionService } from './operations/order-correction.service.js';
 import { createPostgresOrderStatusRepository } from './operations/postgres-order-status.repository.js';
 import { createOrderStatusService } from './operations/order-status.service.js';
 import { createPostgresCommerceSettingsRepository } from './operations/postgres-commerce-settings.repository.js';
@@ -102,6 +107,10 @@ const app = hasServerDependencies
         storageService: storage,
         adminCatalogService: createAdminCatalogService(adminCatalogRepository),
         dashboardService: createDashboardService(dashboardRepository),
+        homeService: createHomeService(createPostgresHomeRepository(createPostgresClientFactory(pool)),
+          (path) => storage.createSignedUrl(PRODUCT_MEDIA_BUCKET, path).then((result) => result.url)),
+        homeTasksService: createHomeTasksService(createPostgresHomeTasksRepository(createPostgresClientFactory(pool))),
+        orderCorrectionService: createOrderCorrectionService(createPostgresClientFactory(pool)),
         orderStatusService: createOrderStatusService(orderStatusRepository),
         commerceSettingsService: createCommerceSettingsService(commerceSettingsRepository),
         commerceService: createCommerceService(commerceRepository),

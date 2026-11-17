@@ -1,7 +1,7 @@
 import type { OrderStatus } from '../domain/order-status.js';
 import type { AdminUserRole } from '../controllers/admin-inventory.controller.js';
 
-export interface BulkStatusItem { orderId: string; version: string; }
+export interface BulkStatusItem { orderId: string; version: string; packageCount?: number; }
 export interface BulkStatusRequest {
   items: BulkStatusItem[];
   targetStatus: OrderStatus;

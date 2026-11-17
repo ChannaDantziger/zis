@@ -22,6 +22,8 @@ export function createPostgresTasksRepository(factory: SqlClientFactory): TasksR
         values ('manual', $1, 'normal', 'open', $2) returning ${TASK_FIELDS}`, [title, adminUserId]);
       const task = result.rows[0];
       if (!task) throw new Error('Task creation failed');
+      await client.query(`insert into public.admin_task_history(admin_task_id, from_status, to_status, changed_by)
+        values($1, null, 'open', $2)`, [task.taskId, adminUserId]);
       await auditTask(client, adminUserId, 'create_manual_task', null, task);
       return task;
     }),
@@ -33,10 +35,12 @@ export function createPostgresTasksRepository(factory: SqlClientFactory): TasksR
       if (before.status === status) return before;
       if (before.status !== 'open') throw new ApiError(409, 'TASK_ALREADY_RESOLVED', 'Task is already resolved');
       if (before.version !== version) throw new ApiError(409, 'TASK_CHANGED', 'Task has changed; refresh before continuing');
-      const updated = await client.query<TaskRow>(`update public.admin_tasks set status = $2, resolved_by = $3,
+      const updated = await client.query<TaskRow>(`update public.admin_tasks set status = $2, workflow_status = 'closed', resolved_by = $3,
         resolved_at = now(), updated_at = now() where admin_task_id = $1 returning ${TASK_FIELDS}`, [taskId, status, adminUserId]);
       const after = updated.rows[0];
       if (!after) throw new Error('Task resolution failed');
+      await client.query(`insert into public.admin_task_history(admin_task_id, from_status, to_status, changed_by)
+        values($1, 'open', 'closed', $2)`, [taskId, adminUserId]);
       await auditTask(client, adminUserId, 'resolve_manual_task', before, after);
       return after;
     }),

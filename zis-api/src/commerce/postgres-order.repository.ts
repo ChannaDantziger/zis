@@ -58,6 +58,10 @@ function transaction(client: SqlClient): OrderTransaction {
       const prior=orders.rows[0]; if(!prior) throw new ApiError(500,'INTERNAL_ERROR','Stored order is unavailable');
       return {isTest:prior.is_test,version:prior.version,orderId:prior.order_id,orderNumber:prior.order_number,total:prior.total,status:prior.status ?? 'ordered',paymentStatus:prior.payment_status ?? 'pending',currency:'ILS',confirmationToken:''};
     },
+    async nextOrderNumber() {
+      const result=await client.query<{order_number:string}>("select nextval('public.order_number_seq')::text as order_number");
+      return result.rows[0].order_number;
+    },
     async readSnapshots(input) {
       await assertAddress(client,input);
       const result=await client.query<SnapshotRow>(`select p.product_id,null::uuid as product_variant_id,p.name as product_name,p.name as variant_name,

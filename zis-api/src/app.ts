@@ -29,6 +29,12 @@ import { createAdminCatalogRouter } from './routes/admin-catalog.routes.js';
 import type { AdminCatalogService } from './catalog/admin-catalog.types.js';
 import { createAdminDashboardRouter } from './routes/admin-dashboard.routes.js';
 import type { DashboardService } from './dashboard/dashboard.types.js';
+import { createAdminHomeRouter } from './routes/admin-home.routes.js';
+import type { HomeService } from './dashboard/home.types.js';
+import { createAdminHomeTasksRouter } from './routes/admin-home-tasks.routes.js';
+import type { HomeTasksRepository } from './tasks/home-tasks.types.js';
+import { createAdminOrderCorrectionRouter } from './routes/admin-order-correction.routes.js';
+import type { OrderCorrectionService } from './operations/order-correction.service.js';
 import type { CommerceService } from './commerce/commerce.types.js';
 import { createCommerceRouter } from './routes/commerce.routes.js';
 import { createAdminOrderStatusRouter } from './routes/admin-order-status.routes.js';
@@ -59,6 +65,9 @@ export interface AppDependencies {
   storageService?: StorageService;
   adminCatalogService?: AdminCatalogService;
   dashboardService?: DashboardService;
+  homeService?: HomeService;
+  homeTasksService?: HomeTasksRepository;
+  orderCorrectionService?: OrderCorrectionService;
   commerceService?: CommerceService;
   orderStatusService?: OrderStatusService;
   commerceSettingsService?: CommerceSettingsService;
@@ -101,6 +110,15 @@ export function createApp(dependencies: AppDependencies = {}) {
   }
   if (dependencies.dashboardService && dependencies.resolveAdminUserId) {
     app.use(createAdminDashboardRouter(dependencies.dashboardService, dependencies.resolveAdminUserId));
+  }
+  if (dependencies.homeService && dependencies.resolveAdminUserId) {
+    app.use(createAdminHomeRouter(dependencies.homeService, dependencies.resolveAdminUserId));
+  }
+  if (dependencies.homeTasksService && dependencies.resolveAdminUserId) {
+    app.use(createAdminHomeTasksRouter(dependencies.homeTasksService, dependencies.resolveAdminUserId));
+  }
+  if (dependencies.orderCorrectionService && dependencies.resolveAdminUserId) {
+    app.use(createAdminOrderCorrectionRouter(dependencies.orderCorrectionService, dependencies.resolveAdminUserId));
   }
   if (dependencies.orderStatusService && dependencies.resolveAdminUserId) {
     app.use(createAdminOrderStatusRouter(dependencies.orderStatusService, dependencies.resolveAdminUserId));
