@@ -11,7 +11,8 @@ export const TestCheckoutAccess = observer(function TestCheckoutAccess() {
   const [error, setError] = useState('');
   if (checkoutStore.testAuthorized) return <Alert color="orange">מצב ניסוי למנהלת: שם המזמין והרחוב יסומנו „ניסוי”. אישור הניסוי אינו חיוב אשראי.</Alert>;
   return <Stack gap="xs">
-    <Button variant="subtle" size="compact-sm" disabled={checkoutStore.locked} aria-expanded={open} onClick={() => setOpen((value) => !value)}>כניסת מנהלת להזמנת ניסוי</Button>
+    {checkoutStore.testAuthorizationExpired && <Alert color="orange" role="status">ההרשאה כבר אינה פעילה. יש להתחבר שוב; עברו יותר מדקה מאז הכניסה הקודמת.</Alert>}
+    <Button variant="subtle" size="compact-sm" disabled={checkoutStore.locked && !checkoutStore.created} aria-expanded={open} onClick={() => setOpen((value) => !value)}>כניסת מנהלת להזמנת ניסוי</Button>
     <Collapse in={open}><form onSubmit={async (event) => {
       event.preventDefault(); setBusy(true); setError('');
       try { await checkoutStore.authorizeTest(email, password); setEmail(''); }

@@ -11,6 +11,9 @@ import { isQuantity, MAX_CART_LINES } from '../../stores/cart.persistence';
 import { checkoutErrorMessage, testPaymentError } from './checkout.errors';
 import { clearCheckoutRecovery, readCheckoutRecovery, writeCheckoutRecovery } from './checkout.recovery';
 
+const TEST_AUTHORIZATION_TTL_MS = 60_000;
+const TEST_AUTHORIZATION_EXPIRED_MESSAGE = 'הרשאת המנהלת כבר אינה פעילה כי עברו יותר מדי זמן. יש להתחבר שוב כדי לאשר את התשלום המדומה.';
+
 export class CheckoutStore {
   status: StoreStatus | null = null;
   zones: ShippingZone[] = [];
@@ -35,6 +38,10 @@ export class CheckoutStore {
   private attempt: { input: OrderInput; key: string } | null = null;
   private token = '';
   private adminToken = '';
+  private adminTokenExpiresAt = 0;
+  private adminTokenTimer: ReturnType<typeof setTimeout> | null = null;
+  testAuthorizationExpired = false;
+  testOrderRequested = false;
   private testOrderVersion = '';
   simulatedPaid = false;
   pendingItems: CheckoutItem[] = [];
@@ -115,16 +122,46 @@ export class CheckoutStore {
     } catch { runInAction(() => { if (version === this.version && request === this.confirmationVersion) this.confirmationError = 'לא ניתן לטעון את פרטי ההזמנה העדכניים. העריכה והתשלום חסומים; נסו שוב כאן.'; }); }
     finally { runInAction(() => { if (version === this.version) this.busy = false; }); }
   }
-  get testAuthorized() { return Boolean(this.adminToken); }
+  get testAuthorized() { return Boolean(this.adminToken && Date.now() < this.adminTokenExpiresAt); }
   async authorizeTest(email: string, password: string) {
     const result = await apiRequest<{ accessToken: string; user: { role: string } }>('/auth/login', { method: 'POST', cache: 'no-store', body: JSON.stringify({ email, password }) });
     if (result.user.role !== 'operations_manager') throw new Error('forbidden');
-    runInAction(() => { this.adminToken = result.accessToken; });
+    runInAction(() => {
+      this.clearTestAuthorizationTimer();
+      this.adminToken = result.accessToken;
+      this.adminTokenExpiresAt = Date.now() + TEST_AUTHORIZATION_TTL_MS;
+      this.testAuthorizationExpired = false;
+      this.testOrderRequested = true;
+      this.confirmationError = '';
+      this.adminTokenTimer = setTimeout(this.expireTestAuthorization, TEST_AUTHORIZATION_TTL_MS);
+    });
+    if (this.created && this.confirmation?.isTest) {
+      await this.refreshConfirmation();
+      if (this.confirmation?.paymentStatus !== 'pending') return;
+    }
+  }
+  private clearTestAuthorizationTimer() {
+    if (this.adminTokenTimer) clearTimeout(this.adminTokenTimer);
+    this.adminTokenTimer = null;
+  }
+  private expireTestAuthorization() {
+    runInAction(() => {
+      this.adminToken = '';
+      this.adminTokenExpiresAt = 0;
+      this.adminTokenTimer = null;
+      this.testAuthorizationExpired = true;
+    });
   }
   async approveTestPayment() {
-    if (!this.adminToken || !this.created || !this.testOrderVersion || this.simulatedPaid || this.busy || this.pendingItemsChanged || this.pendingUpdate || this.pendingConflict) return;
+    if (!this.testAuthorized) {
+      this.expireTestAuthorization();
+      return;
+    }
+    if (!this.created || !this.confirmation?.isTest || !this.testOrderVersion || this.simulatedPaid || this.busy || this.pendingItemsChanged || this.pendingUpdate || this.pendingConflict) return;
     this.busy = true; this.confirmationError = '';
     try {
+      const refreshed = await this.refreshConfirmation();
+      if (!refreshed || this.pendingConflict || this.simulatedPaid || this.confirmation?.paymentStatus !== 'pending' || !this.confirmation.isTest) return;
       const approval = await apiRequest<{ paymentStatus: string; version: string }>('/admin/test-orders/' + encodeURIComponent(this.created.orderId) + '/approve-payment', {
         method: 'POST', cache: 'no-store', headers: { Authorization: 'Bearer ' + this.adminToken },
         body: JSON.stringify({ reason: 'אישור הזמנת ניסוי מהחנות — ללא חיוב אשראי', expectedVersion: this.testOrderVersion }),
@@ -144,7 +181,9 @@ export class CheckoutStore {
     finally { runInAction(() => { this.busy = false; }); }
   }
   constructor(private api: CheckoutApi = checkoutApi, private makeKey = () => crypto.randomUUID()) {
-    makeAutoObservable<this, 'api' | 'makeKey'>(this, { api: false, makeKey: false }, { autoBind: true });
+    makeAutoObservable<this, 'api' | 'makeKey' | 'adminTokenTimer' | 'adminTokenExpiresAt'>(this, {
+      api: false, makeKey: false, adminTokenTimer: false, adminTokenExpiresAt: false,
+    }, { autoBind: true });
   }
   get hasPrivateConfirmation() { return Boolean(this.token); }
   get locked() { return this.busy || Boolean(this.attempt) || Boolean(this.created); }
@@ -216,6 +255,11 @@ export class CheckoutStore {
   }
   async submit(items: CheckoutItem[]) {
     if (this.busy || this.created) return;
+    if (this.testOrderRequested && !this.testAuthorized) {
+      this.expireTestAuthorization();
+      runInAction(() => { this.error = TEST_AUTHORIZATION_EXPIRED_MESSAGE; });
+      return;
+    }
     if (!this.attempt) {
       if (!this.canCreate || JSON.stringify(this.quoteInput(items)) !== this.quotedInput) {
         this.invalidateQuote(); this.error = 'פרטי ההזמנה השתנו. המתינו לחישוב הסכום המעודכן לפני ההמשך.'; return;
@@ -258,10 +302,11 @@ export class CheckoutStore {
       });
     } finally { runInAction(() => { if (version === this.version) this.busy = false; }); }
   }
-  async refreshConfirmation() {
-    if (!this.token) return;
+  async refreshConfirmation(): Promise<boolean> {
+    if (!this.token) return false;
     const version = this.version;
     const request = ++this.confirmationVersion;
+    let refreshed = false;
     this.confirmationError = '';
     try {
       const confirmation = await this.api.confirmation(this.token);
@@ -281,15 +326,23 @@ export class CheckoutStore {
         }
         if (this.created && confirmation.version) { this.created.version = confirmation.version; this.testOrderVersion = confirmation.version; }
         if (this.created && confirmation.paymentStatus === 'paid') this.created.paymentStatus = 'paid';
+        if (confirmation.isTest) this.testOrderRequested = true;
+        if (confirmation.isTest && confirmation.paymentStatus === 'paid') this.simulatedPaid = true;
         if (this.created) writeCheckoutRecovery(this.token, this.created);
+        refreshed = true;
       });
-    } catch { runInAction(() => { if (version === this.version && request === this.confirmationVersion) this.confirmationError = 'ההזמנה נשמרה, אך לא ניתן לרענן את האישור הפרטי כרגע.'; }); }
+      return refreshed;
+    } catch {
+      runInAction(() => { if (version === this.version && request === this.confirmationVersion) this.confirmationError = 'ההזמנה נשמרה, אך לא ניתן לרענן את האישור הפרטי כרגע.'; });
+      return false;
+    }
   }
-  leave() { if (this.retryPending || this.pendingUpdate || (this.created?.paymentStatus === 'pending' && !this.simulatedPaid)) return; this.adminToken = ''; this.token = ''; clearCheckoutRecovery(); this.customer = emptyCustomer(); if (!this.created) this.dispose(); }
+  leave() { if (this.retryPending || this.pendingUpdate || (this.created?.paymentStatus === 'pending' && !this.simulatedPaid)) return; this.clearTestAuthorizationTimer(); this.adminToken = ''; this.adminTokenExpiresAt = 0; this.token = ''; clearCheckoutRecovery(); this.customer = emptyCustomer(); if (!this.created) this.dispose(); }
   dispose() {
     clearCheckoutRecovery();
+    this.clearTestAuthorizationTimer();
     this.version++; this.loadVersion++; this.confirmationVersion++; this.datesVersion++; this.availableDates = []; this.datesLoading = false; this.customer = emptyCustomer(); this.attempt = null; this.token = '';
-    this.adminToken = ''; this.testOrderVersion = ''; this.simulatedPaid = false; this.created = null; this.confirmation = null; this.quote = null; this.busy = false; this.loading = false;
+    this.adminToken = ''; this.adminTokenExpiresAt = 0; this.testAuthorizationExpired = false; this.testOrderRequested = false; this.testOrderVersion = ''; this.simulatedPaid = false; this.created = null; this.confirmation = null; this.quote = null; this.busy = false; this.loading = false;
     this.pendingItems = []; this.savedPendingItems = ''; this.pendingUpdate = null;
     this.pendingCartKeys.clear(); this.removedPendingItems = [];
     this.pendingConflict = false;
@@ -299,5 +352,4 @@ export class CheckoutStore {
       items: items.map(({ productId, quantitySets }) => ({ productId, quantitySets })) };
   }
 }
-function testPaymentError(error: unknown): string {
 export const checkoutStore = new CheckoutStore();

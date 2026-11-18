@@ -46,6 +46,7 @@ export const CheckoutPage = observer(function CheckoutPage() {
         {store.simulatedPaid ? 'הניסוי סומן כשולם והועבר לתהליך התפעול. לא בוצע חיוב אשראי.' : 'אפשר לאשר תשלום ניסוי בהרשאת מנהלת בלבד.'}
         {!store.simulatedPaid && <Button mt="sm" loading={store.busy} disabled={store.pendingItemsChanged || store.pendingUpdatePending || store.pendingConflict} onClick={() => void store.approveTestPayment()}>אישור תשלום ניסוי ללא חיוב</Button>}
       </Alert>}
+      {store.confirmation?.isTest && store.confirmation.paymentStatus === 'pending' && !store.testAuthorized && <TestCheckoutAccess />}
       <Text>סכום שנשמר בהזמנה: {result.total} ₪</Text>
       {!store.simulatedPaid && <PendingOrderItems />}
       <Text>מצב תשלום: {result.paymentStatus === 'pending' ? 'ממתין לתשלום' : result.paymentStatus}</Text>

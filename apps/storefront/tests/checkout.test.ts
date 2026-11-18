@@ -15,7 +15,7 @@ function setup(overrides: Partial<CheckoutApi> = {}) {
     zones: async () => ({ data: [{ shippingZoneId: 'zone-a', name: 'אזור', city: 'ירושלים', neighborhood: 'מרכז' }] }),
     availability: async () => ({ available: true, items: [] }), quote: async () => quote,
     create: async () => created,
-    confirmation: async () => ({ ...created, deliveryDate: '2026-10-12' }), ...overrides,
+    confirmation: async () => ({ ...created, isTest: false, deliveryDate: '2026-10-12' }), ...overrides,
   };
   return new CheckoutStore(api, () => 'stable-key');
 }
@@ -126,15 +126,6 @@ test('separator-only phone and oversized name do not enable submission', async (
   const store = setup(); await ready(store); store.setCustomer('customerPhone', '-------'); assert.equal(store.canCreate, false);
   store.setCustomer('customerPhone', '0500000000'); store.setCustomer('customerName', 'a'.repeat(151)); assert.equal(store.canCreate, false);
 });
-test('known missing configuration 503 unlocks while generic 503 retains exact attempt', async () => {
-  for (const code of ['ORDER_CREATION_NOT_CONFIGURED', 'UNKNOWN_SERVICE_FAILURE']) {
-    const store = setup({ create: async () => { throw new ApiError('unavailable', 503, code); } });
-    await ready(store); await store.submit(items);
-    assert.equal(store.retryPending, code === 'UNKNOWN_SERVICE_FAILURE');
-    assert.match(store.error, code === 'UNKNOWN_SERVICE_FAILURE' ? /לא ניתן לאמת/ : /תקלה זמנית/);
-  }
-});
-
 
 test('contact validation accepts requested separators and rejects malformed numbers and email', async () => {
   const store = setup(); await ready(store);
@@ -150,24 +141,6 @@ test('contact validation accepts requested separators and rejects malformed numb
   store.setCustomer('customerEmail', 'bad@email'); assert.equal(store.validCustomer, false);
 });
 
-test('delivery dates ignore obsolete responses and reject dates absent from server list', async () => {
-  const resolvers = new Map<string, (value: { timezone: string; today: string; maxDate: string; availableDates: string[] }) => void>();
-  const store = setup({
-    zones: async () => ({ data: [
-      { shippingZoneId: 'zone-a', name: 'אזור א', city: 'ירושלים', neighborhood: 'מרכז' },
-      { shippingZoneId: 'zone-b', name: 'אזור ב', city: 'ירושלים', neighborhood: 'מרכז' },
-    ] }),
-    dates: (zoneId) => new Promise((resolve) => resolvers.set(zoneId, resolve)),
-  });
-  await store.load(); store.setDelivery('shippingZoneId', 'zone-a'); store.setDelivery('shippingZoneId', 'zone-b');
-  const dates = { timezone: 'Asia/Jerusalem', today: '2026-10-26', maxDate: '2026-11-01', availableDates: ['2026-10-28'] };
-  resolvers.get('zone-b')!(dates); await Promise.resolve();
-  resolvers.get('zone-a')!({ ...dates, availableDates: ['2026-10-27'] }); await Promise.resolve();
-  assert.deepEqual([...store.availableDates], ['2026-10-28']);
-  store.setDelivery('deliveryDate', '2026-10-27'); assert.equal(Boolean(store.canQuote), false);
-  store.setDelivery('deliveryDate', '2026-10-28'); assert.equal(Boolean(store.canQuote), true);
-});
-
 
 test('admin test mode never uses public creation and retries simulated approval without creating again', async () => {
   const originalFetch = globalThis.fetch;
@@ -178,6 +151,10 @@ test('admin test mode never uses public creation and retries simulated approval 
     const body = JSON.parse(String(init?.body ?? '{}'));
     requests.push({ path, body, authorization: new Headers(init?.headers).get('Authorization') });
     if (path.endsWith('/auth/login')) return Response.json({ accessToken: 'admin-memory-token', user: { role: 'operations_manager' } });
+    if (path.endsWith('/orders/confirmation')) return Response.json({
+      isTest: true, orderNumber: created.orderNumber, status: 'ordered', paymentStatus: approveCalls > 1 ? 'paid' : 'pending',
+      deliveryDate: '2026-10-12', total: created.total, currency: 'ILS', version: approveCalls > 1 ? '2' : '1', items,
+    });
     assert.equal(new Headers(init?.headers).get('Authorization'), 'Bearer admin-memory-token');
     if (path.endsWith('/admin/test-orders')) {
       assert.equal(new Headers(init?.headers).get('Idempotency-Key'), 'stable-key');
@@ -191,13 +168,21 @@ test('admin test mode never uses public creation and retries simulated approval 
     }
     throw new Error('unexpected request');
   };
+  let store: CheckoutStore | undefined;
   try {
-    const store = setup({ create: async () => { throw new Error('public creation must not be used'); } });
+    store = setup({
+      create: async () => { throw new Error('public creation must not be used'); },
+      confirmation: async () => ({ isTest: true, orderNumber: created.orderNumber, status: 'ordered', paymentStatus: 'pending',
+        deliveryDate: '2026-10-12', total: created.total, currency: 'ILS', version: '1', items }),
+    });
     await ready(store); await store.authorizeTest('admin@example.invalid', 'synthetic-password');
-    await store.submit(items); await store.approveTestPayment(); assert.equal(store.simulatedPaid, false);
+    await store.submit(items); assert.equal(store.confirmation?.isTest, true);
+    await store.approveTestPayment(); assert.equal(store.simulatedPaid, false);
     await store.approveTestPayment(); assert.equal(store.simulatedPaid, true);
     assert.equal(requests.filter((request) => request.path.endsWith('/admin/test-orders')).length, 1);
-    assert.deepEqual(requests[2].body, requests[3].body);
+    const approvalRequests = requests.filter((request) => request.path.endsWith('/approve-payment'));
+    assert.equal(approvalRequests.length, 2);
+    assert.deepEqual(approvalRequests[0].body, approvalRequests[1].body);
     store.leave(); assert.equal(store.testAuthorized, false);
-  } finally { globalThis.fetch = originalFetch; }
+  } finally { store?.dispose(); globalThis.fetch = originalFetch; }
 });

@@ -71,6 +71,7 @@
 | [STOREFRONT_REQUIREMENTS](planning/STOREFRONT_REQUIREMENTS.md) | כיסוי קטלוג, תמונות, רכישה ותפעול | מפרט |
 | [DELIVERY_AND_DOCUMENTATION](planning/DELIVERY_AND_DOCUMENTATION.md) | Docker, סביבות, CI, גיבוי ותיעוד בסוף | תוכנית מסירה |
 | [PRODUCTION_DEPLOYMENT_PLAN](PRODUCTION_DEPLOYMENT_PLAN.md) | תוכנית מפורטת Git → Docker/Registry → Hosting, חלוקת אחריות, שערי Staging/Production ו־rollback | תוכנית; פריסה טרם מומשה |
+| [PRODUCTION_READINESS_PHASE_0](PRODUCTION_READINESS_PHASE_0.md) | תוצר שלב 0: חסמי השקת חנות בנפרד מחסמי Staging/CI/Docker, ראיות, אחראים ותנאי סגירה | סקירת תיעוד וקבצים מ־17.11.2026; לא בדיקת שירות חי |
 | [START_NEW_CHAT](START_NEW_CHAT.md) | מודל מומלץ, סדר קריאה והוראת המשך מסונכרנת | עזר עבודה |
 
 ## ארכיטקטורה ונתונים
@@ -104,6 +105,8 @@
 | [SYSTEM_AUDIT](SYSTEM_AUDIT.md) | ראיות מהסקירה, HTML, guidelines ובדיקות |
 | [CODE_REVIEW_FINDINGS_2026-11-17](CODE_REVIEW_FINDINGS_2026-11-17.md) | ממצאי שלוש סקירות ממוקדות: שינוי מקומי, אבטחה וזרימת הזמנה; ראיות וגבולות אימות 17.11.2026 |
 | [CODE_REVIEW_RERUN_2026-11-17](CODE_REVIEW_RERUN_2026-11-17.md) | סקירה חוזרת לאחר שינויי מוצרים פשוטים; סטטוס ממצאים קודמים, כשלי בדיקות ופערי הזמנה 17.11.2026 |
+| [TEST_PAYMENT_VERIFICATION_2026-11-17](TEST_PAYMENT_VERIFICATION_2026-11-17.md) | בדיקות תשלום ניסוי, אישור מנהלת ודשבורד; תוצאות וגבולות אימות 17.11.2026 |
+| [TEST_PAYMENT_EDGE_CASES_2026-11-18](TEST_PAYMENT_EDGE_CASES_2026-11-18.md) · [תצוגת HTML](TEST_PAYMENT_EDGE_CASES_2026-11-18.html) | מטריצת מקרי קצה להזמנת ניסוי, אישור מנהלת, תשלום מדומה ודשבורד; מסכים, לוגיקה עסקית ו־SQL, 18.11.2026 |
 | [IMPLEMENTATION_PROGRESS](IMPLEMENTATION_PROGRESS.md) | מצב עבודה מאומת ותוצאות אחרונות |
 | [ORDER_CREATION](ORDER_CREATION.md) | יצירה אטומית ועריכת פריטי pending עם Idempotency נפרד; 016 דורשת החלה ידנית, השינוי טרם אומת מול DB |
 | [STOREFRONT_CHECKOUT](STOREFRONT_CHECKOUT.md) | מסך הזמנה, מינימום, עריכת pending וטעינת פריטים מפורשת בהתנגשות גרסאות; 016 מוכנה בלבד, ללא ספק תשלום |
@@ -143,6 +146,7 @@
 | [פרומפט יצירת סט 4 במבנה 2x2](../תמונות מעוצבות/פרומפט יצירת סט 4 במבנה 2x2.md) | פרומפט עיצובי שמור ליצירת סט תמונות |
 | [product-description-from-photo](../product-description-from-photo/SKILL.md) | כתיבת תיאור מוצר בשפה פשוטה מתוך תמונה ופרטים מאומתים |
 | [product-description-from-photo README](../product-description-from-photo/README.md) | סקירה ותפעול של מיומנות כתיבת תיאור מוצר |
+| [zis-architecture-review](../.codex/skills/zis-architecture-review/SKILL.md) · [קריטריוני סקירה](../.codex/skills/zis-architecture-review/references/review-rubric.md) | סקירת ארכיטקטורה מערכתית לפי מימוש, חוזים, נתונים, אבטחה, אמינות ותפעול |
 
 ## ארכיון — נשמר למניעת אובדן דרישות
 
