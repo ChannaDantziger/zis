@@ -37,7 +37,7 @@ function BusinessSettings({ value, onSave, saving, closures }: { closures: React
   const set = <K extends keyof AdminBusinessSettings>(key: K, next: AdminBusinessSettings[K]) => setForm((current) => ({ ...current, [key]: next }));
   return <Card withBorder radius="lg"><Stack><form id="business-settings-form" onSubmit={(event) => {
     event.preventDefault();
-    if (!saving) onSave({ storeOpen: form.storeOpen, lockMode: form.lockMode, lockMessage: form.lockMessage, minimumProductSubtotal: form.minimumProductSubtotal, maxAdvanceDays: form.maxAdvanceDays, dispatchTime: form.dispatchTime, sameDayCutoffTime: form.sameDayCutoffTime, workingDays: form.workingDays });
+    if (!saving && form.maxAdvanceDays !== null) onSave({ storeOpen: form.storeOpen, lockMode: form.lockMode, lockMessage: form.lockMessage, minimumProductSubtotal: form.minimumProductSubtotal, maxAdvanceDays: form.maxAdvanceDays, dispatchTime: form.dispatchTime, sameDayCutoffTime: form.sameDayCutoffTime, workingDays: form.workingDays });
   }}><Stack>
     <Title order={2}>החנות והזמנות</Title>
     <Text size="sm" c="dimmed">השינויים נכנסים לתוקף לאחר שמירה.</Text>
@@ -48,7 +48,7 @@ function BusinessSettings({ value, onSave, saving, closures }: { closures: React
     <SimpleGrid cols={{ base: 1, sm: 2 }}>
       <TextInput label="הודעה ללקוחות כשהחנות סגורה" disabled={saving} value={form.lockMessage ?? ''} onChange={(event) => set('lockMessage', event.currentTarget.value || null)} />
       <TextInput label="מינימום להזמנה (₪)" description="לפי סכום המוצרים, ללא דמי משלוח" required inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" disabled={saving} value={form.minimumProductSubtotal} onChange={(event) => set('minimumProductSubtotal', event.currentTarget.value)} />
-      <NumberInput label="כמה ימים קדימה אפשר להזמין?" min={0} allowDecimal={false} required disabled={saving} value={form.maxAdvanceDays} onChange={(value) => set('maxAdvanceDays', Number(value))} />
+      <NumberInput label="כמה ימים קדימה אפשר להזמין?" description="נדרשת הגדרה כדי לאפשר הזמנות" min={0} max={366} allowDecimal={false} required disabled={saving} value={form.maxAdvanceDays ?? ''} onChange={(value) => set('maxAdvanceDays', value === '' ? null : Number(value))} />
       <TextInput type="time" label="שעת יציאת המשלוחים" disabled={saving} value={form.dispatchTime ?? ''} onChange={(event) => set('dispatchTime', event.currentTarget.value || null)} />
       <TextInput type="time" label="עד איזו שעה אפשר להזמין להיום?" required disabled={saving} value={form.sameDayCutoffTime} onChange={(event) => set('sameDayCutoffTime', event.currentTarget.value)} />
     </SimpleGrid>

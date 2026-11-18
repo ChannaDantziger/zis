@@ -288,6 +288,7 @@ export class CheckoutStore {
         this.savedPendingItems = JSON.stringify(this.pendingItems);
         this.created = created; this.token = confirmationToken;
         writeCheckoutRecovery(confirmationToken, created);
+        if (JSON.stringify(cartStore.items) === JSON.stringify(this.attempt!.input.items)) cartStore.clear();
         if ('version' in response) { this.testOrderVersion = String(response.version); this.simulatedPaid = response.paymentStatus === 'paid'; } this.customer = emptyCustomer();
         this.attempt = null; this.quote = null;
       });
@@ -313,7 +314,6 @@ export class CheckoutStore {
       runInAction(() => {
         if (version !== this.version || request !== this.confirmationVersion) return;
         this.confirmation = confirmation;
-        cartStore.clear();
         if (this.created?.paymentStatus === 'pending' && !this.pendingItems.length && confirmation.items?.length) {
           this.pendingItems = confirmation.items.map(item => ({ productId: item.productId, quantitySets: item.quantitySets }));
           this.savedPendingItems = JSON.stringify(this.pendingItems);

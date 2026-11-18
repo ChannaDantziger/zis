@@ -1,83 +1,40 @@
-# הרצת המערכת בפיתוח (DEV)
+# הרצת המערכת ובדיקות בפיתוח
 
-[אינדקס](PLAN_INDEX.md) · [README](../README.md) · [חיבור ותצורה](LIVE_CONNECTION_RUNBOOK.md).
+[אינדקס](PLAN_INDEX.md) · [README](../README.md) · [מצב המימוש](IMPLEMENTATION_PROGRESS.md) · [מדריך החיבור](LIVE_CONNECTION_RUNBOOK.md) · [גרסה היסטורית](OLD/DEVELOPMENT_2026-10-08.md).
 
-עודכן ואומת מול סקריפטי הפרויקט ב־08.10.2026. הפקודות להלן מיועדות ל־PowerShell, מתוך תיקיית המאגר `ZIS`. הרצה מלאה מול DB אינה מאומתת במסגרת עדכון התיעוד.
+עודכן ב־18.11.2026 מול הגדרות הסקריפטים בקוד. הפקודות מיועדות ל־PowerShell מתוך תיקיית הפרויקט. החיבור למסד נתונים ולשירותים חיצוניים לא אומת במסגרת עדכון זה.
 
-## היכן מוגדרות הפקודות
+## התקנה והרצה
 
-פקודות `npm run ...` מוגדרות בשדה `scripts` של `package.json` בכל יישום:
-
-- [שרת API](../zis-api/package.json).
-- [ממשק הניהול](../apps/admin-mobile/package.json).
-
-ב־README הראשי יש קיצור להרצה; מסמך זה מרכז התקנה, הפעלה ובדיקות. אין כרגע `package.json` בשורש שמפעיל את שני היישומים יחד.
-
-## הכנה ראשונית
-
-נדרשים Node.js ו־npm התואמים לתלויות הפרויקטים. לטעינה האוטומטית של קובץ הסביבה בשרת נדרש Node.js שתומך ב־`process.loadEnvFile`.
-
-מתקינים תלויות בפעם הראשונה וגם לאחר שינוי בקובצי הנעילה:
+נדרשים Node.js ו־npm התואמים לתלויות. מתקינים תלויות לכל יישום לפי קובץ הנעילה שלו:
 
 ```powershell
 npm.cmd --prefix zis-api ci
+npm.cmd --prefix apps/storefront ci
 npm.cmd --prefix apps/admin-mobile ci
 ```
 
-`npm.cmd` מתאים ל־PowerShell גם כשמדיניות ההרצה חוסמת את `npm.ps1`. אפשר להשתמש ב־`npm` בטרמינל שמאפשר אותו.
-
-## הפעלה — שני טרמינלים
-
-טרמינל ראשון, שרת API מקומי, מול Database Production לפי הבקשה הנוכחית:
+כל פקודת שרת מופעלת בחלון נפרד:
 
 ```powershell
-$env:DATABASE_TARGET = "production"
-$env:APP_ENV = "development"
-$env:NODE_ENV = "development"
 npm.cmd --prefix zis-api run dev
-```
-
-טרמינל שני, ממשק הניהול:
-
-```powershell
+npm.cmd --prefix apps/storefront run dev -- --configLoader native
 npm.cmd --prefix apps/admin-mobile run dev
 ```
 
-ברירת המחדל של API היא `http://localhost:3000`; הניהול עולה ב־`http://localhost:5173`. אם הפורט תפוס, Vite עשוי לבחור פורט אחר; הכתובת בפלט הטרמינל היא הקובעת ויש להתאים לה את CORS. עוצרים כל תהליך באמצעות `Ctrl+C` בטרמינל שלו.
+כתובות הממשקים והפורט בפועל מוצגים בפלט השרתים. הגדרות החיבור נקבעות בסביבה שבה השרת מופעל; לפני פעולה שמשנה נתונים יש לוודא את יעד החיבור. פרטים ומגבלות ב[מדריך החיבור](LIVE_CONNECTION_RUNBOOK.md); אין לשתף סודות בצ׳אט. `health/live` לבדו אינו מאמת חיבור לנתונים.
 
-## הגדרות וחיבור
-
-- `DATABASE_TARGET` קובע לאיזה מסד השרת יתחבר: `production` משתמש ב־`DATABASE_URL`; `development` משתמש ב־`DATABASE_URL_TRN`. `APP_ENV` קובע CORS: `development` מאפשר localhost; `production` דורש Origins מפורשים. כרגע ה־API רץ מקומית מול Database Production (`DATABASE_TARGET=production`, `APP_ENV=development`), ולכן כל כתיבה מגיעה למסד Production.
-- להפעלת מסכי הניהול המחוברים נדרשים גם `SUPABASE_URL` ו־`SUPABASE_SERVICE_ROLE_KEY` או `SUPABASE_SECRET_KEY`. פרטי ההגדרות ב־[מדריך החיבור](LIVE_CONNECTION_RUNBOOK.md).
-- השרת טוען קובץ סביבה מקומי מתיקיית `zis-api` כשה־Node תומך בכך; משתני סביבת התהליך נתמכים גם הם. סודות נשארים בצד השרת.
-- `VITE_API_BASE_URL` קובע לאיזה API הניהול פונה; ברירת המחדל היא `http://localhost:3000`. משתני `VITE_` חשופים בדפדפן ואין לשים בהם סודות.
-- `CORS_ALLOWED_ORIGINS` מאפשר להגדיר כתובות Frontend מופרדות בפסיקים. לפי `APP_ENV=development` הכתובות מתווספות ל־localhost/127.0.0.1 בפורטים 5173/5174; `APP_ENV=production` משתמש רק בכתובות שהוגדרו במפורש.
-- בלי תלויות השרת המלאות ניתן לקבל liveness; readiness ייכשל ומסכי הנתונים לא יעבדו. `/health/live` לבדו אינו הוכחה לחיבור למסד.
-- אין הרצת מיגרציות אוטומטית בזמן עליית השרת. מצב Production הוא החלה ידנית מדווחת ללא ledger; אין להריץ מחדש את המיגרציות הקיימות.
-- בפרויקט זה הסוכן אינו מריץ מיגרציות. הוא מכין את קובץ המיגרציה ומבקש מבעלת האתר להחיל אותו ידנית בתהליך המאושר של ספק ה־DB.
-
-## בדיקות ובנייה
+## בדיקות
 
 ```powershell
 npm.cmd --prefix zis-api run typecheck
 npm.cmd --prefix zis-api test
-npm.cmd --prefix zis-api run build
+npm.cmd --prefix apps/storefront run typecheck
+npm.cmd --prefix apps/storefront test
+npm.cmd --prefix apps/storefront run lint
 npm.cmd --prefix apps/admin-mobile run typecheck
-npm.cmd --prefix apps/admin-mobile run build
+npm.cmd --prefix apps/admin-mobile test
 ./scripts/check-docs.ps1
 ```
 
-בדיקות Integration מיועדות למסד Development בלבד. אין כיום סקריפט `lint`, ובניהול אין סקריפט `test`. מגבלות הרצת הבדיקות בסביבת העבודה מתועדות ב־[מצב ההתקדמות](IMPLEMENTATION_PROGRESS.md).
-
-לאחר בניית API, `npm.cmd --prefix zis-api start` מפעיל את הקוד שנבנה; לפיתוח שוטף משתמשים ב־`run dev`.
-
-## חנות הלקוחות — נוסף ב־09.10.2026
-
-```powershell
-npm.cmd --prefix apps/storefront install
-npm.cmd --prefix apps/storefront run dev -- --configLoader native
-```
-
-כתובת החנות: [localhost:5174](http://127.0.0.1:5174). בפיתוח, `/api` עובר ל־API ב־3000; בייצור נדרש reverse proxy או `VITE_API_BASE_URL` ציבורי בתהליך הבנייה. קובצי סביבה מקומיים אינם נטענים ב־Vite של החנות.
-
-[מדריך החנות](../apps/storefront/README.md) מפרט בדיקות ומסלול אימות חלופי בעזרת התקנת Admin קיימת. לאחר התקנת התלויות בידי בעלת האתר ב־09.10, החנות עברה Lint, טיפוסים, 16 בדיקות ו־Build בפקודות הרגילות; קובץ נעילה קיים. חיבור חי עדיין דורש אימות.
+כל יישום מגדיר גם `build`; בדיקות API נוספות לבסיס נתונים מבודד מתוארות במסמכי הנושא שלהן. בדיקה מקומית אינה מוכיחה את מצב השרת או הנתונים החיצוניים. לא הורצו בדיקות יישום במסגרת עדכון מדריך זה.

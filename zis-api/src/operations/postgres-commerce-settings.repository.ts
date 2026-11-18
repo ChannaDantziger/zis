@@ -1,4 +1,5 @@
 import { ApiError } from '../http/api-error.js';
+import { configuredDeliveryHorizon } from './delivery-horizon.js';
 import type { SqlClient, SqlClientFactory } from '../inventory/postgres-inventory.repository.js';
 import type {
   AdminBusinessSettings,
@@ -17,7 +18,7 @@ import type {
 } from './commerce-settings.types.js';
 
 interface DefaultRow { [key: string]: unknown; default_key: string; default_value: unknown; }
-interface StoreRow { [key: string]: unknown; store_open: boolean; lock_mode: AdminBusinessSettings['lockMode']; lock_message: string | null; minimum_product_subtotal: string; max_advance_days: number | null; }
+interface StoreRow { [key: string]: unknown; store_open: boolean; lock_mode: AdminBusinessSettings['lockMode']; lock_message: string | null; minimum_product_subtotal: string; }
 interface ZoneRow { [key: string]: unknown; shipping_zone_id: string; name: string; city: string; neighborhood: string | null; dispatch_time: string | null; is_active: boolean; }
 interface RuleRow { [key: string]: unknown; shipping_rule_id: string; shipping_zone_id: string; base_price: string; size_from_sets: number; size_to_sets: number | null; size_surcharge: string; time_surcharge: string; urgency_surcharge: string; is_active: boolean; }
 interface ClosureRow { [key: string]: unknown; store_closure_id: string; starts_at: string; ends_at: string; reason: string | null; is_active: boolean; }
@@ -44,7 +45,7 @@ async function getSettings(factory: SqlClientFactory): Promise<AdminCommerceSett
   const client = await factory();
   try {
     const [store, defaults, zones, rules, closures] = await Promise.all([
-      client.query<StoreRow>(`select store_open, lock_mode, lock_message, minimum_product_subtotal::text, max_advance_days from public.store_settings where store_setting_id = 1`),
+      client.query<StoreRow>(`select store_open, lock_mode, lock_message, minimum_product_subtotal::text from public.store_settings where store_setting_id = 1`),
       client.query<DefaultRow>(`select default_key, default_value from public.system_defaults where default_key = any($1::text[])`, [SETTING_KEYS]),
       client.query<ZoneRow>(`select shipping_zone_id, name, city, neighborhood, dispatch_time::text, is_active from public.shipping_zones order by city, neighborhood nulls first, shipping_zone_id`),
       client.query<RuleRow>(`select shipping_rule_id, shipping_zone_id, base_price::text, size_from_sets, size_to_sets, size_surcharge::text, time_surcharge::text, urgency_surcharge::text, is_active from public.shipping_rules order by shipping_zone_id, size_from_sets`),
@@ -60,7 +61,7 @@ async function getSettings(factory: SqlClientFactory): Promise<AdminCommerceSett
         lockMode: storeRow.lock_mode,
         lockMessage: storeRow.lock_message,
         minimumProductSubtotal: storeRow.minimum_product_subtotal,
-        maxAdvanceDays: Number(readDefault(values, 'max_advance_days', storeRow.max_advance_days ?? 7)),
+        maxAdvanceDays: configuredDeliveryHorizon(values),
         dispatchTime: readNullableDefault(values, 'dispatch_time'),
         sameDayCutoffTime: readDefault(values, 'same_day_cutoff_time', '09:00'),
         workingDays: readDefault(values, 'working_days', ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday']),
@@ -81,11 +82,11 @@ async function updateBusinessSettings(factory: SqlClientFactory, input: UpdateBu
     const before = await getBusinessSettings(client);
     const store = await client.query<StoreRow>(`update public.store_settings set
       store_open = coalesce($1, store_open), lock_mode = coalesce($2, lock_mode), lock_message = $3,
-      minimum_product_subtotal = coalesce($4::numeric, minimum_product_subtotal), max_advance_days = coalesce($5, max_advance_days),
-      updated_by = $6 where store_setting_id = 1
-      returning store_open, lock_mode, lock_message, minimum_product_subtotal::text, max_advance_days`,
+      minimum_product_subtotal = coalesce($4::numeric, minimum_product_subtotal),
+      updated_by = $5 where store_setting_id = 1
+      returning store_open, lock_mode, lock_message, minimum_product_subtotal::text`,
       [input.storeOpen ?? null, input.lockMode ?? null, input.lockMessage === undefined ? before.lockMessage : input.lockMessage,
-        input.minimumProductSubtotal ?? null, input.maxAdvanceDays ?? null, adminUserId]);
+        input.minimumProductSubtotal ?? null, adminUserId]);
     if (!store.rows[0]) throw new ApiError(503, 'STORE_SETTINGS_NOT_CONFIGURED', 'חסרה רשומת הגדרות החנות במסד. יש להשלים את ההגדרה לפני שימוש במסך.');
     for (const [key, value] of Object.entries(toDefaultUpdates(input))) {
       await upsertDefault(client, key, value, adminUserId);
@@ -177,14 +178,14 @@ async function updateClosure(factory: SqlClientFactory, input: UpdateStoreClosur
 }
 
 async function getBusinessSettings(client: SqlClient): Promise<AdminBusinessSettings> {
-  const store = await client.query<StoreRow>(`select store_open, lock_mode, lock_message, minimum_product_subtotal::text, max_advance_days from public.store_settings where store_setting_id = 1`);
+  const store = await client.query<StoreRow>(`select store_open, lock_mode, lock_message, minimum_product_subtotal::text from public.store_settings where store_setting_id = 1`);
   const defaults = await client.query<DefaultRow>(`select default_key, default_value from public.system_defaults where default_key = any($1::text[])`, [SETTING_KEYS]);
   const row = store.rows[0];
   if (!row) throw new ApiError(503, 'STORE_SETTINGS_NOT_CONFIGURED', 'חסרה רשומת הגדרות החנות במסד. יש להשלים את ההגדרה לפני שימוש במסך.');
   const values = new Map(defaults.rows.map((item) => [item.default_key, item.default_value]));
   return {
     storeOpen: row.store_open, lockMode: row.lock_mode, lockMessage: row.lock_message, minimumProductSubtotal: row.minimum_product_subtotal,
-    maxAdvanceDays: Number(readDefault(values, 'max_advance_days', row.max_advance_days ?? 7)), dispatchTime: readNullableDefault(values, 'dispatch_time'),
+    maxAdvanceDays: configuredDeliveryHorizon(values), dispatchTime: readNullableDefault(values, 'dispatch_time'),
     sameDayCutoffTime: readDefault(values, 'same_day_cutoff_time', '09:00'), workingDays: readDefault(values, 'working_days', []),
     businessTimezone: readDefault(values, 'business_timezone', 'Asia/Jerusalem'), blockHolidayEves: readDefault(values, 'block_holiday_eves', true),
     deliveryCalendarCountry: readDefault(values, 'delivery_calendar_country', 'il'), orderPreparationStatus: readDefault(values, 'order_preparation_status', 'ordered'),

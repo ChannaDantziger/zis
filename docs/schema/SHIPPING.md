@@ -62,7 +62,7 @@
 | `lock_mode` | `text` | כן | `open`, `closed`, `scheduled` |
 | `lock_message` | `text` | לא | הודעה ללקוח |
 | `minimum_product_subtotal` | `numeric(12,2)` | כן | מינימום סכום מוצרים להזמנה, ללא דמי משלוח; שם קודם `minimum_order_total` |
-| `max_advance_days` | `integer` | לא | כמה ימים קדימה ניתן להזמין |
+| `max_advance_days` | `integer` | לא | עמודת תאימות ישנה; אינה מקור טווח ההזמנה בקוד המקומי. המקור הוא ההגדרה בניהול הנשמרת ב־`system_defaults` |
 | `updated_by` | `uuid` | לא | FK ל־`admin_users.admin_user_id` |
 | `updated_at` | `timestamptz` | כן | זמן עדכון |
 

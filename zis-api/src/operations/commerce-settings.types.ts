@@ -32,7 +32,7 @@ export interface AdminBusinessSettings {
   lockMode: 'open' | 'closed' | 'scheduled';
   lockMessage: string | null;
   minimumProductSubtotal: string;
-  maxAdvanceDays: number;
+  maxAdvanceDays: number | null;
   dispatchTime: string | null;
   sameDayCutoffTime: string;
   workingDays: string[];

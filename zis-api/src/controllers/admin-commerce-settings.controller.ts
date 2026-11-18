@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { ApiError } from '../http/api-error.js';
 import type { AdminUserResolver } from './admin-inventory.controller.js';
 import type { CommerceSettingsService } from '../operations/commerce-settings.types.js';
+import { MAX_DELIVERY_ADVANCE_DAYS } from '../operations/delivery-horizon.js';
 
 const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 const LOCK_MODES = ['open', 'closed', 'scheduled'] as const;
@@ -16,7 +17,7 @@ export function createAdminCommerceSettingsController(service: CommerceSettingsS
         lockMode: optionalEnum(body.lockMode, LOCK_MODES, 'lockMode'),
         lockMessage: optionalNullableText(body.lockMessage, 'lockMessage'),
         minimumProductSubtotal: optionalMoney(body.minimumProductSubtotal, 'minimumProductSubtotal'),
-        maxAdvanceDays: optionalNonNegativeInteger(body.maxAdvanceDays, 'maxAdvanceDays'),
+        maxAdvanceDays: optionalDeliveryHorizon(body.maxAdvanceDays),
         dispatchTime: optionalTime(body.dispatchTime, 'dispatchTime'),
         sameDayCutoffTime: body.sameDayCutoffTime === undefined ? undefined : time(body.sameDayCutoffTime, 'sameDayCutoffTime'),
         workingDays: optionalDays(body.workingDays),
@@ -83,7 +84,7 @@ function withManager(resolve: AdminUserResolver, handler: (request: Request, res
     const identity = await resolve(request);
     if (identity.status === 'unauthenticated') throw new ApiError(401, 'AUTHENTICATION_REQUIRED', 'Authentication required');
     if (identity.status === 'forbidden') throw new ApiError(403, 'ADMIN_ACCESS_REQUIRED', 'Active admin access required');
-    if (identity.role === 'delivery_driver') throw new ApiError(403, 'OPERATIONS_MANAGER_REQUIRED', 'Operations manager access required');
+    if (identity.role !== 'operations_manager') throw new ApiError(403, 'OPERATIONS_MANAGER_REQUIRED', 'Operations manager access required');
     await handler(request, response, identity.adminUserId);
   };
 }
@@ -101,6 +102,7 @@ function positiveInteger(value: unknown, field: string): number { const result =
 function optionalPositiveInteger(value: unknown, field: string): number | undefined { return value === undefined ? undefined : positiveInteger(value, field); }
 function nonNegativeInteger(value: unknown, field: string): number { const result = number(value, field); if (!Number.isInteger(result) || result < 0) throw invalid(`${field} must be a non-negative integer`); return result; }
 function optionalNonNegativeInteger(value: unknown, field: string): number | undefined { return value === undefined ? undefined : nonNegativeInteger(value, field); }
+function optionalDeliveryHorizon(value: unknown): number | undefined { const result = optionalNonNegativeInteger(value, 'maxAdvanceDays'); if (result !== undefined && result > MAX_DELIVERY_ADVANCE_DAYS) throw invalid('maxAdvanceDays exceeds the supported limit'); return result; }
 function money(value: unknown, field: string): string { if ((typeof value !== 'string' && typeof value !== 'number') || !/^\d+(\.\d{1,2})?$/.test(String(value))) throw invalid(`${field} must be a non-negative amount with up to two decimals`); return Number(value).toFixed(2); }
 function optionalMoney(value: unknown, field: string): string | undefined { return value === undefined ? undefined : money(value, field); }
 function time(value: unknown, field: string): string { if (typeof value !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) throw invalid(`${field} must use HH:mm format`); return value; }

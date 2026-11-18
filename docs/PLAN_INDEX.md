@@ -37,7 +37,7 @@
 
 | מסמך | מה הוא מכיל | סוג |
 |---|---|---|
-| [README](../README.md) | תקציר מצב וקישור לאינדקס | כניסה |
+| [README](../README.md) · [גרסה ישנה ב־OLD](OLD/README_2026-10-18.md) | כניסה לפרויקט; הגרסה הישנה אינה בשימוש כהוראות פעילות | כניסה |
 | [changes](../changes/changes.md) | 30 בקשות ושאלות בעלת האתר מ־26.10; תכנון בלבד | דרישות חדשות |
 | [changes1](../changes/changes1.md) | תשע בקשות שינוי בחנות מ־29.10; דרישות מוצריות | דרישות חדשות |
 | [changes2](../changes/changes2.md) | בקשות שינוי נוספות בחנות מ־01.11; תשובות A ותוכנית חלוקת עבודה | דרישות חדשות ותוכנית |
@@ -49,7 +49,7 @@
 | [AGENTS](../AGENTS.md) | בטיחות, ניווט ותחזוקת תיעוד | מחייב |
 | [GUIDELINES](GUIDELINES.md) | עותק מקומי להנחיות Frontend/Backend/general | מחייב |
 | [IMPLEMENTATION_PLAN](IMPLEMENTATION_PLAN.md) | P0–P9, אחריות ותנאי קבלה | תוכנית ראשית |
-| [NEXT_PHASE_PLAN](NEXT_PHASE_PLAN.md) | תור עבודה עדכני לפי מצב Production והשלב הבא | ניווט |
+| [NEXT_PHASE_PLAN](NEXT_PHASE_PLAN.md) · [גרסה ישנה ב־OLD](OLD/NEXT_PHASE_PLAN_2026-11-17.md) | ניווט לפי הבקשה הנוכחית והמצב המתועד; הגרסה הישנה אינה תור עבודה פעיל | ניווט |
 | [ACCESSIBILITY_PLAN](ACCESSIBILITY_PLAN.md) | תקן ישראלי, סקירת קוד ראשונית, שלבי הנגשה ובדיקות קבלה לאתר הלקוחות | תוכנית 18.10; טרם בוצעה בדיקת נגישות מלאה |
 | [DECISIONS](planning/DECISIONS.md) | כללים קיימים והרחבות עתידיות | החלטות |
 | [DECISION_EXPLANATIONS](planning/DECISION_EXPLANATIONS.md) | הסבר פשוט לסעיפים 1–13, הוראות מ־22.09 והבחירות שנותרו | החלטות והצעות נפרדות |
@@ -71,8 +71,9 @@
 | [STOREFRONT_REQUIREMENTS](planning/STOREFRONT_REQUIREMENTS.md) | כיסוי קטלוג, תמונות, רכישה ותפעול | מפרט |
 | [DELIVERY_AND_DOCUMENTATION](planning/DELIVERY_AND_DOCUMENTATION.md) | Docker, סביבות, CI, גיבוי ותיעוד בסוף | תוכנית מסירה |
 | [PRODUCTION_DEPLOYMENT_PLAN](PRODUCTION_DEPLOYMENT_PLAN.md) | תוכנית מפורטת Git → Docker/Registry → Hosting, חלוקת אחריות, שערי Staging/Production ו־rollback | תוכנית; פריסה טרם מומשה |
+| [PRODUCTION_GIT_BRANCHES](PRODUCTION_GIT_BRANCHES.md) | החלטת ענף production, מסלול PR ופקודות הקמה לקראת Hostinger Docker VPS | החלטה ותוכנית 18.11; ענף/CI/Hosting טרם הוגדרו |
 | [PRODUCTION_READINESS_PHASE_0](PRODUCTION_READINESS_PHASE_0.md) | תוצר שלב 0: חסמי השקת חנות בנפרד מחסמי Staging/CI/Docker, ראיות, אחראים ותנאי סגירה | סקירת תיעוד וקבצים מ־17.11.2026; לא בדיקת שירות חי |
-| [START_NEW_CHAT](START_NEW_CHAT.md) | מודל מומלץ, סדר קריאה והוראת המשך מסונכרנת | עזר עבודה |
+| [START_NEW_CHAT](START_NEW_CHAT.md) · [גרסה ישנה ב־OLD](OLD/START_NEW_CHAT_2026-10.md) | סדר קריאה והוראת המשך; הגרסה הישנה אינה בשימוש כהוראות פעילות | עזר עבודה |
 
 ## ארכיטקטורה ונתונים
 
@@ -100,8 +101,9 @@
 
 | מסמך | מה הוא מכיל |
 |---|---|
-| [DEVELOPMENT](DEVELOPMENT.md) | התקנה והרצה ב־DEV, שני טרמינלים, תצורה, בדיקות ובנייה; סקריפטים אומתו ב־08.10 |
+| [DEVELOPMENT](DEVELOPMENT.md) · [גרסה ישנה ב־OLD](OLD/DEVELOPMENT_2026-10-08.md) | הרצה ובדיקות בפיתוח; הסקריפטים הושוו להגדרות ב־18.11.2026; הגרסה הישנה נשמרת להיסטוריה |
 | [DOCS_INDEX](DOCS_INDEX.md) | מימוש קיים ותיעוד סופי עתידי |
+| [DOCUMENTATION_REVIEW_2026-11-18](DOCUMENTATION_REVIEW_2026-11-18.md) | ממצאי בדיקת תיעוד, מסמכים שהועברו ל־OLD ותחומים שנותרו לסקירה |
 | [SYSTEM_AUDIT](SYSTEM_AUDIT.md) | ראיות מהסקירה, HTML, guidelines ובדיקות |
 | [CODE_REVIEW_FINDINGS_2026-11-17](CODE_REVIEW_FINDINGS_2026-11-17.md) | ממצאי שלוש סקירות ממוקדות: שינוי מקומי, אבטחה וזרימת הזמנה; ראיות וגבולות אימות 17.11.2026 |
 | [CODE_REVIEW_RERUN_2026-11-17](CODE_REVIEW_RERUN_2026-11-17.md) | סקירה חוזרת לאחר שינויי מוצרים פשוטים; סטטוס ממצאים קודמים, כשלי בדיקות ופערי הזמנה 17.11.2026 |
@@ -112,7 +114,7 @@
 | [STOREFRONT_CHECKOUT](STOREFRONT_CHECKOUT.md) | מסך הזמנה, מינימום, עריכת pending וטעינת פריטים מפורשת בהתנגשות גרסאות; 016 מוכנה בלבד, ללא ספק תשלום |
 | [ORDER_TEST_BROWSER_REPORT](ORDER_TEST_BROWSER_REPORT.md) | בדיקת הזמנת ניסוי בדפדפן 08.11: גם בבית שמש יצירה הצליחה, אישור תשלום מדומה נכשל, המשך תפעולי חסום |
 | [PAYMENTS_CODE_REVIEW](PAYMENTS_CODE_REVIEW.html) | סקירת תשלום ואישור ניסוי מקצה לקצה: Client, Server, Admin, ממצאים ומקרי קצה |
-| [PAYMENT_TEST_RESULTS](PAYMENT_TEST_RESULTS.md) | בדיקות 10.11: כשל SQLSTATE 42P08 שוחזר ב־PostgreSQL מבודד; תיקון הוכח בבדיקות בלבד, היישום טרם שונה |
+| [PAYMENT_TEST_RESULTS](PAYMENT_TEST_RESULTS.md) | תוצאות היסטוריות מ־10.11 לכשל SQLSTATE 42P08; מאז דווח על תיקון בקוד — מצב ואימות עדכניים ב[משימות בעלת האתר](OWNER_ACTIONS.md) |
 | [ORDER_FLOW_UX_REVIEW](ORDER_FLOW_UX_REVIEW.md) | הצעות שימושיות מרוכזות למסלול ההזמנה והניהול, מנקודת מבט לא טכנולוגית |
 | [SITE_SCREENSHOTS](SITE_SCREENSHOTS.md) | שבעה צילומי דפדפן נקיים ומסודרים למצגת שימוש באתר מ־08.11.2026 |
 | [STOREFRONT_IMPLEMENTATION](STOREFRONT_IMPLEMENTATION.md) | בית, קטלוג מוצרים פשוטים, עגלה וגלריות; עדכון ממשק 17.11 לא אומת |
@@ -146,7 +148,14 @@
 | [פרומפט יצירת סט 4 במבנה 2x2](../תמונות מעוצבות/פרומפט יצירת סט 4 במבנה 2x2.md) | פרומפט עיצובי שמור ליצירת סט תמונות |
 | [product-description-from-photo](../product-description-from-photo/SKILL.md) | כתיבת תיאור מוצר בשפה פשוטה מתוך תמונה ופרטים מאומתים |
 | [product-description-from-photo README](../product-description-from-photo/README.md) | סקירה ותפעול של מיומנות כתיבת תיאור מוצר |
-| [zis-architecture-review](../.codex/skills/zis-architecture-review/SKILL.md) · [קריטריוני סקירה](../.codex/skills/zis-architecture-review/references/review-rubric.md) | סקירת ארכיטקטורה מערכתית לפי מימוש, חוזים, נתונים, אבטחה, אמינות ותפעול |
+| [zis-architecture-review](../.codex/skills/zis-architecture-review/SKILL.md) · [קריטריוני סקירה](../.codex/skills/zis-architecture-review/references/review-rubric.md) · [בדיקת לוגיקה ואחריות](../.codex/skills/zis-architecture-review/references/business-logic-review.md) | סקירת ארכיטקטורה מערכתית לפי מימוש, חוזים, נתונים, אבטחה, אמינות ותפעול; מדריך הלוגיקה משותף גם לסקירת שינוי וזרימה |
+| [zis-documentation-review](../.codex/skills/zis-documentation-review/SKILL.md) · [רשימת בדיקה](../.codex/skills/zis-documentation-review/references/review-checklist.md) | סקירת דיוק, עדכניות וכיסוי התיעוד וזיהוי קבצים כפולים או מועמדים לטיפול |
+| [ARCHITECTURE_REVIEW_2026-11-18](ARCHITECTURE_REVIEW_2026-11-18.md) | תוצאות הרצת סקיל הארכיטקטורה: מפת מערכת, שבעה ממצאים, בדיקות ותור תיקון |
+| [ARCHITECTURE_INTERNAL_REVIEW_2026-11-18](ARCHITECTURE_INTERNAL_REVIEW_2026-11-18.md) | השלמת סקירת ארכיטקטורה פנימית: כפילויות, טוקנים, הרשאות, תיקיות, חוזים, מחזורי imports ובדיקות |
+| [zis-pr-review](../.codex/skills/zis-pr-review/SKILL.md) | סקירת שינויי קוד ו־PR במערכת ZIS |
+| [zis-flow-review](../.codex/skills/zis-flow-review/SKILL.md) | סקירת מסלול משתמש מקצה לקצה |
+| [zis-security-review](../.codex/skills/zis-security-review/SKILL.md) | סקירת אבטחה ופרטיות ממוקדת |
+| [zis-edge-case-inventory](../.codex/skills/zis-edge-case-inventory/SKILL.md) | מיפוי מקרי קצה ובדיקות למסלול עסקי |
 
 ## ארכיון — נשמר למניעת אובדן דרישות
 

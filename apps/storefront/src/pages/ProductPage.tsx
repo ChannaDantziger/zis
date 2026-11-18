@@ -10,7 +10,6 @@ import { ApiError } from '../shared/api/http-client';
 import { cartStore } from '../stores/cart.store';
 import { useStoreStatus } from '../shared/store-status';
 import { getProductImages } from '../features/product-gallery/images';
-import { CatalogPage } from './CatalogPage';
 
 export const ProductPage = observer(function ProductPage() {
   const { productId } = useParams();
@@ -22,14 +21,14 @@ export const ProductPage = observer(function ProductPage() {
   const [quantitySets, setQuantitySets] = useState(1);
   const product = result.data;
   const images = useMemo(() => product ? getProductImages(product) : [], [product]);
-  const close = () => navigate('/catalog');
+  const close = () => navigate('/#catalog');
 
   let content: ReactNode;
   if (result.isPending) content = <Stack p="xl"><Skeleton h={440} aria-label="טעינת מוצר" /></Stack>;
   else if (result.isError || !product) content = <Stack p="xl">
     <Alert color="red" title={result.error instanceof ApiError && result.error.status === 404 ? 'המוצר אינו זמין' : 'לא ניתן לטעון את המוצר'} role="alert">
       <Text>אפשר לחזור לקטלוג או לנסות שוב.</Text><Button mt="sm" onClick={() => void result.refetch()}>ניסיון נוסף</Button>
-    </Alert><Anchor component={Link} to="/catalog" onClick={close}>חזרה לקטלוג</Anchor></Stack>;
+    </Alert><Anchor component={Link} to="/#catalog">חזרה לקטלוג</Anchor></Stack>;
   else {
     const simpleProduct = product.variants.length === 0;
     const purchasePrice = simpleProduct ? formatPurchasePrice(product.pricePerUnit, product.setSize, quantitySets) : null;
@@ -83,7 +82,6 @@ export const ProductPage = observer(function ProductPage() {
   }
 
   return <>
-    {!mobile && <div className="product-catalog-backdrop" aria-hidden="true"><CatalogPage /></div>}
     <Modal opened onClose={close} fullScreen={mobile} centered size="70rem" className="product-detail-modal"
       overlayProps={{ backgroundOpacity: 0.58, blur: 2 }}
       closeButtonProps={{ 'aria-label': 'סגירת פרטי המוצר' }}>

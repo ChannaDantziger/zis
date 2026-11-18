@@ -127,7 +127,7 @@
 
 | `default_key` | תרגום | ערך התחלתי |
 |---|---|---|
-| `max_advance_days` | ימים להזמנה מראש | `7` |
+| `max_advance_days` | ימים להזמנה מראש | נקבע בהגדרות החנות בניהול; אין ערך חלופי |
 | `working_days` | ימי עבודה | ראשון עד חמישי |
 | `same_day_cutoff_time` | שעת חיתוך | `09:00` |
 | `business_timezone` | אזור זמן | `Asia/Jerusalem` |

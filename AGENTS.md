@@ -18,3 +18,7 @@
 - Do not resolve conflicting business policies by guessing; record the decision needed and which dependent phase it blocks.
 - Update task status and decisions during development. Write and verify final implementation/operations documentation at the end of each completed feature and at final handover.
 - A shop release requires the complete customer and operations flows in docs/IMPLEMENTATION_PLAN.md; a visual prototype or inventory service alone is not a completed store.
+
+# Review sequence
+
+- When the user asks to run all code-review skills, run the applicable code, flow, security and architecture reviews in sequence, then run `zis-documentation-review` once as a separate final pass. Consolidate the results and state coverage and limitations. A request for one specific review does not automatically trigger the documentation review; run it separately when requested.

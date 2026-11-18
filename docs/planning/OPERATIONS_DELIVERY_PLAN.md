@@ -8,7 +8,7 @@
 | ערך | מקור | שימוש |
 |---|---|---|
 | שעת סגירת הזמנות להיום | `system_defaults.same_day_cutoff_time` | תאריך היום, הודעת לקוחה וזיהוי תשלום מאוחר |
-| טווח הזמנה מראש | `system_defaults.max_advance_days` | לוח תאריכי האתר; הערך המתוכנן הוא 7 |
+| טווח הזמנה מראש | `system_defaults.max_advance_days` | נקבע בהגדרות החנות בניהול ומשמש ללוח ולבדיקת ההזמנה; אין ערך חלופי |
 | אזור זמן | `system_defaults.business_timezone` | כל חישוב זמן ב־`Asia/Jerusalem` |
 | זמינות עיר | `shipping_zones.is_active` | נדרש בעת הוספה/עריכה; שעת יציאה עירונית נפרדת נדחית |
 | שעת יציאה | `system_defaults.dispatch_time` | שעת יציאה כללית; override אזורי אופציונלי ב־`shipping_zones.dispatch_time` |

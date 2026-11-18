@@ -7,6 +7,7 @@ import type {
 } from '../contracts/commerce.contracts.js';
 import { readDeliveryDates } from './delivery-dates.js';
 import { ApiError } from '../http/api-error.js';
+import { readDeliveryHorizon } from '../operations/delivery-horizon.js';
 import type { SqlClient, SqlClientFactory } from '../inventory/postgres-inventory.repository.js';
 import type { CommerceRepository } from './commerce.types.js';
 import type { DeliveryPolicy } from './delivery-policy.js';
@@ -142,7 +143,7 @@ export async function readSettings(client: SqlClient) {
     sameDayCutoffTime: readDefault(values, 'same_day_cutoff_time', '09:00'),
     dispatchTime: readNullableDefault(values, 'dispatch_time'),
     blockHolidayEves: readDefault(values, 'block_holiday_eves', true),
-    maxAdvanceDays: Number(readDefault(values, 'max_advance_days', '7')),
+    maxAdvanceDays: readDeliveryHorizon(values),
     workingDays: readWorkingDays(readDefault(values, 'working_days', ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday'])),
   };
 }

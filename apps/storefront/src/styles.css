@@ -25,7 +25,6 @@ main { min-height: 60vh; }
 .faq-title { padding-bottom: 14px; border-bottom: 1px solid #d8c8ae; }
 .faq-section .mantine-Accordion-root { width: 100%; }
 .site-footer { background: var(--zis-ink); color: var(--zis-page); padding-block: 52px; margin-top: 72px; }
-.product-catalog-backdrop { min-height: 70vh; }
 .product-detail-modal .mantine-Modal-content,
 .product-detail-modal .mantine-Modal-header,
 .product-detail-modal .mantine-Modal-body,

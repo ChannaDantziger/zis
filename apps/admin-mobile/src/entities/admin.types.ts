@@ -26,7 +26,7 @@ export interface OrderDetails {
   allowedNextStatuses: OrderStatus[];
 }
 export interface BulkStatusResponse { requested: number; succeeded: number; failed: number; results: Array<{ orderId: string; ok: boolean; reason?: string }>; }
-export interface AdminBusinessSettings { storeOpen: boolean; lockMode: 'open' | 'closed' | 'scheduled'; lockMessage: string | null; minimumProductSubtotal: string; maxAdvanceDays: number; dispatchTime: string | null; sameDayCutoffTime: string; workingDays: string[]; businessTimezone: string; blockHolidayEves: boolean; deliveryCalendarCountry: string; orderPreparationStatus: string; }
+export interface AdminBusinessSettings { storeOpen: boolean; lockMode: 'open' | 'closed' | 'scheduled'; lockMessage: string | null; minimumProductSubtotal: string; maxAdvanceDays: number | null; dispatchTime: string | null; sameDayCutoffTime: string; workingDays: string[]; businessTimezone: string; blockHolidayEves: boolean; deliveryCalendarCountry: string; orderPreparationStatus: string; }
 export interface AdminShippingZone { shippingZoneId: string; name: string; city: string; neighborhood: string | null; dispatchTime: string | null; isActive: boolean; }
 export interface AdminShippingRule { shippingRuleId: string; shippingZoneId: string; basePrice: string; sizeFromSets: number; sizeToSets: number | null; sizeSurcharge: string; timeSurcharge: string; urgencySurcharge: string; isActive: boolean; }
 export interface AdminStoreClosure { storeClosureId: string; startsAt: string; endsAt: string; reason: string | null; isActive: boolean; }

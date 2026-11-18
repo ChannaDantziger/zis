@@ -3,6 +3,7 @@ import test from 'node:test';
 import { CheckoutStore } from '../src/features/checkout/checkout.store';
 import type { CheckoutApi, Quote, OrderInput } from '../src/features/checkout/checkout.types';
 import { ApiError } from '../src/shared/api/http-client';
+import { cartStore } from '../src/stores/cart.store';
 
 const items = [{ productId: 'product-a', quantitySets: 2 }];
 const quote: Quote = { subtotal: '40.00', shippingTotal: '12.00', taxTotal: '0.00', total: '52.00',
@@ -27,6 +28,17 @@ async function ready(store: CheckoutStore) {
     customerEmail: 'qa@example.invalid', street: 'רחוב QA', houseNumber: '1' })) store.setCustomer(field as keyof typeof store.customer, value);
   await store.preview(items);
 }
+test('creation clears the matching cart once and later confirmation preserves additions', async () => {
+  cartStore.items = items.map(item => ({ ...item }));
+  const store = setup();
+  try {
+    await ready(store); await store.submit(items);
+    assert.deepEqual(cartStore.items, []);
+    cartStore.items = [{ productId: 'new-product', quantitySets: 1 }];
+    await store.refreshConfirmation();
+    assert.deepEqual(cartStore.items, [{ productId: 'new-product', quantitySets: 1 }]);
+  } finally { cartStore.clear(); store.dispose(); }
+});
 test('closed store never quotes or creates', async () => {
   let calls = 0;
   const store = setup({ status: async () => ({ storeOpen: false, lockMessage: 'closed', timezone: 'Asia/Jerusalem', dispatchTime: null, sameDayCutoffTime: '10:00' }),

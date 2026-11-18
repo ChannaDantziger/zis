@@ -9,6 +9,14 @@ Use these questions selectively, with evidence. A missing feature is a finding o
 - Do customer and admin actions cross the API boundary consistently, with server-owned price, stock, permissions, and status transitions? Are shared schemas/contracts versioned or checked where they cross builds?
 - Are architectural choices simple enough for the current team and workload? Is there a measured reason for each additional abstraction or service?
 
+## Internal organization and duplication
+
+- Inventory route/controller/service/repository/infrastructure, middleware, tests, and external integration locations. A single database or test folder is optional; clear ownership, dependency direction, and quick navigation are the criteria.
+- Search production code for duplicate credential parsing and issuance, role checks, validation, configuration defaults, pricing and availability rules, status transitions, request/response types, and SQL access abstractions. Inspect the actual implementations and call sites; matching names alone do not prove duplicate behavior.
+- Ask whether one authoritative rule exists, whether copies intentionally serve different trust boundaries, and whether they can diverge. Give a concrete failure scenario before recommending consolidation. Avoid a generic utility package for one-off checks.
+- Check that test scripts discover the intended suites and that architecture-critical invariants have negative and cross-layer coverage. Record any code family not inspected rather than declaring the repository duplicate-free.
+- For a full-system review, also check dependency cycles, error and observability contracts, accessibility boundaries, dependency/update risk, data retention, and recovery ownership. Record unavailable runtime, load, browser, provider, and backup evidence explicitly.
+
 ## State and data integrity
 
 - For ordering, payment, inventory, cancellation, and fulfillment, identify the source of truth, transaction boundary, invariant, and state transition owner.
