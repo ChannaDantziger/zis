@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>איפה נעצרה בדיקת המשלוח?</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6f4;color:#182f29;font:18px/1.65 Arial,sans-serif}main{max-width:950px;padding:clamp(20px,5vw,56px);margin:auto}h1,h2,p{margin:0 0 .65em}h1{font-size:clamp(30px,5vw,46px);line-height:1.18}h2{font-size:23px}section,aside{background:white;border:1px solid #cdd8d2;border-radius:16px;padding:22px;margin:14px 0}.steps{display:grid;grid-template-columns:1fr 1fr;gap:15px}.steps section{margin:0}.stop{border-top:5px solid #a3441d}.ok{border-top:5px solid #247153}ol{padding-inline-start:24px}li{margin-bottom:10px}strong{color:#193c30}aside{background:#e8f3eb}a{color:#165944}code{direction:ltr;unicode-bidi:isolate;overflow-wrap:anywhere}small{color:#526359}summary{cursor:pointer;font-weight:bold}@media(max-width:650px){.steps{grid-template-columns:1fr}}@media print{body{background:white}section,aside{break-inside:avoid}}
+</style>
+<main>
+<h1>איפה נעצרה בדיקת המשלוח?</h1>
+<p><strong>הכשל קרה בשרת בזמן בדיקה אוטומטית של אישור תשלום ניסוי.</strong> הבדיקה התחילה עם הזמנה שכבר קיימת במסד זמני. היא לא פתחה דפדפן ולא עברה בעגלה או במסך בחירת המשלוח.</p>
+<div class="steps">
+<section class="ok"><h2>התהליך שעבר אצלך בחנות</h2><ol><li>הוספת מוצרים לעגלה.</li><li>המשכת להזמנה ובחרת את פרטי המשלוח.</li><li>לדברייך הצלחת להשלים את התהליך.</li></ol><p>הבדיקה האוטומטית השתמשה בנתונים משלה. התוצאה שלה מתיישבת עם ההצלחה שראית בחנות.</p></section>
+<section class="stop"><h2>הבדיקה שנעצרה במסד הזמני</h2><ol><li>הבדיקה יצרה הזמנת ניסוי ונתוני חנות לדוגמה.</li><li>היא ביקשה מהשרת לאשר תשלום מדומה. בממשק הניהול זו הפעולה בכפתור <strong>״סימון כשולמה · ניסוי ללא חיוב״</strong>.</li><li><strong>כאן נעצרה הבדיקה:</strong> לפני אישור התשלום השרת בדק שוב את תנאי ההזמנה. בנתוני הדוגמה חסר מספר הימים קדימה שמותר לבחור למשלוח.</li></ol></section>
+</div>
+<aside><h2>מה קרה כשהשלמנו את נתון הבדיקה?</h2><p>בניסיון נפרד הוגדר טווח של יומיים במסד הזמני בלבד. אותה הזמנת ניסוי אושרה פעמיים ונוצרה רשומת תשלום מדומה אחת. המלאי ירד פעם אחת לכל מוצר ושום כסף לא חויב.</p><p><strong>עדכון לאחר התיקון:</strong> בנתוני הדוגמה הוגדר טווח של שבעה ימים, כפי שביקשת. בהרצה החוזרת כל 26 בדיקות התשלום עברו.</p></aside>
+<section><details><summary>איפה רואים את זה בקוד?</summary><ul>
+<li><a href="../scripts/payment-review/acceptance.test.mjs">בדיקת האישור</a> קוראת ישירות לשירות.</li>
+<li><a href="../scripts/payment-review/fixture.sql">נתוני הדוגמה</a> מכינים את החנות וההזמנה הזמניות.</li>
+<li><a href="../apps/admin-mobile/src/features/home/TestPaymentButton.tsx">הכפתור בניהול</a> מציג את הפעולה המקבילה בממשק.</li>
+<li><a href="../zis-api/src/commerce/test-payment.service.ts">שירות אישור הניסוי</a> מחשב מחדש את ההזמנה לפני הפחתת מלאי.</li>
+<li><a href="../zis-api/src/operations/delivery-horizon.ts">בדיקת טווח המשלוח</a> מחפשת את <code>max_advance_days</code> ומחזירה <code>INVALID_DELIVERY_CONFIG</code> כשחסר ערך תקין.</li>
+</ul></details></section><small>המחשת הבדיקה מ־19.11.2026. נתוני החנות הפעילה לא נבדקו במסגרת ההרצה.</small></main></html>

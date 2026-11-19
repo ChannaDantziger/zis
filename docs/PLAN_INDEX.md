@@ -111,6 +111,7 @@
 | [DOCUMENTATION_REVIEW_2026-11-18](DOCUMENTATION_REVIEW_2026-11-18.md) | ממצאי בדיקת תיעוד, מסמכים שהועברו ל־OLD ותחומים שנותרו לסקירה |
 | [SYSTEM_AUDIT](SYSTEM_AUDIT.md) | ראיות מהסקירה, HTML, guidelines ובדיקות |
 | [CODE_REVIEW_FINDINGS_2026-11-17](CODE_REVIEW_FINDINGS_2026-11-17.md) | ממצאי שלוש סקירות ממוקדות: שינוי מקומי, אבטחה וזרימת הזמנה; ראיות וגבולות אימות 17.11.2026 |
+| [סקירת PR לניסוי](PREVIEW_REVIEW_2026-11-19.md) · [איפה נעצרה בדיקת המשלוח](DELIVERY_TEST_EXPLAINED.html) | ממצאים, בדיקות בפועל והחלטת אישור הניסוי, 19.11.2026 |
 | [CODE_REVIEW_RERUN_2026-11-17](CODE_REVIEW_RERUN_2026-11-17.md) | סקירה חוזרת לאחר שינויי מוצרים פשוטים; סטטוס ממצאים קודמים, כשלי בדיקות ופערי הזמנה 17.11.2026 |
 | [TEST_PAYMENT_VERIFICATION_2026-11-17](TEST_PAYMENT_VERIFICATION_2026-11-17.md) | בדיקות תשלום ניסוי, אישור מנהלת ודשבורד; תוצאות וגבולות אימות 17.11.2026 |
 | [TEST_PAYMENT_EDGE_CASES_2026-11-18](TEST_PAYMENT_EDGE_CASES_2026-11-18.md) · [תצוגת HTML](TEST_PAYMENT_EDGE_CASES_2026-11-18.html) | מטריצת מקרי קצה להזמנת ניסוי, אישור מנהלת, תשלום מדומה ודשבורד; מסכים, לוגיקה עסקית ו־SQL, 18.11.2026 |

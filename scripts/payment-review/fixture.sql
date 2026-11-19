@@ -134,6 +134,7 @@ insert into public.product_images(product_id) select product_id from public.prod
 insert into public.shipping_zones values ('00000000-0000-4000-8000-000000000030',true);
 insert into public.shipping_rules(shipping_zone_id,base_price) values ('00000000-0000-4000-8000-000000000030',30);
 insert into public.store_settings values (1,true,'open',null,0);
+insert into public.system_defaults (default_key, default_value) values ('max_advance_days', '7'::jsonb);
 insert into public.orders(order_id,is_test,delivery_date,shipping_zone_id,total) values
  ('00000000-0000-4000-8000-000000000001',true,'2026-11-09','00000000-0000-4000-8000-000000000030',270);
 insert into public.order_items values
