@@ -1,0 +1,45 @@
+name: Deploy ZIS preview to Hostinger
+
+on:
+  push:
+    branches: [production]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zis-hostinger-preview
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build API image
+        run: docker build --file zis-api/Dockerfile --tag zis-api:verify .
+      - name: Build storefront image
+        run: docker build --file apps/storefront/Dockerfile --tag zis-storefront:verify .
+      - name: Build admin image
+        run: docker build --file apps/admin-mobile/Dockerfile --tag zis-admin:verify .
+
+  deploy:
+    needs: verify
+    if: ${{ vars.HOSTINGER_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Deploy loopback-only preview
+        uses: hostinger/deploy-on-vps@v2
+        with:
+          api-key: ${{ secrets.HOSTINGER_API_KEY }}
+          virtual-machine: ${{ vars.HOSTINGER_VM_ID }}
+          project-name: zis-preview
+          docker-compose-path: docker-compose.yml
+          environment-variables: |
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            CORS_ALLOWED_ORIGINS=${{ vars.CORS_ALLOWED_ORIGINS }}
+            ORDER_CONFIRMATION_TOKEN_SECRET=${{ secrets.ORDER_CONFIRMATION_TOKEN_SECRET }}
+            ORDER_CONFIRMATION_TOKEN_TTL_SECONDS=${{ vars.ORDER_CONFIRMATION_TOKEN_TTL_SECONDS }}

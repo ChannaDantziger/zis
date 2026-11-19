@@ -5,7 +5,8 @@ import { useMediaQuery } from '@mantine/hooks';
 import { IconBell } from '@tabler/icons-react';
 import { Link } from 'react-router-dom';
 import { currentBusinessDate, request } from '../../shared/api/http-client.js';
-import type { Dashboard, OrderStatus } from '../../entities/admin.types.js';
+import type { Dashboard } from '../../entities/admin.types.js';
+import type { DisplayStage } from './order-stage.js';
 import { ErrorState, LoadingState } from '../../shared/components/StateMessage.js';
 import { HomeStageChart } from './HomeStageChart.js';
 import { HomeProductionChart } from './HomeProductionChart.js';
@@ -18,7 +19,7 @@ import './home.css';
 export function HomeDashboardPage() {
   const today = currentBusinessDate();
   const mobile = useMediaQuery('(max-width: 47.99em)');
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus>('in_preparation');
+  const [selectedStatus, setSelectedStatus] = useState<DisplayStage>('in_preparation');
   const [productionDate, setProductionDate] = useState(today), [productionMode, setProductionMode] = useState<'day' | 'week'>('day');
   const [cityDate, setCityDate] = useState(today), [cityMode, setCityMode] = useState<'day' | 'week'>('day');
   const [openOrderId, setOpenOrderId] = useState<string | null>(null);

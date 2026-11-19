@@ -36,7 +36,8 @@ export async function readOrderDetails(client: SqlClient, orderId: string): Prom
         where order_id = $1 and status = 'open' order by created_at, admin_task_id`, [orderId]),
     client.query<NonNullable<AdminOrderDetails['payments']>[number] & Record<string, unknown>>(
       `select provider, provider_transaction_id as "providerTransactionId", amount::text, currency,
-              status, is_simulated as "isSimulated", created_at as "createdAt"
+              status, is_simulated as "isSimulated", created_at as "createdAt",
+              case when provider='manual_external' then provider_payload->>'method' end as "manualMethod"
          from public.payments where order_id = $1 order by created_at, payment_id`, [orderId]),
   ]);
   return { ...order, items: items.rows, history: history.rows, tasks: tasks.rows, payments: payments.rows,

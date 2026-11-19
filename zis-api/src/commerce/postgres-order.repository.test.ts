@@ -46,6 +46,14 @@ test('confirmation SQL checks expiry/revocation and returns a minimal response',
  const result=await f.repository.findConfirmation('hash',new Date());assert.deepEqual(Object.keys(result!).sort(),['currency','deliveryDate','isTest','orderNumber','paymentStatus','status','total']);assert.match(f.calls[0]!.sql,/revoked_at is null and t.expires_at>\$2/);assert.ok(f.released);
 });
 
+test('confirmation exposes ordered product snapshots without customer details',async()=>{
+ const items=[{productId:'product',productVariantId:null,quantitySets:2,productName:'Original name',lineTotal:'20.50'}];
+ const f=fixture(()=>({rows:[{order_id:'private',order_number:'NUMBER',status:'ordered',payment_status:'pending',is_test:false,delivery_date:'2026-10-11',total:'25.50',items,customer_phone:'private'}],rowCount:1}));
+ const result=await f.repository.findConfirmation('hash',new Date());
+ assert.deepEqual(result?.items,items);assert.equal('customer_phone' in result!,false);
+ assert.match(f.calls[0]!.sql,/product_name_snapshot/);assert.match(f.calls[0]!.sql,/line_total/);
+});
+
 test('test creation replay returns explicit marker and current paid status/version',async()=>{
  const f=fixture(sql=>sql.startsWith('insert into public.order_creation_requests')?{rows:[],rowCount:0}:sql.includes('select request_hash')?{rows:[{request_hash:'hash',order_id:'order'}],rowCount:1}:sql.includes('select order_id,order_number,total')?{rows:[{order_id:'order',order_number:'NUMBER',total:'25.50',is_test:true,status:'in_preparation',payment_status:'paid',version:'123.45'}],rowCount:1}:empty);
  const result=await f.repository.withTransaction(tx=>tx.claimRequest('abcdefghijklmnop','hash'));

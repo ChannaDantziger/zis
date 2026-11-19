@@ -65,7 +65,7 @@ export interface OrderCreatedResponse {
 }
 
 export interface OrderConfirmationResponse {
-  items?: CartItemInput[];
+  items?: Array<CartItemInput & { productName: string; lineTotal: string }>;
   version?: string;
   isTest?: boolean;
   orderNumber: string;

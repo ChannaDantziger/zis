@@ -39,6 +39,40 @@ test('creation clears the matching cart once and later confirmation preserves ad
     assert.deepEqual(cartStore.items, [{ productId: 'new-product', quantitySets: 1 }]);
   } finally { cartStore.clear(); store.dispose(); }
 });
+
+test('starting a new checkout from the cart discards old recovery even after a browser reload', async () => {
+  const originalStorage = globalThis.sessionStorage;
+  const storage = new Map<string, string>();
+  Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, value: {
+    getItem: (key: string) => storage.get(key) ?? null,
+    setItem: (key: string, value: string) => storage.set(key, value),
+    removeItem: (key: string) => storage.delete(key),
+  } });
+  const old = setup(); const fresh = setup();
+  try {
+    await ready(old); await old.submit(items);
+    assert.ok(storage.size);
+    fresh.startNewCheckout();
+    await fresh.load();
+    assert.equal(fresh.created, null);
+    assert.equal(fresh.deliveryDate, '');
+    assert.equal(fresh.shippingZoneId, '');
+    assert.equal(storage.size, 0);
+  } finally {
+    old.dispose(); fresh.dispose();
+    Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, value: originalStorage });
+  }
+});
+
+test('starting a checkout preserves an unresolved creation attempt for safe retry', async () => {
+  const store = setup({ create: async () => { throw new Error('unknown result'); } });
+  try {
+    await ready(store); await store.submit(items);
+    assert.equal(store.retryPending, true);
+    store.startNewCheckout();
+    assert.equal(store.retryPending, true);
+  } finally { store.dispose(); }
+});
 test('closed store never quotes or creates', async () => {
   let calls = 0;
   const store = setup({ status: async () => ({ storeOpen: false, lockMessage: 'closed', timezone: 'Asia/Jerusalem', dispatchTime: null, sameDayCutoffTime: '10:00' }),
@@ -89,12 +123,15 @@ test('unknown create result retries exact payload and key, not changed form or c
 });
 test('confirmation failure never re-POSTs committed order; retry uses private token', async () => {
   let creates = 0; let confirms = 0;
+  cartStore.items = items.map(item => ({ ...item }));
   const store = setup({ create: async () => { creates++; return created; }, confirmation: async (token) => {
     assert.equal(token, 'private-token'); confirms++;
     if (confirms === 1) throw new Error('offline');
     return { ...created, deliveryDate: '2026-10-12' };
   } });
-  await ready(store); await store.submit(items); await store.submit(items); await store.refreshConfirmation();
+  await ready(store); await store.submit(items);
+  assert.deepEqual(cartStore.items, []);
+  await store.submit(items); await store.refreshConfirmation();
   assert.equal(creates, 1); assert.equal(confirms, 2); assert.equal(store.created && 'confirmationToken' in store.created, false);
   assert.equal(store.confirmation?.orderNumber, 'QA-100');
 });

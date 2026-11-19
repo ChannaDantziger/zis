@@ -7,6 +7,8 @@ import { OrderStatusBadge, statusLabels } from '../shared/components/OrderStatus
 import type { BulkStatusResponse, OrderDetails, OrderStatus } from '../entities/admin.types.js';
 import { useState } from 'react';
 import { PackageCountDialog } from '../features/home/PackageCountDialog.js';
+import { TestPaymentButton } from '../features/home/TestPaymentButton.js';
+import { ManualPaymentControl } from '../features/home/ManualPaymentControl.js';
 
 const paymentLabels: Record<string, string> = { pending: 'ממתינה לתשלום', authorized: 'אושר אצל הספק', paid: 'שולמה', failed: 'תשלום נכשל' };
 
@@ -31,6 +33,8 @@ export function OrderDetailsPage({ selectedOrderId }: { selectedOrderId?: string
   return <Stack gap="lg" maw={900} mx="auto">
     <Group justify="space-between">{!selectedOrderId && <Button component={Link} to="/orders" variant="subtle">חזרה להזמנות</Button>}<OrderStatusBadge order={order} /></Group>
     <Title order={1}>הזמנה {order.orderNumber}</Title>{order.isTest && <Badge color="orange">הזמנת ניסוי · ללא חיוב אשראי</Badge>}
+    <TestPaymentButton order={order} />
+    <ManualPaymentControl order={order} />
     <Group><Text fw={700}>₪ {order.total}</Text><Text>אספקה: {order.deliveryDate}</Text><Text>{paymentLabels[order.paymentStatus] ?? order.paymentStatus}</Text></Group>
     {mutation.isError && <Alert color="red" title="השינוי נכשל">{mutation.error.message}</Alert>}
     {mutation.data && <Alert color={failure ? 'orange' : 'teal'} title={failure ? 'ההזמנה לא קודמה' : 'הסטטוס עודכן'}>{failure?.reason ?? 'הרשימות מתרעננות מהשרת.'}</Alert>}

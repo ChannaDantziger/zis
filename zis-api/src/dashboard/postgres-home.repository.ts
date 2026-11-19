@@ -2,7 +2,7 @@ import type { SqlClientFactory } from '../inventory/postgres-inventory.repositor
 import type { HomeOrder, HomeOrderRepository } from './home.types.js';
 
 interface HomeRow {
-  orderId: string; orderNumber: string; status: HomeOrder['status']; paymentStatus: string;
+  orderId: string; orderNumber: string; status: HomeOrder['status']; paymentStatus: string; isTest: boolean;
   deliveryDate: string; city: string; address: string; zoneName: string | null; version: string; packageCount: number | null;
   orderItemId: string | null; productName: string | null; variantName: string | null;
   quantitySets: number | null; categoryName: string | null; productId: string | null;
@@ -19,7 +19,7 @@ async function listHomeOrders(factory: SqlClientFactory, from: string, to: strin
   try {
     const result = await client.query<HomeRow>(`
       select o.order_id as "orderId", o.order_number as "orderNumber", o.status,
-             o.payment_status as "paymentStatus", to_char(o.delivery_date, 'YYYY-MM-DD') as "deliveryDate",
+             o.payment_status as "paymentStatus", o.is_test as "isTest", to_char(o.delivery_date, 'YYYY-MM-DD') as "deliveryDate",
              coalesce(o.delivery_address->>'city', '') as city,
              concat_ws(' ', o.delivery_address->>'street', o.delivery_address->>'houseNumber') as address,
              z.name as "zoneName", o.package_count as "packageCount", extract(epoch from o.updated_at)::text as version,
@@ -48,7 +48,7 @@ async function listHomeOrders(factory: SqlClientFactory, from: string, to: strin
       let order = orders.get(row.orderId);
       if (!order) {
         order = { orderId: row.orderId, orderNumber: row.orderNumber, status: row.status,
-          paymentStatus: row.paymentStatus, deliveryDate: row.deliveryDate, city: row.city,
+          paymentStatus: row.paymentStatus, isTest: row.isTest, deliveryDate: row.deliveryDate, city: row.city,
           address: row.address, zoneName: row.zoneName, version: row.version, packageCount: row.packageCount, items: [] };
         orders.set(row.orderId, order);
       }

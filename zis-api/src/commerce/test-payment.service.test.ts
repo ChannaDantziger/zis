@@ -14,7 +14,7 @@ function fixture(options:{real?:boolean;prior?:boolean;denied?:boolean;stale?:bo
   else if(sql.includes('from public.order_items'))rows=[{product_id:productId,product_variant_id:options.variant?productId:null,quantity_sets:1,set_size_snapshot:1}];
   else if(sql.includes('for update'))rows=[{product_id:productId,set_size:1}];
   else if(sql.includes('from public.store_settings'))rows=[{store_open:true,lock_mode:'open',lock_message:null,minimum_product_subtotal:'0.00'}];
-  else if(sql.includes('from public.system_defaults'))rows=[{default_key:'tax_rate',default_value:'18.00'}];
+  else if(sql.includes('from public.system_defaults'))rows=[{default_key:'tax_rate',default_value:'18.00'},{default_key:'max_advance_days',default_value:7}];
   else if(sql.includes('as is_closed'))rows=[{is_closed:false}];
   else if(sql.includes('select is_active from public.shipping_zones'))rows=[{is_active:true}];
   else if(sql.includes('union all'))rows=[{product_id:productId,product_variant_id:options.variant?productId:null,price_per_set:'10.00',available_sets:5}];

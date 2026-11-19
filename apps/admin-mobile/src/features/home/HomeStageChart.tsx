@@ -7,8 +7,15 @@ import type { OrderStatus } from '../../entities/admin.types.js';
 import type { HomeOrder } from './home.types.js';
 import { PackageCountDialog } from './PackageCountDialog.js';
 import { Link } from 'react-router-dom';
+import { IconSearch } from '@tabler/icons-react';
+import { displayStage, type DisplayStage } from './order-stage.js';
+import { TestPaymentButton } from './TestPaymentButton.js';
+import { ManualPaymentControl } from './ManualPaymentControl.js';
 
-const STAGES: OrderStatus[] = ['ordered', 'in_preparation', 'packed', 'in_transit', 'delivered', 'approved'];
+const STAGES: DisplayStage[] = ['payment_pending', 'ordered', 'in_preparation', 'packed', 'in_transit', 'delivered', 'approved'];
+const labels = { ...statusLabels, payment_pending: 'ממתינה לתשלום' };
+const colors = { ...statusColors, payment_pending: '#b36b1f' };
+const icons = { ...statusIcons, payment_pending: IconSearch };
 const NEXT: Partial<Record<OrderStatus, [OrderStatus, string]>> = {
   ordered: ['in_preparation', 'התחלת הכנה'], in_preparation: ['packed', 'סיום אריזה'],
   packed: ['in_transit', 'יציאה למשלוח'], in_transit: ['delivered', 'סימון כנמסרה'],
@@ -16,7 +23,7 @@ const NEXT: Partial<Record<OrderStatus, [OrderStatus, string]>> = {
 };
 
 export function HomeStageChart({ orders, date, selected, onSelect, onOpen }: {
-  orders: HomeOrder[]; date: string; selected: OrderStatus; onSelect: (status: OrderStatus) => void; onOpen: (id: string) => void;
+  orders: HomeOrder[]; date: string; selected: DisplayStage; onSelect: (status: DisplayStage) => void; onOpen: (id: string) => void;
 }) {
   const client = useQueryClient();
   const [packageOrder, setPackageOrder] = useState<HomeOrder | null>(null);
@@ -27,8 +34,8 @@ export function HomeStageChart({ orders, date, selected, onSelect, onOpen }: {
     onSuccess: async data => { if (data.results.every(result => result.ok)) setPackageOrder(null);
       await Promise.all(['home-orders', 'dashboard', 'orders', 'production', 'order-details'].map(key => client.invalidateQueries({ queryKey: [key] }))); },
   });
-  const counts = Object.fromEntries([...STAGES, 'cancelled'].map(status => [status, orders.filter(order => order.status === status).length])) as Record<OrderStatus, number>;
-  const visible = orders.filter(order => order.status === selected);
+  const counts = Object.fromEntries([...STAGES, 'cancelled'].map(status => [status, orders.filter(order => displayStage(order) === status).length])) as Record<DisplayStage, number>;
+  const visible = orders.filter(order => displayStage(order) === selected);
   const total = orders.filter(order => order.status !== 'cancelled').length;
   const failure = mutation.data?.results.find(result => !result.ok);
   return <Card withBorder radius="lg" className="home-panel" id="home-stages">
@@ -37,14 +44,14 @@ export function HomeStageChart({ orders, date, selected, onSelect, onOpen }: {
       <Button component={Link} to={`/delivery?${new URLSearchParams({ date })}`} variant="default">דוח יציאות להיום</Button>
     </Group></Group>
     <div className="home-stage-bar" aria-label="חלוקת הזמנות לפי שלב">{STAGES.filter(status => counts[status]).map(status =>
-      <button key={status} type="button" style={{ flexGrow: counts[status], background: statusColors[status] }}
-        aria-label={`${statusLabels[status]}: ${counts[status]} הזמנות`} aria-pressed={selected === status} onClick={() => onSelect(status)}>{counts[status]}</button>)}</div>
+      <button key={status} type="button" style={{ flexGrow: counts[status], background: colors[status] }}
+        aria-label={`${labels[status]}: ${counts[status]} הזמנות`} aria-pressed={selected === status} onClick={() => onSelect(status)}>{counts[status]}</button>)}</div>
     <div className="home-stage-legend">{[...STAGES, ...(counts.cancelled ? ['cancelled' as const] : [])].map(status => {
-      const Icon = statusIcons[status];
-      return <button key={status} type="button" className="home-stage-choice" style={{ color: statusColors[status] }}
-        aria-pressed={selected === status} onClick={() => onSelect(status)}><Icon size={18} />{statusLabels[status]} <b>{counts[status]}</b></button>;
+      const Icon = icons[status];
+      return <button key={status} type="button" className="home-stage-choice" style={{ color: colors[status] }}
+        aria-pressed={selected === status} onClick={() => onSelect(status)}><Icon size={18} />{labels[status]} <b>{counts[status]}</b></button>;
     })}</div>
-    <div className="home-stage-results"><Title order={3}>{statusLabels[selected]} · {visible.length} הזמנות</Title>
+    <div className="home-stage-results"><Title order={3}>{labels[selected]} · {visible.length} הזמנות</Title>
       {mutation.isError && <Alert color="red" mt="sm">{mutation.error.message}</Alert>}
       {failure && <Alert color="red" mt="sm">המעבר לא בוצע: {failure.reason ?? 'יש לרענן ולנסות שוב'}</Alert>}
       {!visible.length ? <Text c="dimmed" py="md">אין הזמנות בשלב זה היום.</Text> :
@@ -60,6 +67,8 @@ export function HomeStageChart({ orders, date, selected, onSelect, onOpen }: {
               <Button size="sm" color={statusColors[NEXT[order.status]![0]]} loading={mutation.isPending}
                 onClick={() => order.status === 'packed' ? (setPackageOrder(order), mutation.reset()) : window.confirm(`לאשר העברה של הזמנה ${order.orderNumber} לסטטוס "${statusLabels[NEXT[order.status]![0]]}"?`) && mutation.mutate({ order })}>{NEXT[order.status]![1]}</Button>}
             {order.status === 'ordered' && order.paymentStatus !== 'paid' && <Text size="xs" c="dimmed">הכנה לאחר תשלום</Text>}</Group>
+          <TestPaymentButton order={order} />
+          <ManualPaymentControl order={order} />
         </Card>)}</SimpleGrid>}
     </div>
     {packageOrder && <PackageCountDialog key={packageOrder.orderId} initialCount={packageOrder.packageCount}

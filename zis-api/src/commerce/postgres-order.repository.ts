@@ -8,7 +8,7 @@ import { claimPendingEdit, completePendingEdit } from './pending-edit-requests.r
 interface RequestRow extends Record<string,unknown> { request_hash: string; order_id: string | null; }
 interface CreatedRow extends Record<string,unknown> { order_id: string; order_number: string; total: string; is_test?: boolean; version?: string; status?:string;payment_status?:string; }
 interface SnapshotRow extends Record<string,unknown> { product_variant_id:string | null;product_id:string;product_name:string;variant_name:string;product_code:string | null;set_size:number | null;price_per_set:string; }
-interface ConfirmationRow extends CreatedRow { status:string;payment_status:string;delivery_date:string;is_test:boolean;items?:CreateOrderInput['items']; }
+interface ConfirmationRow extends CreatedRow { status:string;payment_status:string;delivery_date:string;is_test:boolean;items?:OrderConfirmationResponse['items']; }
 export function createPostgresOrderRepository(factory: SqlClientFactory): OrderRepository {
   return {
     async withTransaction(work) {
@@ -20,7 +20,7 @@ export function createPostgresOrderRepository(factory: SqlClientFactory): OrderR
       const client=await factory();
       try {
         const result=await client.query<ConfirmationRow>(`select o.order_id,o.order_number,o.status,o.payment_status,o.is_test,extract(epoch from o.updated_at)::text as version,to_char(o.delivery_date,'YYYY-MM-DD') as delivery_date,o.total,
-            coalesce((select jsonb_agg(jsonb_build_object('productId',i.product_id,'productVariantId',i.product_variant_id,'quantitySets',i.quantity_sets)
+            coalesce((select jsonb_agg(jsonb_build_object('productId',i.product_id,'productVariantId',i.product_variant_id,'quantitySets',i.quantity_sets,'productName',i.product_name_snapshot,'lineTotal',i.line_total::text)
               order by i.product_id,i.product_variant_id nulls first) from public.order_items i where i.order_id=o.order_id),'[]'::jsonb) as items
           from public.order_confirmation_tokens t join public.orders o on o.order_id=t.order_id
           where t.token_hash=$1 and t.revoked_at is null and t.expires_at>$2`,[hash,now]);

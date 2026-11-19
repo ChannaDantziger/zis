@@ -39,7 +39,7 @@
 |---|---|---|
 | `GET /store-status` | ציבורי | פתיחה, הודעת סגירה, אזור זמן, שעת יציאה ו־`minimumProductSubtotal` כמחרוזת כספית |
 | `GET /shipping/zones` | ציבורי | אזורים פעילים בלבד |
-| `GET /delivery-dates` | ציבורי | תאריכים כלליים ללא `shippingZoneId`; שישי ושבת חסומים גם אם הוגדרו כימי עבודה. מימוש מקומי 08.11; DB חי טרם אומת |
+| `GET /delivery-dates` | ציבורי | תאריכים כלליים ללא `shippingZoneId`; ימי החלוקה לפי הגדרות החנות, כולל שישי ושבת אם סומנו, בכפוף לטווח, cutoff וסגירות. מימוש ובדיקות מקומיות 19.11; DB חי ודפדפן טרם אומתו |
 | `POST /availability` | ציבורי | `AvailabilityRequest` → `AvailabilityResponse` |
 | `POST /quote` | ציבורי | `ShippingQuoteInput` → `QuotePreview` |
 
@@ -73,7 +73,7 @@
 }
 ```
 
-תגובה מוצלחת מחזירה `orderId`, `orderNumber`, `status`, `paymentStatus`, `total`, `currency` ו־`confirmationToken`. האסימון אקראי, קצר־תוקף ומאוחסן במסד רק כ־hash; משך התוקף יוגדר ב־Config לפני הפעלת הנתיב. `GET /orders/confirmation` יקבל ב־Authorization: Bearer את האסימון ולא מספר הזמנה בלבד, ויחזיר תקציר מצומצם: מספר הזמנה, סטטוסים, תאריך, סכום ומטבע. כתובת, טלפון, Email ופרטי פריטים אינם נחשפים במסלול זה.
+תגובה מוצלחת מחזירה `orderId`, `orderNumber`, `status`, `paymentStatus`, `total`, `currency` ו־`confirmationToken`. האסימון קצר־תוקף ומאוחסן במסד רק כ־hash; משך התוקף מוגדר ב־Config. `GET /orders/confirmation` מקבל ב־Authorization: Bearer את האסימון ולא מספר הזמנה בלבד, ומחזיר מספר הזמנה, סטטוסים, תאריך, סכום, מטבע ופריטים עם מזהים, כמות, שם וסכום שורה שמורים בהזמנה. כתובת, טלפון ו־Email אינם נחשפים במסלול זה. הרחבת פרטי הפריטים בקוד מקומי 19.11.2026; DB חי טרם אומת.
 
 ## קודי שגיאה מחייבים
 
@@ -91,6 +91,7 @@
 | `GET /admin/orders?deliveryDate=YYYY-MM-DD` | Admin פעיל | שורות הזמנה, סינון/מיון, `allowedNextStatuses` ו־`version` |
 | `GET /admin/orders/page` | מנהל תפעול פעיל | `{ data, page, variants }`; עימוד 24 עד 50, מסנני יום/סטטוס/עיר/וריאציה ו־no-store; [פרטים](ADMIN_ORDERS.md) |
 | `GET /admin/orders/:orderId` | מנהל תפעול פעיל | פרטים מוגנים, Snapshot פריטים, הקדשה, משימות פתוחות והיסטוריה; UUID, 404 ו־`Cache-Control: no-store` |
+| `POST /admin/orders/:orderId/manual-payment` | מנהל תפעול פעיל | `action` הוא `confirm` או `revert`, נדרשים `version` ו־`note`. אישור ידני לתשלום שכבר התקבל מחוץ לאתר משנה מלאי ורושם תשלום והיסטוריה אטומית; החזרה מבטלת רק אישור ידני ומחזירה מלאי לפני הכנה. אין סליקה או החזר כספי. קוד ובדיקות מבודדות 19.11; מצב DB חי לא אומת. [פרטים](ORDER_CREATION.md) |
 | `GET /admin/production?date=YYYY-MM-DD` | Admin פעיל | קיבוץ Sets לפי מוצר/וריאציה להזמנות ששולמו |
 | `POST /admin/orders/bulk-status` | Admin פעיל | `{ items: [{ orderId, version }], targetStatus }`; מחזיר תוצאה נפרדת לכל הזמנה |
 | `GET /admin/tasks` | מנהל תפעול פעיל | מסנן `status`, עימוד `page/pageSize`, תשובה `{ data, page }` |

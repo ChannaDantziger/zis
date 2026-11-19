@@ -25,7 +25,8 @@ const server = createServer(async (req, res) => {
     if (path === '/delivery-dates') return json({ timezone: 'Asia/Jerusalem', today: '2026-10-26', maxDate: '2026-11-02', availableDates: ['2026-10-27', '2026-10-28', '2026-10-29'] });
     if (path === '/orders/confirmation') {
       if (req.headers.authorization !== 'Bearer ' + created.confirmationToken) return json({ error: { code: 'NOT_FOUND' } }, 404);
-      return json({ orderNumber: created.orderNumber, status: created.status, paymentStatus: created.paymentStatus,
+      return json({ orderNumber: created.orderNumber, status: created.status, paymentStatus: created.paymentStatus, isTest: false,
+        items: (orderInput?.items ?? []).map(item => ({ ...item, productName: product.name, lineTotal: (20 * item.quantitySets).toFixed(2) })),
         deliveryDate: orderInput?.deliveryDate, total: created.total, currency: created.currency });
     }
     let body = ''; for await (const chunk of req) body += chunk;

@@ -2,6 +2,8 @@ import { createFaqRouter } from './routes/faq.routes.js';
 import type { FaqService } from './faq/faq.service.js';
 import { createAdminTestOrdersRouter } from './routes/admin-test-orders.routes.js';
 import type { TestPaymentService } from './commerce/test-payment.service.js';
+import { createAdminManualPaymentRouter } from './routes/admin-manual-payment.routes.js';
+import type { ManualPaymentService } from './commerce/manual-payment.service.js';
 import express from 'express';
 import { createOrderRouter } from './routes/order.routes.js';
 import type { OrderService } from './commerce/order.types.js';
@@ -51,6 +53,7 @@ import { createEventGalleryRouter } from './routes/event-gallery.routes.js';
 export interface AppDependencies {
   faqService?: FaqService;
   testPaymentService?: TestPaymentService;
+  manualPaymentService?: ManualPaymentService;
   orderService?: OrderService;
   notificationsService?: NotificationsService;
   inventoryAdminService?: InventoryAdminService;
@@ -120,6 +123,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   if (dependencies.orderCorrectionService && dependencies.resolveAdminUserId) {
     app.use(createAdminOrderCorrectionRouter(dependencies.orderCorrectionService, dependencies.resolveAdminUserId));
   }
+  if (dependencies.manualPaymentService && dependencies.resolveAdminUserId) app.use(createAdminManualPaymentRouter(dependencies.manualPaymentService, dependencies.resolveAdminUserId));
   if (dependencies.orderStatusService && dependencies.resolveAdminUserId) {
     app.use(createAdminOrderStatusRouter(dependencies.orderStatusService, dependencies.resolveAdminUserId));
   }

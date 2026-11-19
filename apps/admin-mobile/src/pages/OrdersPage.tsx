@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Accordion, Alert, Badge, Button, Card, Checkbox, Group, Modal, NumberInput, Pagination, Select, SimpleGrid, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
-import { IconArrowLeft, IconRefresh } from '@tabler/icons-react';
+import { IconArrowLeft, IconRefresh, IconSearch } from '@tabler/icons-react';
 import { currentBusinessDate, request } from '../shared/api/http-client.js';
 import type { BulkStatusResponse, OrderPageResponse, OrderRow, OrderStatus } from '../entities/admin.types.js';
 import { EmptyState, ErrorState, LoadingState } from '../shared/components/StateMessage.js';
@@ -18,6 +18,7 @@ const sortOptions = [
   { value: 'location', label: 'עיר' }, { value: 'orderNumber', label: 'מספר הזמנה' }, { value: 'total', label: 'סכום' },
 ];
 const ORDER_STATUSES: OrderStatus[] = ['ordered', 'in_preparation', 'packed', 'in_transit', 'delivered', 'approved', 'cancelled'];
+const PAYMENT_PENDING = 'payment_pending';
 
 export const OrdersPage = observer(function OrdersPage() {
   const client = useQueryClient();
@@ -26,17 +27,22 @@ export const OrdersPage = observer(function OrdersPage() {
   const [packageCounts, setPackageCounts] = useState<Record<string, number | string>>({});
   const { deliveryDate: date, statusFilter, sortBy, sortDirection, orderPage: page } = adminUiStore;
   const params = new URLSearchParams({ deliveryDate: date, sortBy, sortDirection, page: String(page) });
-  if (statusFilter) params.set('status', statusFilter);
+  if (statusFilter) {
+    params.set('status', statusFilter === PAYMENT_PENDING ? 'ordered' : statusFilter);
+    if (statusFilter === PAYMENT_PENDING || statusFilter === 'ordered') params.set('paymentFilter', statusFilter === PAYMENT_PENDING ? 'pending' : 'not_pending');
+  }
   if (location) params.set('location', location);
   const locationPending = location !== adminUiStore.location.trim();
   const query = useQuery({ queryKey: ['orders', date, statusFilter, location, sortBy, sortDirection, page], queryFn: ({ signal }) => request<OrderPageResponse>(`/admin/orders/page?${params}`, { signal }), gcTime: 0 });
-  const statusCountQueries = useQueries({ queries: ORDER_STATUSES.map((status) => {
-    const countParams = new URLSearchParams({ deliveryDate: date, status, page: '1', pageSize: '1' });
+  const filterStages = [PAYMENT_PENDING, ...ORDER_STATUSES];
+  const statusCountQueries = useQueries({ queries: filterStages.map((status) => {
+    const countParams = new URLSearchParams({ deliveryDate: date, status: status === PAYMENT_PENDING ? 'ordered' : status, page: '1', pageSize: '1' });
+    if (status === PAYMENT_PENDING || status === 'ordered') countParams.set('paymentFilter', status === PAYMENT_PENDING ? 'pending' : 'not_pending');
     if (location) countParams.set('location', location);
     return { queryKey: ['orders-status-count', date, status, location], queryFn: () => request<OrderPageResponse>(`/admin/orders/page?${countParams}`), enabled: !locationPending };
   }) });
-  const statusCounts = Object.fromEntries(ORDER_STATUSES.map((status, index) => [status, statusCountQueries[index]?.data?.page.totalItems ?? null])) as Record<OrderStatus, number | null>;
-  const allCount = ORDER_STATUSES.every((status) => statusCounts[status] !== null) ? ORDER_STATUSES.reduce((total, status) => total + (statusCounts[status] ?? 0), 0) : null;
+  const statusCounts = Object.fromEntries(filterStages.map((status, index) => [status, statusCountQueries[index]?.data?.page.totalItems ?? null])) as Record<string, number | null>;
+  const allCount = filterStages.every((status) => statusCounts[status] !== null) ? filterStages.reduce((total, status) => total + (statusCounts[status] ?? 0), 0) : null;
   const orders = query.data?.data ?? [];
   const totalPages = query.data?.page.totalPages;
   useEffect(() => { if (totalPages !== undefined && page > Math.max(1, totalPages)) adminUiStore.setOrderPage(Math.max(1, totalPages)); }, [page, totalPages]);
@@ -60,6 +66,7 @@ export const OrdersPage = observer(function OrdersPage() {
     <TextInput type="date" maw={360} label="תאריך אספקה" value={date} disabled={busy} onChange={(event) => { if (event.currentTarget.value) adminUiStore.setDeliveryDate(event.currentTarget.value); }} />
     <Group gap="xs" className="orders-status-filters" role="group" aria-label="סינון לפי שלב ההזמנה">
       <StatusFilterButton label="הכול" count={allCount} active={!statusFilter} disabled={busy} onClick={() => adminUiStore.setStatusFilter(null)} />
+      <StatusFilterButton label="ממתינה לתשלום" count={statusCounts[PAYMENT_PENDING]} icon={<IconSearch size={16} />} color="#b36b1f" active={statusFilter === PAYMENT_PENDING} disabled={busy} onClick={() => adminUiStore.setStatusFilter(PAYMENT_PENDING)} />
       {ORDER_STATUSES.map((status) => {
         const Icon = statusIcons[status];
         return <StatusFilterButton key={status} label={statusLabels[status]} count={statusCounts[status]} icon={<Icon size={16} />} color={statusColors[status]} active={statusFilter === status} disabled={busy} onClick={() => adminUiStore.setStatusFilter(status)} />;

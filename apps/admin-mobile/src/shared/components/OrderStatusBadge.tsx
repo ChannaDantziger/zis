@@ -1,5 +1,5 @@
 import { Badge } from '@mantine/core';
-import { IconBox, IconCheck, IconClock, IconCircleX, IconFileText, IconTruck, IconChecks } from '@tabler/icons-react';
+import { IconBox, IconCheck, IconClock, IconCircleX, IconFileText, IconTruck, IconChecks, IconSearch } from '@tabler/icons-react';
 import type { OrderPreview, OrderStatus } from '../../entities/admin.types.js';
 
 export const statusLabels: Record<OrderStatus, string> = {
@@ -17,6 +17,7 @@ export const statusIcons = {
 } satisfies Record<OrderStatus, typeof IconBox>;
 
 export function OrderStatusBadge({ order }: { order: Pick<OrderPreview, 'status' | 'paymentStatus'> }) {
+  if (order.status === 'ordered' && order.paymentStatus === 'pending') return <Badge variant="light" color="orange" leftSection={<IconSearch size={14} />}>ממתינה לתשלום</Badge>;
   const Icon = statusIcons[order.status];
   return <Badge variant="light" color={statusColors[order.status]} leftSection={<Icon size={14} />}>{statusLabels[order.status]}</Badge>;
 }

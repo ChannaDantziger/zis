@@ -8,6 +8,8 @@ import { OrderStatusBadge, statusColors, statusIcons, statusLabels } from '../..
 import type { BulkStatusResponse, OrderDetails, OrderStatus } from '../../entities/admin.types.js';
 import type { HomeItem } from './home.types.js';
 import { PackageCountDialog } from './PackageCountDialog.js';
+import { TestPaymentButton } from './TestPaymentButton.js';
+import { ManualPaymentControl } from './ManualPaymentControl.js';
 
 const STATUSES: OrderStatus[] = ['ordered', 'in_preparation', 'packed', 'in_transit', 'delivered', 'approved'];
 const paymentLabels: Record<string, string> = { pending: 'ממתינה לתשלום', authorized: 'אושר אצל הספק', paid: 'שולמה', failed: 'תשלום נכשל' };
@@ -37,6 +39,8 @@ export function DetailedOrderPage({ selectedOrderId, itemImages = [] }: { select
     {!selectedOrderId && <Button component={Link} to="/orders" variant="subtle" w="fit-content">חזרה להזמנות</Button>}
     <Group justify="space-between"><Title order={1}>פרטים · {order.orderNumber}</Title><OrderStatusBadge order={order} /></Group>
     {order.isTest && <Badge color="orange">הזמנת ניסוי · ללא חיוב אשראי</Badge>}
+    <TestPaymentButton order={order} />
+    <ManualPaymentControl order={order} />
     <Card withBorder radius="lg"><Title order={2} mb="sm">מידע חשוב לשלב הזה</Title>{stageSummary(order)}</Card>
     {advance.isError && <Alert color="red">{advance.error.message}</Alert>}
     {advanceFailure && <Alert color="red">המעבר לא בוצע: {advanceFailure.reason ?? 'רענני ונסי שוב'}</Alert>}
@@ -45,11 +49,11 @@ export function DetailedOrderPage({ selectedOrderId, itemImages = [] }: { select
       <DetailsCard title="הזמנה ותשלום"><Field label="מספר הזמנה" value={order.orderNumber} /><Field label="נוצרה" value={formatDateTime(order.createdAt)} /><Field label="עודכנה" value={formatDateTime(order.updatedAt)} /><Field label="סטטוס" value={statusLabels[order.status]} /><Field label="מצב תשלום" value={paymentLabels[order.paymentStatus] ?? order.paymentStatus} /><Field label="אושר תשלום" value={formatDateTime(order.paymentConfirmedAt ?? undefined)} /><Field label="תאריך אספקה" value={order.deliveryDate} /><Field label="הזמנה דחופה" value={order.isUrgent ? 'כן' : 'לא'} /></DetailsCard>
       <DetailsCard title="לקוחה ויצירת קשר"><Field label="שם" value={order.customerName} /><Field label="טלפון המזמינה" value={order.customerPhone} /><Field label="דוא״ל" value={order.customerEmail} /></DetailsCard>
       <DetailsCard title="נתונים לשליח"><Field label="שיטת אספקה" value={order.shippingMethod} /><Field label="אזור משלוח" value={order.shippingZoneName} /><Field label="עיר" value={address.city} /><Field label="שכונה" value={address.neighborhood} /><Field label="רחוב" value={address.street} /><Field label="מספר בית" value={address.houseNumber} /><Field label="דירה" value={address.apartment} /><Field label="מיקוד" value={address.postalCode} /><Field label="אולם / מקום מסירה" value={order.venueName} /><Field label="טלפון זמין לשליח" value={order.deliveryPhone || order.customerPhone} /><Field label="חלון מסירה" value={displayWindow(order.deliveryTimeWindow)} /><Field label="מספר מארזים" value={order.packageCount ?? 'טרם הוזן באריזה'} /><Field label="הוראות לשליח" value={order.courierNotes} /></DetailsCard>
-      <DetailsCard title="סכומים"><Field label="מוצרים" value={money(order.subtotal)} /><Field label="דמי משלוח" value={money(order.shippingTotal)} /><Field label="הנחה" value={money(order.discountTotal)} /><Field label="מס" value={money(order.taxTotal)} /><Field label="שיעור מס" value={order.taxRate ? `${order.taxRate}%` : '0%'} /><Field label="סה״כ לתשלום" value={money(order.total)} /><Field label="מצב תשלום" value={paymentLabels[order.paymentStatus] ?? order.paymentStatus} /></DetailsCard>
+      <DetailsCard title="סכומים"><Field label="מוצרים" value={money(order.subtotal)} /><Field label="דמי משלוח" value={money(order.shippingTotal)} /><Field label="סה״כ לתשלום" value={money(order.total)} /><Field label="מצב תשלום" value={paymentLabels[order.paymentStatus] ?? order.paymentStatus} /></DetailsCard>
     </SimpleGrid>
     <Card withBorder radius="lg"><Title order={2} mb="sm">רישומי תשלום</Title><Stack gap="sm">
       {(order.payments ?? []).map((payment, index) => <div key={`${payment.provider}-${payment.createdAt}-${index}`}>
-        <Text fw={700}>{payment.isSimulated ? 'אישור ניסיון ללא חיוב' : payment.provider} · ₪{payment.amount} {payment.currency}</Text>
+        <Text fw={700}>{payment.isSimulated ? 'אישור ניסיון ללא חיוב' : payment.provider === 'manual_external' ? `תשלום חיצוני: ${payment.manualMethod || 'לא צוינה דרך'}` : payment.provider} · ₪{payment.amount} {payment.currency}</Text>
         <Text size="sm">מצב: {paymentLabels[payment.status] ?? payment.status} · {formatDateTime(payment.createdAt)}</Text>
         {payment.providerTransactionId && <Text size="sm">אסמכתא: {payment.providerTransactionId}</Text>}
       </div>)}{!order.payments?.length && <Text c="dimmed">אין רישום תשלום נוסף בהזמנה.</Text>}

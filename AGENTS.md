@@ -21,4 +21,5 @@
 
 # Review sequence
 
+- Before any production release or production-targeted code review, inspect the temporary test-payment approval flow (`apps/admin-mobile/src/features/home/TestPaymentButton.tsx` and `zis-api/src/commerce/test-payment.service.ts`), flag it explicitly, and ask the owner whether to remove it or retain it with appropriate safeguards; record the decision and verification. A simulated payment must never be described as a real charge.
 - When the user asks to run all code-review skills, run the applicable code, flow, security and architecture reviews in sequence, then run `zis-documentation-review` once as a separate final pass. Consolidate the results and state coverage and limitations. A request for one specific review does not automatically trigger the documentation review; run it separately when requested.

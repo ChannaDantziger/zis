@@ -1,0 +1,20 @@
+name: Verify Docker images
+
+on:
+  pull_request:
+    branches: [master, production]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build API image
+        run: docker build --file zis-api/Dockerfile --tag zis-api:ci .
+      - name: Build storefront image
+        run: docker build --file apps/storefront/Dockerfile --tag zis-storefront:ci .
+      - name: Build admin image
+        run: docker build --file apps/admin-mobile/Dockerfile --tag zis-admin:ci .

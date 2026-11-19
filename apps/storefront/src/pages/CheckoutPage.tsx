@@ -10,7 +10,6 @@ import { checkoutStore } from '../features/checkout/checkout.store';
 import { CheckoutForm } from '../features/checkout/CheckoutForm';
 import { TestCheckoutAccess } from '../features/checkout/TestCheckoutAccess';
 import { DemoCredit } from '../features/checkout/DemoCredit';
-import { PendingOrderItems } from '../features/checkout/PendingOrderItems';
 const QUOTE_DELAY_MS = 400;
 const checkoutSteps = ['מוצרים', 'משלוח', 'הקדשה', 'אשראי', 'סיום'];
 
@@ -39,22 +38,18 @@ export const CheckoutPage = observer(function CheckoutPage() {
     const result = store.confirmation ?? store.created;
     return <Container size="sm" py="xl"><Stack>
       <Title order={1}>הזמנה {result.orderNumber}</Title>
-      <Alert color="yellow" title={store.simulatedPaid ? "הזמנת הניסוי נשמרה ואושרה" : "ההזמנה נשמרה — התשלום עדיין לא זמין"} role="status">
-        לא בוצע חיוב אשראי. הסל מתנקה רק אחרי שהאישור הפרטי נטען בהצלחה.
-      </Alert>
-      {store.testAuthorized && <Alert color={store.simulatedPaid ? 'green' : 'orange'} title="הזמנת ניסוי בלבד">
-        {store.simulatedPaid ? 'הניסוי סומן כשולם והועבר לתהליך התפעול. לא בוצע חיוב אשראי.' : 'אפשר לאשר תשלום ניסוי בהרשאת מנהלת בלבד.'}
-        {!store.simulatedPaid && <Button mt="sm" loading={store.busy} disabled={store.pendingItemsChanged || store.pendingUpdatePending || store.pendingConflict} onClick={() => void store.approveTestPayment()}>אישור תשלום ניסוי ללא חיוב</Button>}
-      </Alert>}
-      {store.confirmation?.isTest && store.confirmation.paymentStatus === 'pending' && !store.testAuthorized && <TestCheckoutAccess />}
-      <Text>סכום שנשמר בהזמנה: {result.total} ₪</Text>
-      {!store.simulatedPaid && <PendingOrderItems />}
-      <Text>מצב תשלום: {result.paymentStatus === 'pending' ? 'ממתין לתשלום' : result.paymentStatus}</Text>
-      {store.confirmation && <Text>תאריך אספקה: {store.confirmation.deliveryDate}</Text>}
-      {store.confirmationError && <Alert color="orange">{store.confirmationError}</Alert>}
-      <Button variant="light" disabled={!store.hasPrivateConfirmation} onClick={() => void store.refreshConfirmation()}>רענון האישור הפרטי</Button>
-      <Text size="sm" c="dimmed">אפשר לטעון שוב את האישור הפרטי גם אחרי רענון באותו דפדפן. אין ליצור שוב את אותה הזמנה מהעגלה.</Text>
-      <Button component={Link} to="/catalog" variant="subtle">חזרה לקטלוג</Button>
+      <Title order={2} size="h4">פרטי ההזמנה</Title>
+      {store.confirmation?.items?.map((item, index) => <Group key={`${item.productId}-${index}`} justify="space-between">
+        <Text>{item.productName ?? 'מוצר בהזמנה'} · כמות: {item.quantitySets}</Text>
+        {item.lineTotal && <Text>{item.lineTotal} ₪</Text>}
+      </Group>)}
+      <Text fw={700}>סך הכול: {result.total} ₪</Text>
+      <Text>מצב תשלום: {result.paymentStatus === 'pending' ? 'ממתין לתשלום' : result.paymentStatus === 'paid' ? 'שולם' : result.paymentStatus}</Text>
+      {(store.confirmation?.deliveryDate || store.deliveryDate) && <Text>תאריך אספקה: {store.confirmation?.deliveryDate || store.deliveryDate}</Text>}
+      {store.confirmationError && <Alert color="orange" role="alert">לא ניתן לטעון את כל פרטי ההזמנה כרגע. <Button variant="subtle" onClick={() => void store.refreshConfirmation()}>נסו שוב</Button></Alert>}
+      <Text>תודה שהזמנתם זיס<br />ושנפגש בשמחות</Text>
+      <Text>צוות זיס</Text>
+      <Button component={Link} to="/" onClick={() => store.dispose()}>להזמנות נוספות</Button>
     </Stack></Container>;
   }
   return <Container size="sm" py="xl"><Stack gap="lg">

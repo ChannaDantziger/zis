@@ -1,7 +1,7 @@
 # Docker, פריסה ותיעוד מסירה
 
 [אינדקס](../PLAN_INDEX.md) · [P8/P9 בתוכנית](../IMPLEMENTATION_PLAN.md) · [מעורבות שלך](../OWNER_ACTIONS.md).
-מצב: מתוכנן. אין כרגע Dockerfile/Compose/CI במאגר; מסמך זה אינו מדריך הרצה של תשתית קיימת.
+מצב: Dockerfiles, Compose ו־Workflows ל־Preview סגור הוכנו ב־19.11.2026; Node/Vite builds עברו, אך Docker/CI/VPS לא אומתו. מסמך זה נשאר תוכנית מסירה ואינו מדריך הרצה של תשתית חיה. [מצב הקבצים וההפעלה](../HOSTINGER_DOCKER_PREVIEW.md).
 
 לרצף עבודה מפורט לפי אחריות, Git → Docker/Registry → Hosting, הקמת Staging, שער Production ו־rollback, ראו [תוכנית העלאה לפרודקשן](../PRODUCTION_DEPLOYMENT_PLAN.md).
 

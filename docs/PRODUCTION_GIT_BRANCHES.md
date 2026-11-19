@@ -4,28 +4,34 @@
 
 **החלטת בעלת האתר, 18.11.2026:** `production` יהיה ענף הגרסה החיה. שינוי נכנס אליו דרך Pull Request מאושר; לאחר הקמת Docker ו־CI, מיזוג אליו יפעיל פריסה ל־Hostinger. החלטת הענפים התקבלה, אך החיבור לאירוח עדיין לא הוגדר.
 
+**בדיקת מצב עדכנית, 18.11.2026:** `production` קיים מקומית וב־`origin`, ועוקב אחרי `origin/production`. `master` ו־`production` מצביעים על אותו commit מקומי `56960dd`; `origin/HEAD` מצביע על `origin/main`, שהוא commit ישן יותר לפי הרשומות המקומיות. הבדיקה לא ביצעה `fetch`, ולכן מצב השרת בזמן אמת אינו מאומת. אין להריץ מחדש את פקודות יצירת הענף שלהלן. לא נמצאו `docker-compose.yml` או Workflow תחת `.github/workflows`; קובצי YAML אחרים במאגר מיועדים ל־skills.
+
+**דיווח בעלת האתר, 18.11.2026:** GitHub מציג הודעה ש־rulesets אינם נאכפים במאגר הפרטי בתוכנית החשבון הנוכחית עד מעבר לתוכנית מתאימה. לכן אין להחשיב את `production` כמוגן, גם אם טופס ה־ruleset נשמר. לפני אוטומציית פריסה על כל push יש להפעיל אכיפה בתוכנית מתאימה; אם נשארים בתוכנית הנוכחית, יש לתכנן Workflow פריסה ידני עם `workflow_dispatch` ובחירה מודעת של גרסה, ולא לפרוס אוטומטית מכל push לענף. מצב החיוב/התוכנית לא אומת עצמאית.
+
+**עדכון 19.11.2026:** המאגר הועבר ל־Public לפי בעלת האתר ואומת דרך חיבור GitHub; ענף ברירת המחדל הוא `master`. אכיפת ruleset ל־`production` עדיין לא אומתה. [Workflow Preview](HOSTINGER_DOCKER_PREVIEW.md) מאזין ל־push ל־`production` אך Job הפריסה כבוי עד הגדרת `HOSTINGER_DEPLOY_ENABLED=true` לאחר אימות.
+
 | ענף | תפקיד | PR הבא |
 |---|---|---|
 | `codex/<topic>` | עבודה על שינוי ממוקד | `master` |
 | `master` | שילוב ובדיקת שינויים; אינו פורס לאתר החי | `production` |
 | `production` | מקור הגרסה לפריסת האתר החי | אין push ישיר |
 
-בבדיקה מקומית מ־18.11 נמצאו `master`, `codex/admin-simplification` ו־remote בשם `origin`. לא נמצא `production`. יש שינויים מקומיים רבים שאינם ב־commit; יצירת מצביע ענף אינה כוללת אותם. יעד ה־remote, מצב סנכרון והרשאות לא נבדקו.
+במאגר קיימים גם `master`, `codex/admin-simplification` ו־remote בשם `origin`. יעד ה־remote, מצב סנכרון והרשאות לא נבדקו. ל־PR מהעבודה בוחרים במפורש `base: master`; ל־PR שחרור בוחרים `base: production`. אם מעוניינים ש־PR חדש יציע `master` אוטומטית, בעלת המאגר יכולה לשנות את default branch מ־`main` ל־`master` בהגדרות Git provider, לאחר בדיקת ההשפעה על אוטומציות קיימות.
 
-## 1. יצירת ענף production
+## 1. בדיקת ענף production הקיים
 
-הפקודות הן ל־PowerShell מתיקיית ZIS. בודקים ש־`origin/master` הוא הבסיס הרצוי לפני שתי הפקודות האחרונות. `git branch` אינו מחליף את הענף הפעיל ולכן אינו נוגע בשינויים המקומיים.
+הפקודות הן ל־PowerShell מתיקיית ZIS. `fetch` מעדכן מידע על הענפים המרוחקים בלי לשנות את הקבצים המקומיים. בודקים ששני הענפים קיימים ומציגים את ה־commit האחרון בכל אחד.
 
 ```powershell
 cd "C:\Users\123\Documents\ChatGPT\ZIS"
 git status --short --branch
 git fetch origin
+git branch -avv
 git log -1 --oneline origin/master
-git branch production origin/master
-git push -u origin production
+git log -1 --oneline origin/production
 ```
 
-אם הענף כבר קיים, לבדוק `git branch -avv` ולא ליצור אותו שוב. לפני `push`, לבדוק שב־Git provider אין אוטומציה חיצונית שמאזינה כבר ל־`production`. אין להריץ `reset`, `clean` או החלפת ענף כדי לעקוף את השינויים המקומיים.
+אין ליצור או לדחוף את הענף מחדש. אין להריץ `reset`, `clean` או החלפת ענף כדי לעקוף את השינויים המקומיים.
 
 ## 2. הגנת הענף ב־Git provider
 
@@ -61,7 +67,7 @@ gh pr create --base production --head master --title "Release to production" --b
 → GitHub Actions על push ל-production → Docker/Compose → Hostinger VPS
 ```
 
-את ה־Workflow נגדיר להאזין **רק** ל־`production`. את מפתח Hostinger מזינים ישירות ב־GitHub Actions Secrets; לא בצ'אט או ב־Git. Dockerfiles, Compose, CI, VPS וסודות טרם הוגדרו, ולכן push לענף אינו מפעיל פריסה כעת. מיגרציות DB לעולם אינן מופעלות אוטומטית ב־merge, ב־CI או ב־container startup; בעלת תפקיד מורשית מבצעת אותן ידנית בתהליך המאושר.
+אם הגנת הענף נאכפת בתוכנית החשבון, נגדיר את ה־Workflow להאזין **רק** ל־`production`. אם אין אכיפה, נגדיר פריסה ידנית בלבד מתוך Actions לאחר בדיקת הגרסה. קובץ Compose מסוג `docker-compose.yml` יוכן בשלב 3 של [תוכנית הפריסה](PRODUCTION_DEPLOYMENT_PLAN.md), וקובץ Workflow מסוג `.github/workflows/deploy-production.yml` בשלב 4; החיבור והרצת הפריסה נבדקים בהמשך ב־Staging ורק אז ב־Production. את מפתח Hostinger מזינים ישירות ב־GitHub Actions Secrets; לא בצ'אט או ב־Git. Dockerfiles, Compose, CI, VPS וסודות טרם הוגדרו, ולכן push לענף אינו מפעיל פריסה כעת. מיגרציות DB לעולם אינן מופעלות אוטומטית ב־merge, ב־CI או ב־container startup; בעלת תפקיד מורשית מבצעת אותן ידנית בתהליך המאושר.
 
 ## שער להפעלת אוטומציית Production
 

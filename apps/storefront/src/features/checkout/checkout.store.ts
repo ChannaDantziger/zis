@@ -51,6 +51,11 @@ export class CheckoutStore {
   private savedPendingItems = '';
   private pendingUpdate: { input: { items: CheckoutItem[]; expectedVersion: string }; key: string } | null = null;
   get pendingUpdatePending() { return Boolean(this.pendingUpdate); }
+  startNewCheckout() {
+    if (this.retryPending || this.pendingUpdatePending) return;
+    this.dispose();
+    this.deliveryDate = ''; this.shippingZoneId = '';
+  }
   get pendingItemsChanged() { return JSON.stringify(this.pendingItems) !== this.savedPendingItems; }
   get canEditPending() { return Boolean(this.created?.status === 'ordered' && this.created.paymentStatus === 'pending' && this.token && this.created.version) && !this.simulatedPaid && !this.busy && !this.pendingUpdate && !this.pendingConflict; }
   setPendingQuantity(key: string, quantitySets: number) {

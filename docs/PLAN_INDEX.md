@@ -71,7 +71,10 @@
 | [STOREFRONT_REQUIREMENTS](planning/STOREFRONT_REQUIREMENTS.md) | כיסוי קטלוג, תמונות, רכישה ותפעול | מפרט |
 | [DELIVERY_AND_DOCUMENTATION](planning/DELIVERY_AND_DOCUMENTATION.md) | Docker, סביבות, CI, גיבוי ותיעוד בסוף | תוכנית מסירה |
 | [PRODUCTION_DEPLOYMENT_PLAN](PRODUCTION_DEPLOYMENT_PLAN.md) | תוכנית מפורטת Git → Docker/Registry → Hosting, חלוקת אחריות, שערי Staging/Production ו־rollback | תוכנית; פריסה טרם מומשה |
-| [PRODUCTION_GIT_BRANCHES](PRODUCTION_GIT_BRANCHES.md) | החלטת ענף production, מסלול PR ופקודות הקמה לקראת Hostinger Docker VPS | החלטה ותוכנית 18.11; ענף/CI/Hosting טרם הוגדרו |
+| [HOSTINGER_DEPLOYMENT_ARCHITECTURE](HOSTINGER_DEPLOYMENT_ARCHITECTURE.md) | מבנה VPS אחד, שלושה images, כתובות, Compose/CI וגבולות אבטחה | תכנון פריסה 19.11; תשתית טרם נבדקה |
+| [HOSTINGER_DOCKER_PREVIEW](HOSTINGER_DOCKER_PREVIEW.md) | קובצי Docker/Compose/CI/Deploy שהוכנו ל־Preview סגור והוראות חיבור וגישה | קוד מקומי 19.11; Node/Vite build עברו, Docker/VPS טרם אומתו |
+| [HOSTINGER_NEXT_STEPS](HOSTINGER_NEXT_STEPS.md) | החלטת נתונים חיים, גיבויים, Git, חיבור Hostinger ובדיקת תפעול | החלטה ודיווח בעלת האתר 19.11; תשתית ובדיקות תפעול פתוחות |
+| [PRODUCTION_GIT_BRANCHES](PRODUCTION_GIT_BRANCHES.md) | החלטת ענף production, מסלול PR ופקודות לקראת Hostinger Docker VPS | ענף מקומי ומרוחק קיים לפי בדיקה 18.11; CI/Hosting טרם הוגדרו |
 | [PRODUCTION_READINESS_PHASE_0](PRODUCTION_READINESS_PHASE_0.md) | תוצר שלב 0: חסמי השקת חנות בנפרד מחסמי Staging/CI/Docker, ראיות, אחראים ותנאי סגירה | סקירת תיעוד וקבצים מ־17.11.2026; לא בדיקת שירות חי |
 | [START_NEW_CHAT](START_NEW_CHAT.md) · [גרסה ישנה ב־OLD](OLD/START_NEW_CHAT_2026-10.md) | סדר קריאה והוראת המשך; הגרסה הישנה אינה בשימוש כהוראות פעילות | עזר עבודה |
 
@@ -98,6 +101,8 @@
 | [ERD_COMPARISON](ERD_COMPARISON.md) | השוואה היסטורית; יש לקרוא עם הפערים העדכניים |
 
 ## מימוש, סקירה והפעלה
+
+- [בדיקת ימי חלוקה 19.11.2026](DELIVERY_DAYS_REVIEW_2026-11-19.md) — קבצים שנסקרו, תיקון מקומי, בדיקות והסיבה שטרם אומתה ליום ראשון חסר.
 
 | מסמך | מה הוא מכיל |
 |---|---|

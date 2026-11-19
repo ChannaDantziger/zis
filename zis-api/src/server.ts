@@ -1,5 +1,6 @@
 import { createFaqService } from './faq/faq.service.js';
 import { createTestPaymentService } from './commerce/test-payment.service.js';
+import { createManualPaymentService } from './commerce/manual-payment.service.js';
 import { createApp } from './app.js';
 import { createOrderService } from './commerce/order.service.js';
 import { createPostgresOrderRepository } from './commerce/postgres-order.repository.js';
@@ -86,6 +87,7 @@ const app = hasServerDependencies
       return createApp({
         faqService: createFaqService(createPostgresClientFactory(pool)),
         testPaymentService: createTestPaymentService(createPostgresClientFactory(pool)),
+        manualPaymentService: createManualPaymentService(createPostgresClientFactory(pool)),
         orderService: createOrderService(createPostgresOrderRepository(createPostgresClientFactory(pool)),
           serverConfig.orderConfirmationTokenTtlSeconds && serverConfig.orderConfirmationTokenSecret ? {
             confirmationTokenTtlSeconds: serverConfig.orderConfirmationTokenTtlSeconds,

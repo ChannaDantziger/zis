@@ -9,16 +9,14 @@ import { checkoutStore } from '../features/checkout/checkout.store';
 
 export const CartPage = observer(function CartPage() {
   const minimumOrder = useMinimumOrderStatus();
-  const editingPending = checkoutStore.created?.paymentStatus === 'pending' && checkoutStore.hasPrivateConfirmation;
   useEffect(() => { void cartStore.refresh(); }, []);
   return (
     <Container size="sm" py="xl">
       <Stack gap="lg">
         <Title order={1}>העגלה שלך</Title>
         <CartItems />
-        {editingPending &&
-          <Button component={Link} to="/checkout">חזרה לעריכת ההזמנה הממתינה</Button>}
-        {!editingPending && cartStore.items.length > 0 && <Button component={Link} to="/checkout" disabled={!cartStore.canContinue || !minimumOrder.isMet}>להמשך</Button>}
+        {cartStore.items.length > 0 && <Button component={Link} to="/checkout" disabled={!cartStore.canContinue || !minimumOrder.isMet}
+          onClick={() => checkoutStore.startNewCheckout()}>להמשך</Button>}
       </Stack>
     </Container>
   );

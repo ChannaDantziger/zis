@@ -13,8 +13,8 @@ export function HomePage() {
     <section className="hero content-width" aria-labelledby="hero-title">
       <Stack className="hero-copy" gap="xl">
         <Text className="eyebrow">זיס</Text>
-        <Title id="hero-title" order={1}>משהו מתוק.<br />בדיוק בשבילך.</Title>
-        <Text size="lg" className="hero-description">מגלים את המוצרים, בוחרים את הכמויות המתאימות ומרכיבים עגלה בדרך שלכם.</Text>
+        <Title id="hero-title" order={1}>משהו מתוק.<br />לאירוע שלך</Title>
+        {/* <Text size="lg" className="hero-description">מגלים את המוצרים, בוחרים את הכמויות המתאימות ומרכיבים עגלה בדרך שלכם.</Text> */}
         <Group><Button component={Link} to="/#catalog" rightSection={<IconArrowLeft size={18} />}>לקטלוג המלא</Button>
           <Button component="a" href="#gallery" variant="outline">לגלריה</Button></Group>
         <Text size="sm" c="dimmed">בחירת אפשרות וכמות יחידות קנייה בכל מוצר</Text>

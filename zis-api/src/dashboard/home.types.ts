@@ -7,7 +7,7 @@ export interface HomeItem {
 }
 
 export interface HomeOrder {
-  orderId: string; orderNumber: string; status: OrderStatus; paymentStatus: string;
+  orderId: string; orderNumber: string; status: OrderStatus; paymentStatus: string; isTest?: boolean;
   deliveryDate: string; city: string; address: string; zoneName: string | null; version: string; packageCount: number | null;
   items: HomeItem[];
 }
