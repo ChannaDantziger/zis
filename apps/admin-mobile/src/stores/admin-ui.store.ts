@@ -13,28 +13,17 @@ export class AdminUiStore {
   taskStatus: TaskStatus = 'open';
   taskPage = 1;
   orderPage = 1;
-  productVariantFilter: string | null = null;
 
   constructor() { makeAutoObservable(this); }
   setStatusFilter(value: string | null) { this.statusFilter = value; this.resetOrderPage(); }
-  setDeliveryDate(value: string) { if (!isBusinessDate(value)) return; this.deliveryDate = value; this.productVariantFilter = null; this.resetOrderPage(); }
+  setDeliveryDate(value: string) { if (!isBusinessDate(value)) return; this.deliveryDate = value; this.resetOrderPage(); }
   setProductionDate(value: string) { if (!isBusinessDate(value)) return; this.productionDate = value; }
-  showProductionOrders(date: string, productVariantId: string) {
-    if (!isBusinessDate(date) || !productVariantId.trim()) return;
-    this.deliveryDate = date;
-    this.productVariantFilter = productVariantId;
-    this.statusFilter = null;
-    this.location = '';
-    this.sortBy = 'status';
-    this.sortDirection = 'asc';
-    this.resetOrderPage();
-  }
   setLocation(value: string) { this.location = value; this.resetOrderPage(); }
   setSortBy(value: string) { this.sortBy = value; this.resetOrderPage(); }
   setSortDirection(value: string) { this.sortDirection = value; this.resetOrderPage(); }
+  clearAdditionalFilters() { this.location = ''; this.sortBy = 'status'; this.sortDirection = 'asc'; this.resetOrderPage(); }
   setTaskStatus(value: TaskStatus) { this.taskStatus = value; this.taskPage = 1; }
   setTaskPage(value: number) { this.taskPage = value; }
-  setProductVariantFilter(value: string | null) { this.productVariantFilter = value; this.resetOrderPage(); }
   setOrderPage(value: number) { this.orderPage = value; this.clearSelection(); }
   resetOrderPage() { this.orderPage = 1; this.clearSelection(); }
   selectOrders(orderIds: string[]) { this.selectedOrderIds = [...new Set(orderIds)]; }
@@ -50,7 +39,6 @@ export class AdminUiStore {
     this.taskStatus = 'open';
     this.taskPage = 1;
     this.orderPage = 1;
-    this.productVariantFilter = null;
   }
   clearSelection() { this.selectedOrderIds = []; }
 }

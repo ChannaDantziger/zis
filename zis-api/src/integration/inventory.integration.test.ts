@@ -37,7 +37,7 @@ test('inventory service updates a real Development PostgreSQL database transacti
     );
     await pool.query(
       `insert into public.product_variants
-        (product_variant_id, product_id, name, product_code, price_per_set,
+        (product_variant_id, product_id, name, product_code, price_per_item,
          available_sets, low_stock_threshold_sets, default_production_quantity_sets)
        values ($1, $2, $3, $4, 10, 2, 1, 5)`,
       [variantId, productId, 'Integration Test Variant', `integration-${variantId}`],

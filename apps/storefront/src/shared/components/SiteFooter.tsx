@@ -9,10 +9,10 @@ export function SiteFooter() {
         <Stack gap="sm">
           <Text fw={700}>זיס</Text>
           <Anchor component={Link} to="/" c="inherit">דף הבית</Anchor>
-          <Anchor component={Link} to="/catalog" c="inherit">לקטלוג</Anchor>
+          <Anchor component={Link} to="/#catalog" c="inherit">לקטלוג</Anchor>
           <Anchor component={Link} to="/cart" c="inherit">לעגלה שלי</Anchor>
         </Stack>
-        <Text size="sm" maw={340}>המחירים והזמינות מתעדכנים מהחנות. הסכום בעגלה הוא אומדן לפני משלוח.</Text>
+        <Text size="sm" maw={340}>דמי המשלוח יחושבו לפי פרטי ההזמנה ויוצגו לפני התשלום.</Text>
       </Group>
     </Container>
   </footer>;

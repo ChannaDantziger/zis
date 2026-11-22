@@ -3,6 +3,9 @@ import test from 'node:test';
 import { createPostgresCommerceSettingsRepository } from './postgres-commerce-settings.repository.js';
 import type { SqlClient } from '../inventory/postgres-inventory.repository.js';
 import { ApiError } from '../http/api-error.js';
+import { readSettings } from '../commerce/postgres-commerce.repository.js';
+import { readDeliveryDates } from '../commerce/delivery-dates.js';
+import { assertDeliveryDateAllowed } from '../commerce/delivery-policy.js';
 
 function fixture(configured: boolean) {
   let released = false;
@@ -15,6 +18,7 @@ function fixture(configured: boolean) {
       { default_key: 'working_days', default_value: ['sunday', 'monday'] },
       { default_key: 'business_timezone', default_value: 'Asia/Jerusalem' },
       { default_key: 'dispatch_time', default_value: null },
+      { default_key: 'max_advance_days', default_value: 21 },
     ] };
     return { rows: [] };
   }, release: () => { released = true; } } as unknown as SqlClient;
@@ -35,6 +39,31 @@ test('configured settings accept decoded PostgreSQL JSON values and empty shippi
   assert.deepEqual(settings.business.workingDays, ['sunday', 'monday']);
   assert.equal(settings.business.businessTimezone, 'Asia/Jerusalem');
   assert.equal(settings.business.dispatchTime, null);
+  assert.equal(settings.business.maxAdvanceDays, 21);
   assert.deepEqual(settings.shippingRules, []);
   assert.equal(released(), true);
+});
+
+test('saving an admin horizon drives the customer calendar and quote policy, including recovery from missing config', async () => {
+  let horizon: number | undefined;
+  const client = { async query(sql: string, values: readonly unknown[] = []) {
+    if (sql.includes('insert into public.system_defaults') && values[0] === 'max_advance_days') horizon = JSON.parse(String(values[1]));
+    if (sql.includes('from public.system_defaults')) return { rows: horizon === undefined ? [] : [{ default_key: 'max_advance_days', default_value: horizon }] };
+    if (sql.includes('from public.store_settings') || sql.includes('update public.store_settings')) return { rows: [{ store_open: true, lock_mode: 'open', lock_message: null, minimum_product_subtotal: '0.00', max_advance_days: 99 }] };
+    return { rows: [] };
+  } } as unknown as SqlClient;
+  const factory = async () => client;
+  const repository = createPostgresCommerceSettingsRepository(factory);
+  assert.equal((await repository.getSettings()).business.maxAdvanceDays, null);
+  await assert.rejects(readSettings(client), { code: 'INVALID_DELIVERY_CONFIG' });
+  await repository.updateBusinessSettings({ maxAdvanceDays: 3 }, 'manager');
+  assert.equal((await repository.getSettings()).business.maxAdvanceDays, 3);
+  assert.equal((await readSettings(client)).maxAdvanceDays, 3);
+  const calendar = await readDeliveryDates(factory, new Date('2026-10-26T06:00:00Z'));
+  assert.equal(calendar.maxDate, '2026-10-29');
+  const context = await readSettings(client);
+  const policy = { timezone: context.timezone, sameDayCutoffTime: context.sameDayCutoffTime, maxAdvanceDays: context.maxAdvanceDays,
+    workingDays: context.workingDays, holidayDates: new Set<string>(), storeOpen: true };
+  assert.doesNotThrow(() => assertDeliveryDateAllowed('2026-10-29', new Date('2026-10-26T06:00:00Z'), policy));
+  assert.throws(() => assertDeliveryDateAllowed('2026-11-01', new Date('2026-10-26T06:00:00Z'), policy));
 });

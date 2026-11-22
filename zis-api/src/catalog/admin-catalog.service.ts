@@ -12,7 +12,7 @@ export function createAdminCatalogService(repository: AdminCatalogRepository): A
   return {
     reorderGallery: (ids, actor) => repository.reorderGallery(ids, actor),
     saveCategory: (input, adminUserId) => repository.saveCategory(input, adminUserId),
-    listProducts: (page, productId) => repository.listProducts(page, productId),
+    listProducts: (page, productId, categoryId) => repository.listProducts(page, productId, categoryId),
     updateProduct: (input, actor) => repository.updateProduct(input, actor),
     updateVariant: (input, actor) => repository.updateVariant(input, actor),
     createProduct: (input, adminUserId) => repository.createProduct(input, adminUserId),

@@ -6,8 +6,8 @@ export interface CreateProductInput {
   name: string;
   description: string | null;
   setSize: number;
-  pricePerSet: string;
-  availableSets: number;
+  pricePerUnit: string;
+  availableItems: number;
   displayOrder: number;
 }
 
@@ -15,7 +15,7 @@ export interface CreateVariantInput {
   productId: string;
   name: string;
   productCode: string;
-  pricePerSet: string;
+  pricePerUnit: string;
   availableSets: number;
   lowStockThresholdSets: number;
   defaultProductionQuantitySets: number;

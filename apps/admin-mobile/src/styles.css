@@ -3,5 +3,8 @@ body { margin: 0; background: #f7f2e9; }
 .grow { flex: 1; min-width: 0; }
 .list-row { padding: 8px 0; border-bottom: 1px solid #eee6db; }
 .action-bar { position: sticky; bottom: 12px; z-index: 2; background: #fffaf2; }
+.orders-status-filters { align-items: center; }
+.orders-status-count { margin-inline-start: 4px; font-size: 0.95em; }
+.orders-sticky-toolbar { position: sticky; top: 72px; z-index: 5; background: #fffaf2; box-shadow: 0 4px 12px rgb(64 45 28 / 10%); }
 .login-page { background: radial-gradient(circle at top right, #fff4db, transparent 45%), #f7f2e9; }
 @media (max-width: 576px) { .mantine-AppShell-main { padding: 16px 12px; } }

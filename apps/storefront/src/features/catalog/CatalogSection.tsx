@@ -1,4 +1,5 @@
-import { Alert, Button, Group, Pagination, Select, SimpleGrid, Skeleton, Stack, Text, TextInput, Title } from '@mantine/core';
+import { ActionIcon, Alert, Button, Collapse, Group, Pagination, Select, SimpleGrid, Skeleton, Stack, Text, TextInput, Title } from '@mantine/core';
+import { IconSearch } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useCategoriesQuery, useProductsQuery } from '../../entities/product/api';
@@ -9,13 +10,16 @@ export function CatalogSection() {
   const [parameters, setParameters] = useSearchParams();
   const query = readCatalogQuery(parameters);
   const [search, setSearch] = useState(query.search ?? '');
+  const [filtersOpen, setFiltersOpen] = useState(Boolean(query.search || query.categorySlug));
   const products = useProductsQuery(query);
   const categories = useCategoriesQuery();
   useEffect(() => { setSearch(query.search ?? ''); }, [query.search]);
   const update = (changes: Record<string, string | undefined>) => setParameters(updateCatalogQuery(parameters, changes), { preventScrollReset: true });
   return (
     <Stack id="catalog" gap="xl" py="xl" component="section" aria-labelledby="catalog-title">
-      <div><Text size="sm" c="dimmed">לבחור, לשלב, לשמח</Text><Title id="catalog-title" order={2}>הקטלוג שלנו</Title></div>
+      <Group justify="space-between"><div><Text size="sm" c="dimmed">לבחור, לשלב, לשמח</Text><Title id="catalog-title" tabIndex={-1} order={2}>הקטלוג שלנו</Title></div>
+        <ActionIcon size="xl" variant="outline" aria-label="חיפוש וסינון מוצרים" aria-expanded={filtersOpen} aria-controls="catalog-filters" onClick={() => setFiltersOpen((open) => !open)}><IconSearch /></ActionIcon></Group>
+      <Collapse in={filtersOpen} id="catalog-filters">
       <form onSubmit={(event) => { event.preventDefault(); update({ search: search.trim() || undefined }); }}>
         <Group align="end" grow>
           <TextInput label="חיפוש מוצרים" placeholder="מה תרצו למצוא?" value={search} maxLength={100}
@@ -31,6 +35,8 @@ export function CatalogSection() {
           <Button type="submit">חיפוש</Button>
         </Group>
       </form>
+      <Button mt="sm" variant="subtle" onClick={() => { setSearch(''); setParameters({}); }}>ניקוי סינון</Button>
+      </Collapse>
       {categories.isError && <Alert color="orange" title="הקטגוריות לא נטענו">אפשר לחפש מוצרים או <Button variant="subtle" onClick={() => void categories.refetch()}>לנסות שוב</Button></Alert>}
       {products.isPending && <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 4 }} aria-label="טעינת מוצרים">
         {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} h={320} />)}

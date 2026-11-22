@@ -1,74 +1,14 @@
-# ZIS — חנות מקוונת למוצרי Sets
+# ZIS — חנות מקוונת
 
-**מתחילים ב־[אינדקס המרכזי](docs/PLAN_INDEX.md)**: כל המסמכים, תפקידם, מצבם וקישורים להמשך העבודה.
+נקודת הכניסה למסמכי הפרויקט היא [האינדקס המרכזי](docs/PLAN_INDEX.md). הפרויקט כולל חנות לקוחות, ממשק ניהול ושרת API; רמת המימוש והאימות שונה בין התהליכים.
 
-המטרה היא חנות מלאה: קטלוג ותמונות מנתונים אמיתיים, דפי מוצר ווריאציות, עגלה, רכישה כאורח, תשלום, ניהול מוצרים, הכנת הזמנות ומשלוחים.
+- [תוכנית המימוש](docs/IMPLEMENTATION_PLAN.md) — שלבים ותנאי סיום.
+- [ארכיטקטורת פריסה ל־Hostinger](docs/HOSTINGER_DEPLOYMENT_ARCHITECTURE.md) — חלוקת VPS, כתובות, Docker, Compose וגבולות האבטחה.
+- [קובצי Docker ו־Preview ל־Hostinger](docs/HOSTINGER_DOCKER_PREVIEW.md) — מה הוכן, אילו הגדרות מזינים בחשבונות וכיצד ניגשים ב־SSH עד שיש HTTPS ציבורי.
+- [מבנה Git ו־PR לפרודקשן](docs/PRODUCTION_GIT_BRANCHES.md) — ענף `production`, פקודות להקמתו ומסלול הפריסה המתוכנן ל־Hostinger.
+- [מצב המימוש](docs/IMPLEMENTATION_PROGRESS.md) ו[נושאים פתוחים](docs/OPEN_ISSUES.md) — התקדמות, ראיות ופערים.
+- [מדריך הפיתוח](docs/DEVELOPMENT.md) — התקנה, הפעלה ובדיקות מקומיות.
+- [החלטות ופעולות בעלת האתר](docs/OWNER_ACTIONS.md) — שאלות ופעולות שתלויות בבעלת האתר.
+- [הגרסה ההיסטורית של README](docs/OLD/README_2026-10-18.md) — נשמרה לעיון ואינה מדריך עבודה פעיל.
 
-## מצב נוכחי — 18.10.2026
-
-- לפי דיווח בעלת האתר, Login מול Production עובד ומיגרציות 001–008 הוחלו ידנית עד הסוף; אין ledger שמתעד את ההרצות, ואין להריץ אותן מחדש.
-- קיימים `zis-api` עם קטלוג/מלאי/Admin API, וכן `apps/admin-mobile` עם Login, Dashboard, Orders, Production ו־Settings. חיבור כל המסכים ל־Production עדיין דורש אימות.
-- חנות Storefront מלאה, Checkout, סליקה, חשבוניות/PDF, Push, תפעול ביטולים מלא, ופריסה/גיבוי עדיין אינם גמורים.
-- נוספה [חנות הלקוחות](apps/storefront/README.md) עם בית, קטלוג, מוצר, גלריות ועגלה. Lint/TypeScript/Build, 16 בדיקות ובדיקת דפדפן בשלושה רוחבים עברו מקומית; נתוני חנות חיים לא אומתו. [ראיות](docs/STOREFRONT_IMPLEMENTATION.md).
-- ניהול קטלוג, דוחות אריזה/אספקה, [התראות אישיות](docs/ADMIN_NOTIFICATIONS.md) ו־[מלאי והיסטוריה](docs/ADMIN_INVENTORY.md) שולבו; 64 בדיקות API ו־17 בדיקות Admin עברו מקומית. טעינת חמשת המסכים החדשים אומתה במצב ריק לאחר הפעלה מחדש; קטגוריות, נתונים ובדיקות שמירה עדיין פתוחים; P5 חודש לפי הוראת בעלת האתר: [Checkout](docs/STOREFRONT_CHECKOUT.md) ו־[יצירת הזמנה](docs/ORDER_CREATION.md) ממומשים ונבדקו מקומית; 010 ותצורה טרם הופעלו. סליקה נשארת פתוחה.
-- מצב המיגרציות הוא דיווח חיצוני ולא אימות עצמאי. בדוק את [מצב ההתקדמות](docs/IMPLEMENTATION_PROGRESS.md) ואת [הפערים](docs/OPEN_ISSUES.md) לפני שינוי.
-- הוראות ההרצה של ה־API ואתר הלקוחות ב־PowerShell נוספו ל־README ב־18.10.2026. החיבור למסד Development עדיין תלוי בהגדרות המקומיות.
-
-הסקירה ההיסטורית מ־18.09 נמצאת ב־[דוח הסקירה](docs/SYSTEM_AUDIT.md); היא אינה תמונת המצב הנוכחית.
-
-## הרצה בפיתוח (DEV)
-
-מתקינים תלויות פעם אחת מתוך תיקיית `ZIS`:
-
-```powershell
-npm.cmd --prefix zis-api ci
-npm.cmd --prefix apps/storefront ci
-```
-
-להרצת אתר הלקוחות וה־API, פותחים שני חלונות PowerShell. בכל חלון מנווטים לתיקיית הפרויקט:
-
-```powershell
-cd "C:\Users\123\Documents\ChatGPT\ZIS"
-```
-
-בחלון הראשון מפעילים את ה־API בסביבת Development:
-
-```powershell
-$env:NODE_ENV = "development"
-npm.cmd --prefix zis-api run dev
-```
-
-ה־API מאזין ב־`http://localhost:3000` ומשתמש ב־`DATABASE_URL_TRN` ובפרטי Supabase מקומיים. בלי חיבור Development תקין השרת עשוי לעלות, אבל נתוני הקטלוג לא ייטענו. אין לשלוח פרטי התחברות בצ'אט.
-
-בחלון השני מפעילים את אתר הלקוחות:
-
-```powershell
-npm.cmd --prefix apps/storefront run dev -- --configLoader native
-```
-
-פותחים את [אתר הלקוחות](http://127.0.0.1:5174/). עוצרים כל שרת עם `Ctrl+C` בחלון שבו הוא פועל. להפעלת ממשק הניהול, מתקינים בנפרד עם `npm.cmd --prefix apps/admin-mobile ci` ומפעילים לפי [מדריך הפיתוח](docs/DEVELOPMENT.md).
-
-הוראות חיבור, בדיקות והפעלת הניהול נמצאות ב־[מדריך הפיתוח](docs/DEVELOPMENT.md). הפקודות מוגדרות ב־`package.json` של כל יישום; הפעלת השרת אינה מריצה מיגרציות מסד נתונים.
-
-## קישורי עבודה
-
-- [תוכנית עבודה מלאה](docs/IMPLEMENTATION_PLAN.md) — מקור האמת לשלבים, תלויות ותנאי קבלה עד השקה ותיעוד סופי.
-- [דרישות חנות ושליפת נתונים ותמונות](docs/planning/STOREFRONT_REQUIREMENTS.md).
-- [נושאים פתוחים ותיקונים נדרשים](docs/OPEN_ISSUES.md).
-- [המשימות וההחלטות שלך](docs/OWNER_ACTIONS.md) — תוכן, חשבונות, Docker, אירוח ואישור השקה.
-- [החלטות קיימות](docs/planning/DECISIONS.md).
-- [הנחיות פיתוח](docs/GUIDELINES.md) ו־[כללי המאגר](AGENTS.md).
-- [תיעוד המימוש בפועל](docs/DOCS_INDEX.md) ו־[פתיחת שיחת המשך](docs/START_NEW_CHAT.md).
-
-## מבנה
-
-| מיקום | תפקיד | מצב |
-|---|---|---|
-| [zis-api](zis-api/README.md) | שרת, אימות ושירות מלאי | חלקי |
-| [zis-db](zis-db/README.md) | סכמת נתונים ומיגרציות | 001–008 דווחו כהחלה ידנית ב־Production; אין ledger |
-| [apps/storefront](apps/storefront/README.md) | חנות React + Mantine + MobX | קטלוג/מוצר/גלריות/עגלה נבדקו מקומית; הזמנה נבנתה מקומית אך טרם הופעלה; תשלום חסר |
-| [apps/admin-mobile](apps/admin-mobile/package.json) | ניהול נפרד, Mobile-first | קיים: Login, Dashboard, Orders, Production, Settings; נדרש אימות מלא מול Production |
-| [docs](docs/DOCS_INDEX.md) | סקירה, מפרטים ותיעוד | מופרדים לפי סוג ומצב |
-| [scripts](scripts/README.md) | הכנת קבצים בטוחה ובדיקת תיעוד | קיים |
-
-מסמכי האפיון הקודמים נשמרו בארכיון המקושר באינדקס כדי שלא לאבד דרישות. אין להשתמש בטענות המצב או בסדר העבודה הישנים כהוראות נוכחיות.
+עודכן ב־18.11.2026. מצב שירותים חיצוניים ונתונים חיים אינו מאומת מעצם קיומו של קוד או תיעוד.

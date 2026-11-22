@@ -2,6 +2,8 @@
 .packing-fold-section { margin-top: var(--mantine-spacing-lg); padding-top: var(--mantine-spacing-md); border-top: 2px dashed var(--mantine-color-gray-5); }
 .delivery-address-section { margin-top: var(--mantine-spacing-md); }
 .delivery-city-heading { margin-bottom: var(--mantine-spacing-md); }
+.delivery-city-summary { margin-bottom: var(--mantine-spacing-md); }
+.packing-package-number { font-size: 1.25rem; }
 @media print {
   @page { size: A4 portrait; margin: 12mm; }
   body:has(.operations-report-page) { background: white; }
@@ -12,6 +14,8 @@
   .operations-report-page { max-width: none !important; margin: 0 !important; }
   .operations-report-order { box-shadow: none; border-radius: 0; break-inside: avoid; margin-bottom: 8mm; }
   .packing-report .operations-report-order:not(.operations-report-first) { break-before: page; }
-  .delivery-city-heading { break-after: avoid; }
+  .delivery-city-heading { break-before: page; break-after: avoid; }
+  .delivery-city-first { break-before: auto; }
+  .delivery-city-summary { break-after: avoid; }
   .operations-report-heading { break-after: avoid; }
 }

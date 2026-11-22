@@ -7,7 +7,6 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 export interface CartReference {
   productId: string;
-  productVariantId: string | null;
   quantitySets: number;
 }
 
@@ -20,14 +19,13 @@ export function readCart(value: string | null): CartReference[] {
     const result: CartReference[] = [];
     for (const candidate of parsed.items) {
       const variantId = isRecord(candidate) ? candidate.productVariantId ?? null : null;
-      if (!isRecord(candidate) || !isIdentifier(candidate.productId)
-        || (variantId !== null && !isIdentifier(variantId))
+      if (!isRecord(candidate) || !isIdentifier(candidate.productId) || variantId !== null
         || !isQuantity(candidate.quantitySets)) continue;
-      const existing = result.find((item) => item.productId === candidate.productId && item.productVariantId === variantId);
+      const existing = result.find((item) => item.productId === candidate.productId);
       if (existing) {
         existing.quantitySets = Math.min(MAX_QUANTITY_SETS, existing.quantitySets + candidate.quantitySets);
       } else {
-        result.push({ productId: candidate.productId, productVariantId: variantId, quantitySets: candidate.quantitySets });
+        result.push({ productId: candidate.productId, quantitySets: candidate.quantitySets });
       }
     }
     return result;
@@ -37,7 +35,7 @@ export function readCart(value: string | null): CartReference[] {
 }
 
 export function writeCart(items: CartReference[]): string {
-  return JSON.stringify({ version: CART_VERSION, items: items.map(({ productId, productVariantId, quantitySets }) => ({ productId, productVariantId, quantitySets })) });
+  return JSON.stringify({ version: CART_VERSION, items: items.map(({ productId, quantitySets }) => ({ productId, quantitySets })) });
 }
 
 export function isQuantity(value: unknown): value is number {

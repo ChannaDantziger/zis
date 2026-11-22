@@ -7,12 +7,14 @@ import { galleryStore as store } from './gallery.store.js';
 export const GalleryEditor = observer(function GalleryEditor() {
   const [dragged, setDragged] = useState<string | null>(null);
   const [over, setOver] = useState(false);
+  const [uploadOpened, setUploadOpened] = useState(false);
   useEffect(() => { void store.load(); return () => store.clearPending(); }, []);
   const busy = store.saving || store.loading;
   return <Stack maw={1200} mx="auto">
     <Group justify="space-between"><div><Title order={1}>גלריה כללית</Title><Text c="dimmed">כל תמונה חדשה מוצגת באתר. אפשר להסתיר אותה זמנית ולבחור בכוכב תמונה אחת לתמונה הגדולה בראש הדף.</Text></div><Button variant="light" onClick={() => void store.load()} disabled={busy}>רענן</Button></Group>
     {store.error && <Alert color="red" role="alert">{store.error}</Alert>}
-    <Card withBorder p="xl" bg={over ? 'blue.0' : undefined} style={{ borderStyle: 'dashed' }}
+    <Group><Button onClick={() => setUploadOpened((opened) => !opened)} disabled={busy} aria-expanded={uploadOpened} aria-controls="gallery-upload">{uploadOpened ? 'סגירת אזור העלאה' : 'הוספת תמונה'}</Button></Group>
+    {uploadOpened && <Card id="gallery-upload" withBorder p="xl" bg={over ? 'blue.0' : undefined} style={{ borderStyle: 'dashed' }}
       onDragOver={(event) => { event.preventDefault(); if (!busy) setOver(true); }} onDragLeave={() => setOver(false)}
       onDrop={(event) => { event.preventDefault(); setOver(false); if (!busy) store.selectFiles(Array.from(event.dataTransfer.files)); }}>
       <Stack align="center" justify="center" mih={210}>
@@ -20,7 +22,7 @@ export const GalleryEditor = observer(function GalleryEditor() {
         <Text c="dimmed" ta="center">או בחרי כמה תמונות מהמחשב · JPEG, PNG, WebP · עד 5 MiB לתמונה</Text>
         <FileButton multiple accept="image/jpeg,image/png,image/webp" onChange={(files) => store.selectFiles(files)}>{(props) => <Button {...props} disabled={busy}>בחירת תמונות</Button>}</FileButton>
       </Stack>
-    </Card>
+    </Card>}
     {store.pending.length > 0 && <Stack>
       <Group><Text>{store.pending.length} תמונות ממתינות להעלאה</Text><Button loading={store.saving} disabled={store.loading} onClick={() => void store.add()}>העלאת התמונות</Button><Button variant="subtle" disabled={busy} onClick={() => store.clearPending()}>נקה בחירה</Button></Group>
       <SimpleGrid cols={{ base: 2, sm: 4, lg: 6 }}>{store.pending.map((item, index) => <Card withBorder key={item.preview} p="xs"><Stack gap="xs">

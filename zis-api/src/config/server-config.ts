@@ -2,6 +2,8 @@ export interface ServerEnvironment {
   DATABASE_URL?: string;
   DATABASE_URL_TRN?: string;
   NODE_ENV?: string;
+  DATABASE_TARGET?: 'development' | 'production';
+  APP_ENV?: 'development' | 'production';
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   SUPABASE_SECRET_KEY?: string;
@@ -20,16 +22,24 @@ export interface ServerConfig {
   orderConfirmationTokenSecret?: string;
 }
 
+const DEVELOPMENT_ORIGINS = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+] as const;
+
 /**
  * Resolves server configuration without exposing secret values.
- * Development accepts only DATABASE_URL_TRN. Production accepts only the
- * explicitly named DATABASE_URL connection string, preventing an accidental
- * production connection from a local development process.
+ * Database selection and browser-origin policy are independent settings.
  */
 export function readServerConfig(environment: ServerEnvironment = process.env): ServerConfig {
   const orderConfirmation = parseOrderConfirmationConfig(environment);
-  const allowedOrigins = parseAllowedOrigins(environment.CORS_ALLOWED_ORIGINS, environment.NODE_ENV);
-  if (environment.NODE_ENV === 'production' && environment.DATABASE_URL) {
+  const allowedOrigins = parseAllowedOrigins(
+    environment.CORS_ALLOWED_ORIGINS,
+    environment.APP_ENV,
+  );
+  if (environment.DATABASE_TARGET === 'production' && environment.DATABASE_URL) {
     return {
       databaseUrl: environment.DATABASE_URL,
       databaseSource: 'DATABASE_URL',
@@ -40,7 +50,7 @@ export function readServerConfig(environment: ServerEnvironment = process.env): 
     };
   }
 
-  if (environment.NODE_ENV !== 'production' && environment.DATABASE_URL_TRN) {
+  if (environment.DATABASE_TARGET === 'development' && environment.DATABASE_URL_TRN) {
     return {
       databaseUrl: environment.DATABASE_URL_TRN,
       databaseSource: 'DATABASE_URL_TRN',
@@ -61,28 +71,30 @@ export function readServerConfig(environment: ServerEnvironment = process.env): 
 
 export function validateServerConfig(config: ServerConfig, environment: ServerEnvironment = process.env): string[] {
   const errors: string[] = [];
-  if (environment.NODE_ENV === 'production' && !config.databaseUrl) {
-    errors.push('DATABASE_URL is required in production');
+  if (!['development', 'production'].includes(environment.DATABASE_TARGET ?? '')) errors.push('DATABASE_TARGET must be development or production');
+  if (!['development', 'production'].includes(environment.APP_ENV ?? '')) errors.push('APP_ENV must be development or production');
+  if (environment.DATABASE_TARGET === 'production' && !config.databaseUrl) {
+    errors.push('DATABASE_URL is required when DATABASE_TARGET=production');
   }
-  if (environment.NODE_ENV === 'production' && !config.supabaseUrl) {
-    errors.push('SUPABASE_URL is required in production');
+  if (environment.DATABASE_TARGET === 'production' && !config.supabaseUrl) {
+    errors.push('SUPABASE_URL is required when DATABASE_TARGET=production');
   }
-  if (environment.NODE_ENV === 'production' && !config.supabaseServiceRoleKey) {
-    errors.push('SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY is required in production');
+  if (environment.DATABASE_TARGET === 'production' && !config.supabaseServiceRoleKey) {
+    errors.push('SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY is required when DATABASE_TARGET=production');
   }
-  if (environment.NODE_ENV === 'production' && config.allowedOrigins.includes('*')) {
-    errors.push('CORS_ALLOWED_ORIGINS cannot use * in production');
+  if (environment.APP_ENV === 'production' && config.allowedOrigins.includes('*')) {
+    errors.push('CORS_ALLOWED_ORIGINS cannot use * when APP_ENV=production');
   }
   return errors;
 }
 
-function parseAllowedOrigins(value: string | undefined, nodeEnvironment: string | undefined): string[] {
+function parseAllowedOrigins(value: string | undefined, appEnvironment: string | undefined): string[] {
   const configuredOrigins = (value ?? '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
-  if (configuredOrigins.length > 0 || nodeEnvironment === 'production') return configuredOrigins;
-  return ['http://localhost:5173', 'http://127.0.0.1:5173'];
+  if (appEnvironment === 'production') return configuredOrigins;
+  return [...new Set([...DEVELOPMENT_ORIGINS, ...configuredOrigins])];
 }
 
 function parseOrderConfirmationConfig(environment: ServerEnvironment) {

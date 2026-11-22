@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
 import { Button, Stack, Text, Title } from '@mantine/core';
-import { Link, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { HomePage } from '../pages/HomePage';
-import { CatalogPage } from '../pages/CatalogPage';
 import { ProductPage } from '../pages/ProductPage';
 import { CartPage } from '../pages/CartPage';
 import { CheckoutPage } from '../pages/CheckoutPage';
@@ -14,7 +13,11 @@ import { StoreStatusBanner } from '../shared/store-status';
 export function App() {
   const location = useLocation();
   useEffect(() => {
-    if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+    if (location.hash) {
+      const section = document.getElementById(location.hash.slice(1));
+      section?.scrollIntoView();
+      section?.querySelector<HTMLElement>('h1, h2')?.focus({ preventScroll: true });
+    }
     else window.scrollTo({ top: 0 });
   }, [location.pathname, location.hash]);
   return <>
@@ -24,11 +27,11 @@ export function App() {
       <div className="content-width status-banner"><StoreStatusBanner /></div>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/catalog" element={<CatalogPage />} />
-        <Route path="/products/:productId" element={<ProductPage />} />
+        <Route path="/catalog" element={<Navigate to={{ pathname: '/', search: location.search, hash: '#catalog' }} replace />} />
+        <Route path="/products/:productId" element={<><HomePage /><ProductPage /></>} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="*" element={<Stack className="content-width" py="xl"><Title>העמוד לא נמצא</Title><Text>אפשר לחזור לקטלוג ולהמשיך משם.</Text><Button component={Link} to="/catalog">לקטלוג</Button></Stack>} />
+        <Route path="*" element={<Stack className="content-width" py="xl"><Title>העמוד לא נמצא</Title><Text>אפשר לחזור לקטלוג ולהמשיך משם.</Text><Button component={Link} to="/#catalog">לקטלוג</Button></Stack>} />
       </Routes>
     </main>
     <SiteFooter />

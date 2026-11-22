@@ -21,7 +21,9 @@ export function createAdminCatalogController(service: AdminCatalogService, resol
     listProducts: withAdmin(resolveAdminUserId, async (request, response) => {
       const raw = request.query.page ?? '1';
       if (typeof raw !== 'string' || !/^[1-9]\d*$/.test(raw) || !Number.isSafeInteger(Number(raw)) || Number(raw) > 100000) throw new ApiError(400, 'VALIDATION_ERROR', 'Invalid page');
-      response.json(await withImageUrls(await service.listProducts(Number(raw)), storage));
+      const categoryId = request.query.categoryId === undefined ? undefined : readUuid(request.query.categoryId, 'categoryId');
+      const catalog = categoryId ? await service.listProducts(Number(raw), undefined, categoryId) : await service.listProducts(Number(raw));
+      response.json(await withImageUrls(catalog, storage));
     }),
     productDetails: withAdmin(resolveAdminUserId, async (request, response) => {
       const catalog = await service.listProducts(1, readUuid(request.params.productId, 'productId'));
@@ -34,8 +36,8 @@ export function createAdminCatalogController(service: AdminCatalogService, resol
         productId: readUuid(request.params.productId, 'productId'),
         categoryId: readUuid(body.categoryId, 'categoryId'), name: readText(body.name, 'name'),
         description: readNullableText(body.description, 'description'),
-        setSize: readPositiveInteger(body.setSize, 'setSize'), pricePerSet: readMoney(body.pricePerSet, 'pricePerSet'),
-        availableSets: readNonNegativeInteger(body.availableSets, 'availableSets'), displayOrder: readNonNegativeInteger(body.displayOrder, 'displayOrder'),
+        setSize: readPositiveInteger(body.setSize, 'setSize'), pricePerUnit: body.pricePerUnit === null ? null : readMoney(body.pricePerUnit, 'pricePerUnit'),
+        availableItems: readNonNegativeInteger(body.availableItems, 'availableItems'), displayOrder: readNonNegativeInteger(body.displayOrder, 'displayOrder'),
         status: readEnum(body.status, ['draft', 'active', 'hidden', 'sold_out', 'archived'] as const, 'status'),
         version: readText(body.version, 'version'),
       }, actor));
@@ -44,7 +46,7 @@ export function createAdminCatalogController(service: AdminCatalogService, resol
       const body = asRecord(request.body);
       response.json(await service.updateVariant({
         productVariantId: readUuid(request.params.productVariantId, 'productVariantId'),
-        name: readText(body.name, 'name'), pricePerSet: readMoney(body.pricePerSet, 'pricePerSet'),
+        name: readText(body.name, 'name'), pricePerUnit: readMoney(body.pricePerUnit, 'pricePerUnit'),
         lowStockThresholdSets: readNonNegativeInteger(body.lowStockThresholdSets, 'lowStockThresholdSets'),
         defaultProductionQuantitySets: readPositiveInteger(body.defaultProductionQuantitySets, 'defaultProductionQuantitySets'),
         status: readEnum(body.status, ['active', 'hidden', 'sold_out', 'archived'] as const, 'status'),
@@ -57,27 +59,13 @@ export function createAdminCatalogController(service: AdminCatalogService, resol
         categoryId: readUuid(body.categoryId, 'categoryId'),
         name: readText(body.name, 'name'),
         description: readNullableText(body.description, 'description'),
-        setSize: readPositiveInteger(body.setSize, 'setSize'), pricePerSet: readMoney(body.pricePerSet, 'pricePerSet'),
-        availableSets: readNonNegativeInteger(body.availableSets, 'availableSets'), displayOrder: readNonNegativeInteger(body.displayOrder, 'displayOrder'),
+        setSize: readPositiveInteger(body.setSize, 'setSize'), pricePerUnit: readMoney(body.pricePerUnit, 'pricePerUnit'),
+        availableItems: readNonNegativeInteger(body.availableItems, 'availableItems'), displayOrder: readNonNegativeInteger(body.displayOrder, 'displayOrder'),
       }, adminUserId);
       response.status(201).json(result);
     }),
-    createVariant: withAdmin(resolveAdminUserId, async (request, response, adminUserId) => {
-      const body = asRecord(request.body);
-      const productId = readUuid(request.params.productId, 'productId');
-      const result = await service.createVariant({
-        productId,
-        name: readText(body.name, 'name'),
-        productCode: readText(body.productCode, 'productCode'),
-        pricePerSet: readMoney(body.pricePerSet, 'pricePerSet'),
-        availableSets: readNonNegativeInteger(body.availableSets, 'availableSets'),
-        lowStockThresholdSets: readNonNegativeInteger(body.lowStockThresholdSets, 'lowStockThresholdSets'),
-        defaultProductionQuantitySets: readPositiveInteger(body.defaultProductionQuantitySets, 'defaultProductionQuantitySets'),
-        attributes: readAttributes(body.attributes),
-        isDefault: readBoolean(body.isDefault, 'isDefault'),
-        status: readEnum(body.status, ['active', 'hidden'] as const, 'status'),
-      }, adminUserId);
-      response.status(201).json(result);
+    createVariant: withAdmin(resolveAdminUserId, async () => {
+      throw new ApiError(422, 'VARIANTS_DISABLED', 'יצירת וריאציות חדשות אינה זמינה כעת; יש ליצור מוצר פשוט');
     }),
     createImage: withAdmin(resolveAdminUserId, async (request, response, adminUserId) => {
       const body = asRecord(request.body);
@@ -141,7 +129,9 @@ export function createAdminCatalogController(service: AdminCatalogService, resol
 
 async function withImageUrls(catalog: ManagedCatalog, storage?: StorageService): Promise<ManagedCatalog> {
   if (!storage) return catalog;
-  return { ...catalog, data: await Promise.all(catalog.data.map(async (product) => ({
+  return { ...catalog, categories:await Promise.all(catalog.categories.map(async category=>({...category,
+    previewImages:await Promise.all((category.previewImages??[]).map(async image=>({...image,url:(await storage.createSignedUrl(PRODUCT_MEDIA_BUCKET,image.storagePath)).url}))),
+  }))), data: await Promise.all(catalog.data.map(async (product) => ({
     ...product,
     images: await Promise.all(product.images.map(async (image) => ({
       ...image,

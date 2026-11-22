@@ -14,25 +14,30 @@ test('calendar dates reject rollover, empty input and malformed URLs', () => {
   for (const date of ['2024-02-29', '2026-10-09']) assert.equal(isBusinessDate(date), true, date);
 });
 
-test('production drilldown removes conflicting filters and stale bulk selection', () => {
+test('changing the delivery date resets stale bulk selection', () => {
   const store = new AdminUiStore();
-  store.setStatusFilter('delivered'); store.setLocation('old city'); store.setSortBy('total');
-  store.setSortDirection('desc'); store.setOrderPage(3); store.selectOrders(['old-order']);
-  store.showProductionOrders('2026-10-09', 'variant');
-  assert.equal(store.deliveryDate, '2026-10-09'); assert.equal(store.productVariantFilter, 'variant');
-  assert.equal(store.statusFilter, null); assert.equal(store.location, '');
-  assert.equal(store.sortBy, 'status'); assert.equal(store.sortDirection, 'asc');
+  store.setOrderPage(3); store.selectOrders(['old-order']);
+  store.setDeliveryDate('2026-10-10');
+  assert.equal(store.deliveryDate, '2026-10-10');
   assert.equal(store.orderPage, 1); assert.deepEqual(store.selectedOrderIds, []);
-  store.selectOrders(['current-order']); store.setDeliveryDate('2026-10-10');
-  assert.equal(store.productVariantFilter, null); assert.deepEqual(store.selectedOrderIds, []);
 });
 
 test('invalid dates leave valid screen state intact', () => {
   const store = new AdminUiStore(); const date = store.deliveryDate;
   store.setDeliveryDate('2026-02-30'); store.setProductionDate('');
-  store.showProductionOrders('invalid', 'variant');
   assert.equal(store.deliveryDate, date); assert.equal(store.productionDate, date);
-  assert.equal(store.productVariantFilter, null);
+});
+
+test('clearing additional order filters preserves the chosen day and status while clearing selection', () => {
+  const store = new AdminUiStore();
+  store.setDeliveryDate('2026-10-21'); store.setStatusFilter('packed');
+  store.setLocation('בני ברק'); store.setSortBy('total');
+  store.setSortDirection('desc'); store.setOrderPage(3); store.selectOrders(['order']);
+  store.clearAdditionalFilters();
+  assert.equal(store.deliveryDate, '2026-10-21'); assert.equal(store.statusFilter, 'packed');
+  assert.equal(store.location, '');
+  assert.equal(store.sortBy, 'status'); assert.equal(store.sortDirection, 'asc');
+  assert.equal(store.orderPage, 1); assert.deepEqual(store.selectedOrderIds, []);
 });
 
 test('session changes reset dates, filters, tasks, pages and selected orders', async () => {
@@ -41,11 +46,11 @@ test('session changes reset dates, filters, tasks, pages and selected orders', a
   const sessionUrl = await loadSource('../src/stores/admin-session.store.ts', { mobx: import.meta.resolve('mobx'), './admin-ui.store.js': storeUrl });
   const { adminSessionStore } = await import(sessionUrl);
   for (const action of [() => adminSessionStore.setSession('fixture-only-token'), () => adminSessionStore.clearSession()]) {
-    adminUiStore.setProductionDate('2020-01-01'); adminUiStore.showProductionOrders('2020-01-01', 'old-variant');
+    adminUiStore.setProductionDate('2020-01-01'); adminUiStore.setDeliveryDate('2020-01-01');
     adminUiStore.setOrderPage(4); adminUiStore.setTaskStatus('done'); adminUiStore.setTaskPage(3); adminUiStore.selectOrders(['old-order']);
     action();
     assert.equal(adminUiStore.productionDate, currentBusinessDate()); assert.equal(adminUiStore.deliveryDate, currentBusinessDate());
-    assert.equal(adminUiStore.productVariantFilter, null); assert.equal(adminUiStore.taskStatus, 'open');
+    assert.equal(adminUiStore.taskStatus, 'open');
     assert.equal(adminUiStore.orderPage, 1); assert.equal(adminUiStore.taskPage, 1); assert.deepEqual(adminUiStore.selectedOrderIds, []);
   }
   assert.equal(adminSessionStore.isAuthenticated, false); assert.equal(storage.size, 0);

@@ -17,7 +17,6 @@ export interface CartItemInput {
 export interface ShippingQuoteInput {
   deliveryDate: string;
   shippingZoneId: string;
-  shippingMethodId: string;
   items: CartItemInput[];
   isUrgent?: boolean;
 }
@@ -39,10 +38,10 @@ export interface QuotePreview {
 export interface CreateOrderInput {
   customerName: string;
   customerPhone: string;
+  deliveryPhone?: string;
   customerEmail: string;
   deliveryAddress: DeliveryAddress;
   shippingZoneId: string;
-  shippingMethodId: string;
   deliveryDate: string;
   items: CartItemInput[];
   dedicationText?: string | null;
@@ -54,16 +53,21 @@ export interface CreateOrderHeaders {
 }
 
 export interface OrderCreatedResponse {
+  version?: string;
+  isTest?: boolean;
   orderId: string;
   orderNumber: string;
-  status: 'ordered';
-  paymentStatus: 'pending';
+  status: string;
+  paymentStatus: string;
   total: string;
   currency: 'ILS';
   confirmationToken: string;
 }
 
 export interface OrderConfirmationResponse {
+  items?: Array<CartItemInput & { productName: string; lineTotal: string }>;
+  version?: string;
+  isTest?: boolean;
   orderNumber: string;
   status: string;
   paymentStatus: string;
@@ -89,6 +93,7 @@ export interface AvailabilityResponse {
 
 export interface StoreStatusResponse {
   storeOpen: boolean;
+  minimumProductSubtotal?: string;
   lockMode: 'open' | 'closed' | 'scheduled';
   lockMessage: string | null;
   timezone: string;
@@ -103,4 +108,3 @@ export interface ShippingZoneResponse {
   neighborhood: string | null;
 }
 
-export interface ShippingMethodResponse { shippingMethodId: string; name: string; code: string; }

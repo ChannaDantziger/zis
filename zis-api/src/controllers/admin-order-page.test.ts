@@ -35,3 +35,10 @@ test('order page applies bounded defaults and no-store for an operations manager
   }
   assert.equal(calls.length, 1);
 });
+
+test('order page accepts the pending payment filter and rejects unsupported filters', async () => {
+  const { calls, response, controller } = setup({ status: 'authenticated', adminUserId: 'manager', role: 'operations_manager' });
+  await controller.orderPage({ query: { deliveryDate: '2026-10-09', status: 'ordered', paymentFilter: 'pending' } } as unknown as Request, response);
+  assert.equal((calls[0] as { paymentFilter: string }).paymentFilter, 'pending');
+  await assert.rejects(controller.orderPage({ query: { deliveryDate: '2026-10-09', paymentFilter: 'invalid' } } as unknown as Request, response), { statusCode: 400 });
+});

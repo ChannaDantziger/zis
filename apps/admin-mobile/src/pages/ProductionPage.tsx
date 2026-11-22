@@ -14,6 +14,12 @@ export const ProductionPage = observer(function ProductionPage() {
     queryKey: ['production', date],
     queryFn: ({ signal }) => request<ProductionItem[]>(`/admin/production?date=${date}`, { signal }),
   });
+  const products = query.data?.reduce((groups, item) => {
+    const existing = groups.get(item.productName);
+    if (existing) { existing.requiredSets += item.requiredSets; existing.hasOpenTask ||= item.hasOpenTask; }
+    else groups.set(item.productName, { productName: item.productName, requiredSets: item.requiredSets, hasOpenTask: item.hasOpenTask });
+    return groups;
+  }, new Map<string, { productName: string; requiredSets: number; hasOpenTask: boolean }>());
   return <Stack gap="lg" maw={900} mx="auto">
     <Group justify="space-between">
       <Group><IconChefHat size={28} color="var(--mantine-color-orange-6)" /><div>
@@ -32,18 +38,14 @@ export const ProductionPage = observer(function ProductionPage() {
       <Button variant="subtle" onClick={() => adminUiStore.setProductionDate(currentBusinessDate())}>חזרה להיום</Button>
     </Group>
     {query.isPending ? <LoadingState /> : query.isError ? <ErrorState message={query.error.message} /> :
-      query.data.length ? <Stack>{query.data.map((item) => <Card key={item.productVariantId} withBorder radius="lg">
+      products?.size ? <Stack>{[...products.values()].map((item) => <Card key={item.productName} withBorder radius="lg">
         <Group justify="space-between">
-          <div><Text fw={700}>{item.productName}</Text><Text c="dimmed">{item.variantName} · {item.orderCount} הזמנות</Text></div>
+          <Text fw={700}>{item.productName}</Text>
           <Group><Text size="xl" fw={700}>{item.requiredSets}</Text><Text size="sm" c="dimmed">Sets להכנה</Text>
             {item.hasOpenTask && <Badge color="orange" leftSection={<IconAlertTriangle size={14} />}>שים לב</Badge>}
           </Group>
         </Group>
-        <Button component={Link} to="/orders" variant="subtle" mt="sm"
-          onClick={() => adminUiStore.showProductionOrders(date, item.productVariantId)}>
-          הצג הזמנות לווריאציה בתאריך זה
-        </Button>
-        <Text size="xs" c="dimmed">הרשימה תציג את כל שלבי ההזמנות התואמות, כולל הזמנות שכבר הוכנו.</Text>
+        <Button component={Link} to="/orders" variant="subtle" mt="sm">מעבר לרשימת ההזמנות</Button>
       </Card>)}</Stack> : <EmptyState>אין ייצור נדרש לתאריך זה</EmptyState>}
   </Stack>;
 });

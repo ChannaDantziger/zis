@@ -23,13 +23,14 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-function readItems(value: unknown): Array<{ orderId: string; version: string }> {
+function readItems(value: unknown): Array<{ orderId: string; version: string; packageCount?: number }> {
   if (!Array.isArray(value)) throw new ApiError(400, 'VALIDATION_ERROR', 'items is required');
   return value.map((item) => {
     if (!item || typeof item !== 'object' || Array.isArray(item)) throw new ApiError(400, 'VALIDATION_ERROR', 'each item must be an object');
     const record = item as Record<string, unknown>;
     if (typeof record.orderId !== 'string' || typeof record.version !== 'string') throw new ApiError(400, 'VALIDATION_ERROR', 'orderId and version are required');
-    return { orderId: record.orderId, version: record.version };
+    return { orderId: record.orderId, version: record.version,
+      ...(record.packageCount === undefined ? {} : { packageCount: record.packageCount as number }) };
   });
 }
 
