@@ -25,7 +25,7 @@ export interface CatalogVariant {
   productVariantId: string;
   name: string;
   productCode: string;
-  pricePerSet: string;
+  pricePerUnit: string;
   availableSets: number;
   isDefault: boolean;
   attributes: Record<string, unknown> | null;
@@ -39,7 +39,7 @@ export interface CatalogProduct {
   name: string;
   description: string | null;
   setSize: number;
-  pricePerSet: string;
+  pricePerUnit: string;
   availableSets: number;
   displayOrder: number;
   primaryImage: CatalogImage | null;

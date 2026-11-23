@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createPostgresOrderRepository } from './postgres-order.repository.js';
 import type { SqlClient } from '../inventory/postgres-inventory.repository.js';
 import type { CreateOrderInput, OrderCreatedResponse } from '../contracts/commerce.contracts.js';
-const input:CreateOrderInput={customerName:'Example',customerPhone:'0501234567',customerEmail:'a@example.invalid',deliveryAddress:{city:'Jerusalem',street:'Street',houseNumber:'1'},deliveryDate:'2026-10-11',shippingZoneId:'00000000-0000-0000-0000-000000000001',shippingMethodId:'00000000-0000-0000-0000-000000000002',items:[{productId:'00000000-0000-4000-8000-000000000004',productVariantId:'00000000-0000-4000-8000-000000000003',quantitySets:2}]};
+const input:CreateOrderInput={customerName:'Example',customerPhone:'0501234567',customerEmail:'a@example.invalid',deliveryAddress:{city:'Jerusalem',street:'Street',houseNumber:'1'},deliveryDate:'2026-10-11',shippingZoneId:'00000000-0000-0000-0000-000000000001',items:[{productId:'00000000-0000-4000-8000-000000000004',productVariantId:'00000000-0000-4000-8000-000000000003',quantitySets:2}]};
 function fixture(answer:(sql:string,values:readonly unknown[])=>{rows:Record<string,unknown>[];rowCount:number|null}) {
  const calls:Array<{sql:string;values:readonly unknown[]}>=[];let released=false;
  const client:SqlClient={async query(sql,values=[]){calls.push({sql,values});return answer(sql,values) as never;},release(){released=true;}};
@@ -15,10 +15,10 @@ test('request hash mismatch rolls back and releases without creating an order',a
  await assert.rejects(f.repository.withTransaction(tx=>tx.claimRequest('abcdefghijklmnop','changed')),{code:'CONFLICT'});
  assert.equal(f.calls.at(-1)?.sql,'rollback');assert.ok(f.released);assert.ok(!f.calls.some(call=>call.sql.includes('insert into public.orders')));
 });
-test('existing key reads original creation response even when order state changes',async()=>{
+test('existing key returns the current order state without creating another order',async()=>{
  const f=fixture(sql=>sql.startsWith('insert into public.order_creation_requests')?{rows:[],rowCount:0}:sql.startsWith('select request_hash')?{rows:[{request_hash:'same',order_id:'order'}],rowCount:1}:sql.startsWith('select order_id')?{rows:[{order_id:'order',order_number:'NUMBER',total:'25.50',status:'approved',payment_status:'paid'}],rowCount:1}:empty);
  const response=await f.repository.withTransaction(tx=>tx.claimRequest('abcdefghijklmnop','same'));
- assert.equal(response?.status,'ordered');assert.equal(response?.paymentStatus,'pending');assert.equal(response?.total,'25.50');assert.equal(f.calls.at(-1)?.sql,'commit');
+ assert.equal(response?.status,'approved');assert.equal(response?.paymentStatus,'paid');assert.equal(response?.total,'25.50');assert.equal(f.calls.at(-1)?.sql,'commit');
  assert.match(f.calls[2]!.sql,/for update/);
 });
 test('address-zone mismatch rejects before snapshot reads',async()=>{
@@ -32,9 +32,9 @@ test('simple product order snapshots allow a null variant and use product price'
 });
 test('save transaction persists only hashed credential and never consumes stock',async()=>{
  const f=fixture(()=>empty);const response:OrderCreatedResponse={orderId:'order',orderNumber:'NUMBER',status:'ordered',paymentStatus:'pending',total:'25.50',currency:'ILS',confirmationToken:'plain-credential-must-not-store'};
- await f.repository.withTransaction(async tx=>{await tx.save(input,{calculatedAt:'now',deliveryDate:input.deliveryDate,subtotal:'20.50',shippingTotal:'5.00',taxTotal:'3.89',taxRate:'18.00',total:'25.50',currency:'ILS',availability:'available',reservationCreated:false,warnings:[]},[{productVariantId:input.items[0]!.productVariantId!,productId:input.items[0]!.productId,productName:'Historical',variantName:'Variant',productCode:'CODE',setSize:6,pricePerSet:'10.25'}],response,'only-hash',new Date());await tx.completeRequest('abcdefghijklmnop','order');});
+ await f.repository.withTransaction(async tx=>{await tx.save(input,{calculatedAt:'now',deliveryDate:input.deliveryDate,subtotal:'20.50',shippingTotal:'5.00',taxTotal:'0.00',total:'25.50',currency:'ILS',availability:'available',reservationCreated:false,warnings:[]},[{productVariantId:input.items[0]!.productVariantId!,productId:input.items[0]!.productId,productName:'Historical',variantName:'Variant',productCode:'CODE',setSize:6,pricePerSet:'10.25'}],response,'only-hash',new Date());await tx.completeRequest('abcdefghijklmnop','order');});
  const text=JSON.stringify(f.calls);assert.ok(!text.includes(response.confirmationToken));assert.ok(text.includes('only-hash'));assert.ok(!/update public.product_variants|insert into public.inventory_movements|insert into public.production_allocations/.test(text));assert.equal(f.calls.at(-1)?.sql,'commit');
- const order=f.calls.find(call=>call.sql.includes('insert into public.orders'))!;assert.equal(order.values.at(-1),'18.00');
+ const order=f.calls.find(call=>call.sql.includes('insert into public.orders'))!;assert.match(order.sql,/\$11,0,0,\$12/);assert.equal(order.values[3],input.customerPhone);assert.equal(order.values[14],input.customerPhone);
 });
 test('failed token insertion rolls the entire transaction back',async()=>{
  const f=fixture(sql=>{if(sql.includes('order_confirmation_tokens'))throw new Error('token insert failed');return empty;});
@@ -43,5 +43,19 @@ test('failed token insertion rolls the entire transaction back',async()=>{
 });
 test('confirmation SQL checks expiry/revocation and returns a minimal response',async()=>{
  const f=fixture(sql=>sql.includes('from public.order_confirmation_tokens')?{rows:[{order_id:'private',order_number:'NUMBER',status:'ordered',payment_status:'paid',delivery_date:'2026-10-11',total:'25.50',customer_phone:'private'}],rowCount:1}:empty);
- const result=await f.repository.findConfirmation('hash',new Date());assert.deepEqual(Object.keys(result!).sort(),['currency','deliveryDate','orderNumber','paymentStatus','status','total']);assert.match(f.calls[0]!.sql,/revoked_at is null and t.expires_at>\$2/);assert.ok(f.released);
+ const result=await f.repository.findConfirmation('hash',new Date());assert.deepEqual(Object.keys(result!).sort(),['currency','deliveryDate','isTest','orderNumber','paymentStatus','status','total']);assert.match(f.calls[0]!.sql,/revoked_at is null and t.expires_at>\$2/);assert.ok(f.released);
+});
+
+test('confirmation exposes ordered product snapshots without customer details',async()=>{
+ const items=[{productId:'product',productVariantId:null,quantitySets:2,productName:'Original name',lineTotal:'20.50'}];
+ const f=fixture(()=>({rows:[{order_id:'private',order_number:'NUMBER',status:'ordered',payment_status:'pending',is_test:false,delivery_date:'2026-10-11',total:'25.50',items,customer_phone:'private'}],rowCount:1}));
+ const result=await f.repository.findConfirmation('hash',new Date());
+ assert.deepEqual(result?.items,items);assert.equal('customer_phone' in result!,false);
+ assert.match(f.calls[0]!.sql,/product_name_snapshot/);assert.match(f.calls[0]!.sql,/line_total/);
+});
+
+test('test creation replay returns explicit marker and current paid status/version',async()=>{
+ const f=fixture(sql=>sql.startsWith('insert into public.order_creation_requests')?{rows:[],rowCount:0}:sql.includes('select request_hash')?{rows:[{request_hash:'hash',order_id:'order'}],rowCount:1}:sql.includes('select order_id,order_number,total')?{rows:[{order_id:'order',order_number:'NUMBER',total:'25.50',is_test:true,status:'in_preparation',payment_status:'paid',version:'123.45'}],rowCount:1}:empty);
+ const result=await f.repository.withTransaction(tx=>tx.claimRequest('abcdefghijklmnop','hash'));
+ assert.equal(result!.isTest,true);assert.equal(result!.paymentStatus,'paid');assert.equal(result!.status,'in_preparation');assert.equal(result!.version,'123.45');
 });

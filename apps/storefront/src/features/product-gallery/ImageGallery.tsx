@@ -50,9 +50,9 @@ export function ImageGallery({ images, title, columns = 4, prominent = false, pr
     {prominent && <UnstyledButton onClick={() => setSelected(0)} aria-label={`הגדלת ${images[0].altText || title}`}>
       <AspectRatio ratio={4 / 3}><SafeImage src={images[0].url} alt={images[0].altText || title} fit="cover" /></AspectRatio>
     </UnstyledButton>}
-    <SimpleGrid cols={{ base: 2, sm: 3, md: columns }} spacing="sm">
+    <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: columns }} spacing="lg">
       {images.map((image, index) => <UnstyledButton key={image.imageId} onClick={() => setSelected(index)}
-        aria-label={`הגדלת ${image.altText || title}`} style={{ overflow: 'hidden', borderRadius: 'var(--mantine-radius-md)' }}>
+        aria-label={`הגדלת ${image.altText || title}`} style={{ overflow: 'hidden', borderRadius: '0 0 0 var(--mantine-radius-md)' }}>
         <AspectRatio ratio={4 / 3}><SafeImage src={image.url} alt={image.altText || title} fit="cover" /></AspectRatio>
       </UnstyledButton>)}
     </SimpleGrid>

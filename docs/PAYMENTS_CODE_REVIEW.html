@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>סקירת קוד — תשלומים ואישור הזמנת ניסוי</title>
+<style>
+:root{color-scheme:light;--ink:#29231f;--muted:#71675f;--paper:#fbf8f5;--card:#fff;--line:#e8ddd3;--accent:#754b31;--warn:#8a4b00;--red:#9b3030;--green:#256b4a;--blue:#355d7a}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 Arial,sans-serif}main{max-width:1120px;margin:auto;padding:36px 22px 70px}h1,h2,h3{line-height:1.3}h1{font-size:2.15rem;margin:.2em 0}h2{font-size:1.5rem;margin:0 0 16px}h3{font-size:1.1rem;margin:0 0 8px}p{margin:.4em 0 1em}.eyebrow{color:var(--accent);font-weight:700}.lead{font-size:1.12rem;color:#51463e;max-width:850px}.meta{color:var(--muted);font-size:.92rem}.panel,.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 4px 18px #4a2e1508}.panel{margin:20px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.82rem;font-weight:700;background:#f5e6d4;color:var(--warn)}.tag.red{background:#fae2df;color:var(--red)}.tag.green{background:#e2f2e9;color:var(--green)}.tag.blue{background:#e4eef5;color:var(--blue)}.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:stretch}.step{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px}.arrow{align-self:center;color:var(--accent);font-size:1.5rem}ul,ol{padding-right:1.3em;margin:.4em 0}.small{font-size:.9rem;color:var(--muted)}a{color:#694128}table{border-collapse:collapse;width:100%;background:white}th,td{text-align:right;vertical-align:top;border-bottom:1px solid var(--line);padding:11px}th{background:#f3ece6}code{direction:ltr;unicode-bidi:embed;background:#f2eeea;padding:1px 5px;border-radius:4px;font-size:.9em}.callout{border-right:4px solid var(--warn);padding:12px 16px;background:#fff5e8;border-radius:8px}.critical{border-color:var(--red);background:#fff0ee}.ok{border-color:var(--green);background:#eff8f2}.links li{margin:5px 0}footer{border-top:1px solid var(--line);padding-top:15px;margin-top:36px;color:var(--muted)}
+@media(max-width:760px){main{padding:24px 14px 50px}.grid,.three{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg);justify-self:center}.panel,.card{padding:16px}table{font-size:.9rem}th,td{padding:8px}}
+@media print{body{background:white}main{max-width:none;padding:0}.panel,.card{box-shadow:none;break-inside:avoid}a{color:inherit;text-decoration:none}}
+</style>
+</head>
+<body><main>
+<header>
+<div class="eyebrow">ZIS · סקירת תחום ממוקדת</div>
+<h1>תשלומים ואישור הזמנת ניסוי</h1>
+<p class="lead"><strong>נמצא ותוקן כשל בקוד שמנע את אישור הניסוי.</strong> שאילתת שמירת התשלום שלחה פרמטרים עם סוגים סותרים. PostgreSQL דחה אותה והטרנזקציה התבטלה. תיקון נקודתי הוחל ונבדק מול PostgreSQL בזיכרון; עדיין נדרש אימות בסביבת החנות.</p>
+<p class="meta">עדכון בדיקות: 10.11.2026 · תיקון קוד מקומי נבדק מול PostgreSQL בזיכרון עם נתונים סינתטיים · בניית ה־API עברה · לא נגעתי במסד החנות ובהזמנותיה.</p>
+</header>
+
+<section class="panel callout critical"><h2>הסיבה שנמצאה — והטיפול</h2>
+<p>בשורה 34 של שירות אישור הניסוי, אותו פרמטר <code>$1</code> נשלח לעמודת מזהה הזמנה מסוג UUID וגם לאסמכתה מסוג טקסט. PostgreSQL מחזיר <code>42P08: text versus uuid</code>. זה קורה גם כשיש מלאי, הרשאה, מחיר ותאריך תקינים.</p>
+<p><strong>התיקון שנבדק:</strong> להחליף בשאילתה את <code>$1</code> הראשון ב־<code>$1::uuid</code>. זה שינוי בשאילתה בלבד; אין צורך במיגרציה עבור התקלה הזאת. השינוי הוחל בשירות היישום; האישור הצליח עם תשלום מדומה של 0 ₪.</p>
+<p>נמצא גם פער באבחון: <code>42P08</code> אינו ברשימת קודי השגיאה שהשרת שומר, ולכן הוא נרשם כ־<code>UNCLASSIFIED</code>. זו הסיבה שקוד התקלה לא הופיע בלוג המוגן. מומלץ להוסיף את הקוד לרשימה המותרת.</p>
+<p class="small">זהו כשל מוכח בקוד המקומי, התואם לתסמין שנצפה ב־08.11. לא נבדקו מחדש הבקשה ההיסטורית או סביבת Production, ולכן אין לייחס להן בוודאות את אותו קוד שגיאה.</p>
+</section>
+
+<section class="panel"><h2>מה הבדיקות הראו</h2><div class="grid three">
+<article class="card"><span class="tag red">לפני התיקון</span><h3>בדיקת הקבלה נכשלה לפני התיקון</h3><p>הזמנה תקינה בסך 270 ₪ נכשלת בכתיבת התשלום. המלאי חוזר ל־100/20, וההזמנה נשארת pending. לא נשארת רשומת אישור או תשלום חלקית.</p></article>
+<article class="card"><span class="tag green">לאחר התיקון בקוד</span><h3>האישור המדומה עבר לאחר התיקון בקוד</h3><p>האישור מצליח; המלאי יורד ל־96/8; נרשם תשלום מדומה אחד של 0 ₪. ניסיון חוזר מחזיר אותה הצלחה ללא הפחתה נוספת.</p></article>
+<article class="card"><span class="tag blue">ההסבר לבדיקות הישנות</span><h3>הן דימו את המסד</h3><p>3 הבדיקות הקיימות עברו כי לא שלחו SQL ל־PostgreSQL. נוספו 3 בדיקות אבחון שמאמתות את הכשל, הביטול לאחור ואובדן קוד האבחון.</p></article>
+</div><p><strong>27 בדיקות ממוקדות עברו:</strong> 24 מול PostgreSQL בזיכרון ועוד 3 בדיקות SQL מדומה; בדיקת הקבלה כלולה. בדיקות האבחון “עוברות” כשהן מצליחות לשחזר את הבאג.</p>
+<p><a href="PAYMENT_TEST_RESULTS.md">הראיות, קובצי הבדיקה והפקודות להרצה</a> · <a href="../scripts/payment-review/acceptance-result.txt">פלט הכשל המלא</a></p>
+<p class="small">המנוע: PostgreSQL 18.6 בתוך PGlite 0.5.16. סכמה מצומצמת ונתונים סינתטיים בזיכרון. נבדק retry סדרתי; מרוץ בין חיבורים, Supabase והרצת החנות בדפדפן טרם אומתו.</p></section>
+
+<section class="panel callout critical"><strong>תשובה לשאלה “למה זה נחשב לתשלום?”</strong><br>במימוש הניסוי, השרת מסמן את ההזמנה כ־<code>paid</code> כדי לשחרר את המשך תהליך הניהול, אבל יוצר רשומת תשלום מדומה בסכום אפס (<code>amount=0</code>, <code>is_simulated=true</code>) ואינו פונה לספק אשראי. לכן זו הוכחת תשלום לצורכי סימולציה בלבד — לא עסקת אשראי ולא אישור מחברת הסליקה. כדאי להציג בנפרד “אישור ניסוי — ללא חיוב” ולא לבלבל אותו עם תשלום אמיתי.</section>
+
+<section class="panel"><h2>הזרימה מקצה לקצה</h2>
+<div class="flow">
+<div class="step"><span class="tag blue">צד לקוח</span><h3>1. יצירת הזמנה</h3><p>החנות שולחת פריטים ופרטי משלוח. השרת מחשב מחדש מחיר, זמינות ותאריך, ושומר הזמנה <code>ordered / pending</code>. במצב מנהלת היא נשלחת לנתיב ניסוי.</p></div><div class="arrow">←</div>
+<div class="step"><span class="tag">צד מנהלת</span><h3>2. בקשת אישור ניסוי</h3><p>מסך החנות שולח אסימון מנהלת, גרסת הזמנה וסיבה אל <code>POST /admin/test-orders/:id/approve-payment</code>. זה אינו טופס אשראי ואינו שולח פרטי כרטיס.</p></div><div class="arrow">←</div>
+<div class="step"><span class="tag green">צד שרת</span><h3>3. בדיקה וטרנזקציה</h3><p>השרת בודק תפקיד, סימון ניסוי, גרסה ומצב; נועל מלאי, מחשב מחדש תאריך ומחיר, מפחית מלאי, שומר אישור ורשומת תשלום אפס, מעדכן ל־<code>paid</code> ורושם Audit והיסטוריה — יחד בטרנזקציה.</p></div>
+</div>
+<p class="small">אם האישור מצליח, ממשק הניהול יכול לקדם את ההזמנה להכנה. אם נופלת בדיקה או כתיבה בתוך הטרנזקציה, מתבצע rollback וההזמנה אמורה להישאר ממתינה.</p></section>
+
+<section><h2>מה הושלם ומה לא</h2><div class="grid">
+<article class="card"><h3><span class="tag green">הגנות קיימות בקוד</span></h3><ul><li>יצירת הזמנת ניסוי מוגבלת ל־<code>operations_manager</code>; הלקוחה אינה יכולה לסמן הזמנה רגילה כניסוי בגוף הבקשה.</li><li>שם המזמין והרחוב מסומנים “ניסוי”; הניהול מציג תגית כדי להבחין בהזמנות סימולציה.</li><li>האישור כולל בדיקת גרסה ומצב, בדיקת מחיר/זמינות, נעילות, מלאי, Audit והיסטוריה. כשל ה־SQL עדיין חוסם את השלמתו בקוד המקורי.</li><li>בדיקות ההצעה אימתו הרשאות, הגבלת ניסוי, rollback ואישור חוזר ללא כפילות.</li></ul></article>
+<article class="card"><h3><span class="tag red">חסר או לא מאומת</span></h3><ul><li>אין ספק סליקה, יצירת ניסיון אשראי, Webhook מאומת או אישור חיוב אמיתי. שלב P6 עדיין פתוח.</li><li>תיקון 42P08 הוחל ונבדק מקומית; עדיין לא בוצע אימות מול סביבת החנות. מצב הסכמה החיה עדיין לא מאומת.</li><li>ביטול/החזר, חשבונית/קבלה, PDF ואישור ללקוחה אינם חלק ממסלול התשלום שהושלם.</li><li><code>DemoCredit</code> כן מוצג בשלב 3 ב־Checkout. הוא מכיל רק ערכי דוגמה ואינו שולח פרטי כרטיס או מפעיל סליקה. הטענה בדוח הקודם שאינו בשימוש הייתה שגויה ותוקנה.</li></ul></article>
+</div></section>
+
+<section class="panel"><h2>מה קרה בבדיקת המנהלת</h2><p>בדפדפן המקומי מול נתוני Production, ב־08.11.2026 נוצרה הזמנת ניסוי בירושלים בסך 270 ₪; לאחר מכן אישור הניסוי נכשל פעמיים וההזמנה נשארה <code>ordered / pending</code>. בבדיקה חוזרת בבית שמש נוצרה הזמנה נוספת באותו סכום, ואישור אחד נכשל עם מזהה פנייה <code>eb8c24bb-4d2f-4803-b839-553da7db04ca</code>. בבדיקת ה־DB שסופקה להזמנה הראשונה נמצאו הזמנה מסומנת כניסוי, מלאי מספיק ו־snapshot תקין. אלה שוללים כמה חשדות, אך לא קובעים את סיבת הכשל בניסיון השני.</p>
+<p><strong>עדכון 10.11:</strong> הבדיקות החדשות מאתרות כשל דטרמיניסטי בכתיבת התשלום, גם בסכמה תקינה. לכן אפשר להתקדם לתיקון הקוד בלי להמתין לשאילתות DB נוספות. הראיות ההיסטוריות נשמרות לצורך השוואה; הן אינן מוכיחות אם אותה בקשה נכשלה קודם לכן בבדיקת הרשאה, תאריך או מחיר.</p>
+<p class="small">אין להסיק מהסטטוס <code>paid</code> שנגבה כסף: באישור המדומה קוד השרת קובע סכום אפס. בכישלון שתועד, הסטטוס נשאר pending ולא נמצאה רשומת תשלום/אישור בתוצאות שנמסרו.</p></section>
+
+<section><h2>מסלול הלקוחה מול מסלול הניהול</h2><div class="grid three">
+<article class="card"><h3>לקוחה רגילה</h3><ol><li>ממלאת פרטי משלוח.</li><li>מקבלת סכום מחושב מהשרת.</li><li>יוצרת הזמנה ממתינה.</li><li>אין מסך תשלום פעיל ואין חיוב; אין דרך להשלים רכישה רגילה כרגע.</li></ol></article>
+<article class="card"><h3>מנהלת — הזמנת ניסוי</h3><ol><li>נכנסת באמצעות חשבון מנהלת פעיל.</li><li>יוצרת הזמנה מסומנת לניסוי.</li><li>לוחצת על אישור מדומה ללא חיוב.</li><li>אם השרת מאשר, מלאי מופחת ותהליך ההכנה נפתח.</li></ol></article>
+<article class="card"><h3>ממשק ניהול</h3><ol><li>תגית “הזמנת ניסוי” מוצגת ברשימה ובפרטים.</li><li>הסטטוס נשאר ממתין אם אישור נכשל ולכן אין קידום להכנה.</li><li>לא מצאתי תהליך ניהול לתשלום אמיתי, החזר או התאמה לספק.</li><li>דוחות אריזה/אספקה כוללים הזמנות ששולמו; הזמנת ניסוי שאושרה עלולה להיכלל בתהליך המדומה בכוונה.</li></ol></article>
+</div></section>
+
+<section class="panel"><h2>מקרי קצה שכדאי לסגור</h2><table><thead><tr><th>מקרה</th><th>הגנה קיימת בקוד</th><th>פער / אימות נדרש</th></tr></thead><tbody>
+<tr><td>ניסיון חוזר אחרי תשובה לא ידועה</td><td>השרת נועל הזמנה ובודק רשומת אישור ייחודית; הזמנה שכבר אושרה מחזירה הצלחה.</td><td>אומת בבדיקת התיקון: אין כתיבה או הפחתת מלאי כפולה. לא נדרש מפתח נוסף רק משום שאין כותרת Idempotency-Key.</td></tr>
+<tr><td>שתי מנהלות מאשרות במקביל</td><td>נעילת שורת ההזמנה ובדיקת גרסה/סטטוס.</td><td>לוודא בסביבת בדיקה שאין הפחתת מלאי כפולה וש־retry אחרי הצלחה מחזיר הצלחה.</td></tr>
+<tr><td>עמודת תשלום חסרה</td><td>אומת rollback מלא כשעמודה חסרה.</td><td>זו בדיקת קצה נפרדת. כשל 42P08 שוחזר גם כשהסכמה מלאה, ותיקונו אינו דורש מיגרציה.</td></tr>
+<tr><td>מחיר/תאריך/כלל משלוח השתנו מאז יצירת ההזמנה</td><td>השרת מחשב מחדש ודוחה אם הסכום השתנה או הכלל אינו תקף.</td><td>הודעת הלקוחה אינה מציגה את קוד התקלה ברוב המקרים; להסביר מה השתנה ולתת פעולה מתאימה.</td></tr>
+<tr><td>מלאי אזל בזמן אישור</td><td>נעילת מלאי ועדכון מותנה בכמות הזמינה; כשל אמור לבצע rollback.</td><td>לאמת תחרות במסד אמיתי ולבדוק שהזמנה לא מגיעה להכנה ללא מלאי.</td></tr>
+<tr><td>אישור ניסוי ואז ביטול/חזרה</td><td>הרשומה מסומנת כניסוי; ממשק הניהול מציג זאת.</td><td>לקבוע אם מלאי של הזמנות ניסוי מוחזר בעת ביטול, ואיך נמנעת הכללתן במדדי מכירות/חשבונאות.</td></tr>
+<tr><td>לקוחה מרעננת/סוגרת את הדפדפן</td><td>פרטים רגישים ואסימון נשמרים בזיכרון בלבד.</td><td>אין שחזור הזמנה אורחת אחרי רענון/סגירה; זו מגבלה ידועה, במיוחד כשהתוצאה לא ידועה.</td></tr>
+<tr><td>הזמנה רגילה נשלחת לנתיב מדומה</td><td>השרת מחזיר <code>TEST_ORDER_REQUIRED</code>.</td><td>לשמר הגנה זו גם לאחר הכנסת ספק סליקה ולבדוק עם הרשאה/משתמש לא מורשה.</td></tr>
+</tbody></table></section>
+
+<section class="panel ok"><h2>איך לטפל בהזמנת הניסוי</h2><ol><li><strong>תיקון קוד מקומי:</strong> ה־cast ל־UUID ו־<code>42P08</code> בקודי האבחון הוחלו ונבדקו.</li><li><strong>בדיקות מקומיות:</strong> בדיקת הקבלה ומקרי הקצה עברו על שירות היישום מול PostgreSQL בזיכרון; בניית ה־API עברה.</li><li><strong>בסביבת החנות:</strong> להפעיל את גרסת ה־API המתוקנת ולהשלים בדיקת זרימה: אישור ניסוי, הפחתת מלאי פעם אחת, Audit והמשך להכנה/אריזה/אספקה. יש לבחור תאריך שעדיין מותר להזמנה.</li><li><strong>לשפר בהמשך את התצוגה:</strong> לציין “אישור ניסוי — ללא חיוב” וגם שהמלאי יופחת. תקלת שרת צריכה להציג הודעה קצרה עם מזהה פנייה, בלי SQL.</li><li><strong>סליקה אמיתית:</strong> ספק Sandbox, Webhook, ניסיונות, בירור תוצאה לא ידועה, החזרים ומסמכים נשארים עבודה נפרדת במסגרת P6.</li></ol>
+<p class="small">הזמנות 08.11 נוצרו לתאריך אספקה 09.11, שכבר חלף נכון לדוח זה. תיקון ה־SQL לא מבטל את בדיקת התאריך. אין לשנות ידנית payment_status או להפעיל מיגרציה כדי לעקוף את הכשל; לאחר התיקון אפשר לבדוק הזמנת ניסוי חדשה לתאריך תקין.</p></section>
+
+<section class="panel"><h2>ראיות וקישורים</h2><ul class="links">
+<li><a href="PAYMENT_TEST_RESULTS.md">תוצאות הבדיקות, מגבלות והוראות שחזור — 10.11</a></li>
+<li><a href="../scripts/payment-review/results.json">תוצאות מובנות וטביעות קובצי המקור</a></li>
+<li><a href="../scripts/payment-review/acceptance.test.mjs">בדיקת הקבלה שעברה לאחר התיקון המקומי</a></li>
+<li><a href="ORDER_TEST_BROWSER_REPORT.md">תיעוד בדיקת הדפדפן והכישלון</a></li>
+<li><a href="ORDER_TEST_DIAGNOSTICS_BEIT_SHEMESH.sql">שאילתות אבחון קריאה בלבד להזמנה מבית שמש</a></li>
+<li><a href="ORDER_TEST_DIAGNOSTICS.sql">שאילתות אבחון קריאה בלבד להזמנה הראשונה</a></li>
+<li><a href="STOREFRONT_CHECKOUT.md">מצב Checkout, פרטיות ומגבלות</a></li>
+<li><a href="IMPLEMENTATION_PLAN.md">תנאי סיום P6 לתשלום</a></li>
+<li><a href="../zis-api/src/commerce/test-payment.service.ts">מימוש אישור התשלום המדומה בשרת</a></li>
+<li><a href="../zis-api/src/controllers/admin-test-orders.controller.ts">בדיקת הרשאת מנהלת בנתיב הניסוי</a></li>
+<li><a href="../apps/storefront/src/features/checkout/checkout.store.ts">פעולת אישור הניסוי בצד החנות</a></li>
+<li><a href="../zis-db/migrations/015_checkout_faq_and_test_orders.sql">מיגרציה 015 — נדרשת לאישור ניסוי</a></li>
+</ul><p class="small">הראיות על כישלון Production מבוססות על דוח הבדיקה ותוצאות שהועברו בעבר; לא התקבלה בסקירה זו גישה חדשה ללוגים או למסד. מצב המיגרציה החי נשאר לא מאומת.</p></section>
+<footer>תיקון קוד מקומי, בדיקות ותיעוד הושלמו. מסד החנות לא נפתח לבדיקה ולא נשלחה בקשה לספק סליקה. אימות בסביבת החנות והמשך התפעול עדיין נדרשים.</footer>
+</main></body></html>

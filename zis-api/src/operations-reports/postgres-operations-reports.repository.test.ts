@@ -31,6 +31,7 @@ test('packing uses packed history, paid active orders and parameterized exact se
   assert.match(statement.sql, /h.to_status = 'packed'/);
   assert.match(statement.sql, /payment_status = 'paid'/);
   assert.match(statement.sql, /o.status <> 'cancelled'/);
+  assert.match(statement.sql, /o.package_count as "packageCount"/);
   assert.ok(!statement.sql.includes(city));
   assert.deepEqual(statement.values, [DATE, city, [ORDER_ID], 501]);
   assert.match(statement.sql, /limit \$4/);

@@ -24,7 +24,6 @@ export interface QuoteContext {
   deliveryPolicy: DeliveryPolicy;
   minimumProductSubtotal: string;
   currency: 'ILS';
-  taxRate: string;
   shippingRules: ShippingRuleContext[];
   variants: QuoteVariantContext[];
 }
@@ -58,8 +57,7 @@ export function createQuoteService(repository: QuoteRepository): QuoteService {
         deliveryDate: input.deliveryDate,
         subtotal: centsToMoney(subtotalCents),
         shippingTotal: centsToMoney(shippingTotalCents),
-        taxTotal: inclusiveTax(totalCents,context.taxRate),
-        taxRate: context.taxRate,
+        taxTotal: '0.00',
         total: centsToMoney(totalCents),
         currency: context.currency,
         availability: 'available',
@@ -84,10 +82,10 @@ function validateItems(items: CartItemInput[], variants: QuoteVariantContext[]) 
     }
     const variant = variants.find((candidate) => candidate.productId === item.productId && candidate.productVariantId === (item.productVariantId ?? null));
     if (!variant || !variant.active) {
-      throw new ApiError(422, 'BUSINESS_RULE_VIOLATION', 'Product variant is unavailable');
+      throw new ApiError(422, 'STOCK_UNAVAILABLE', 'Product variant is unavailable');
     }
     if (item.quantitySets > variant.availableSets) {
-      throw new ApiError(422, 'BUSINESS_RULE_VIOLATION', 'Requested quantity is not available');
+      throw new ApiError(422, 'STOCK_UNAVAILABLE', 'Requested quantity is not available');
     }
     return { item, quantitySets: item.quantitySets, variant };
   });
@@ -114,9 +112,3 @@ function centsToMoney(value: number): string {
   return (value / 100).toFixed(2);
 }
 
-function inclusiveTax(totalCents:number,rate:string):string {
-  if (!/^\d{1,3}(\.\d{1,2})?$/.test(rate)) throw new ApiError(503,'COMMERCE_TAX_NOT_CONFIGURED','Tax rate is not configured');
-  const basisPoints=BigInt(moneyToCents(rate));const denominator=10000n+basisPoints;
-  const tax=(BigInt(totalCents)*basisPoints+denominator/2n)/denominator;
-  return centsToMoney(Number(tax));
-}

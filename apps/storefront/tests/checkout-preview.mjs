@@ -5,10 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { extname, resolve, sep } from 'node:path';
 const root = resolve(fileURLToPath(new URL('../dist-checkout-qa/', import.meta.url)));
 const productId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
-const variantId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const product = { productId, name: 'מוצר בדיקה בלבד', description: 'QA', category: { categoryId: productId, name: 'בדיקות', slug: 'qa' },
-  setSize: 6, primaryImage: null, gallery: [], variants: [{ productVariantId: variantId, name: 'QA',
-    productCode: 'QA', pricePerSet: '20.00', availableSets: 100, isDefault: true, attributes: null, primaryImage: null, gallery: [] }] };
+  setSize: 1, pricePerUnit: '20.00', availableSets: 100, displayOrder: 10, primaryImage: null, gallery: [], variants: [] };
 const created = { orderId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', orderNumber: 'QA-100', status: 'ordered',
   paymentStatus: 'pending', total: '52.00', currency: 'ILS', confirmationToken: 'qa-private-memory-token' };
 let orderInput; const attempts = new Map();
@@ -19,14 +17,16 @@ const server = createServer(async (req, res) => {
     const path = url.pathname.slice(4);
     if (path === '/store-status') return json({ storeOpen: true, lockMessage: null, timezone: 'Asia/Jerusalem', dispatchTime: '14:00', sameDayCutoffTime: '10:00' });
     if (path === '/shipping/zones') return json({ data: [{ shippingZoneId: productId, name: 'אזור בדיקה', city: 'ירושלים', neighborhood: 'QA' }] });
-    if (path === '/shipping/methods') return json({ data: [{ shippingMethodId: variantId, name: 'משלוח בדיקה', code: 'regular' }] });
     if (path === '/categories') return json({ data: [product.category] });
     if (path === '/catalog/' + productId) return json(product);
     if (path === '/catalog') return json({ data: [product], page: { page: 1, pageSize: 24, totalItems: 1, totalPages: 1 } });
-    if (path === '/event-gallery' || path === '/faq') return json({ data: [] });
+    if (path === '/event-gallery') return json({ data: [] });
+    if (path === '/faq') return json({ items: [{ faqEntryId: productId, question: 'שאלת ניסוי', answer: 'תשובת ניסוי', sortOrder: 1 }] });
+    if (path === '/delivery-dates') return json({ timezone: 'Asia/Jerusalem', today: '2026-10-26', maxDate: '2026-11-02', availableDates: ['2026-10-27', '2026-10-28', '2026-10-29'] });
     if (path === '/orders/confirmation') {
       if (req.headers.authorization !== 'Bearer ' + created.confirmationToken) return json({ error: { code: 'NOT_FOUND' } }, 404);
-      return json({ orderNumber: created.orderNumber, status: created.status, paymentStatus: created.paymentStatus,
+      return json({ orderNumber: created.orderNumber, status: created.status, paymentStatus: created.paymentStatus, isTest: false,
+        items: (orderInput?.items ?? []).map(item => ({ ...item, productName: product.name, lineTotal: (20 * item.quantitySets).toFixed(2) })),
         deliveryDate: orderInput?.deliveryDate, total: created.total, currency: created.currency });
     }
     let body = ''; for await (const chunk of req) body += chunk;

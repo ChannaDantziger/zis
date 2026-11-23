@@ -35,7 +35,7 @@ interface VariantRow {
   product_id: string;
   name: string;
   product_code: string;
-  price_per_set: string;
+  price_per_item: string;
   available_sets: number;
   is_default: boolean;
   attributes: Record<string, unknown> | null;
@@ -55,7 +55,7 @@ interface ImageRow {
 const SORT_SQL: Record<NonNullable<CatalogQuery['sort']>, string> = {
   display: 'c.sort_order, p.display_order, p.name, p.product_id',
   name: 'p.name, p.product_id',
-  price: 'coalesce(min(v.price_per_set), p.price_per_item), p.name, p.product_id',
+  price: 'coalesce(min(v.price_per_item), p.price_per_item) * p.set_size, p.name, p.product_id',
 };
 
 export function createPostgresCatalogRepository(factory: SqlClientFactory): CatalogRepository {
@@ -158,7 +158,7 @@ async function attachDetails(client: SqlClient, productRows: ProductRow[], total
 
   const productIds = productRows.map((row) => row.product_id);
   const variantsResult = await client.query<VariantRow>(
-    `select product_variant_id, product_id, name, product_code, price_per_set,
+    `select product_variant_id, product_id, name, product_code, price_per_item,
             available_sets, is_default, attributes
        from public.product_variants
       where product_id = any($1::uuid[])
@@ -196,8 +196,8 @@ function mapProduct(row: ProductRow, variants: VariantRow[], images: ImageRow[])
     name: row.name,
     description: row.description,
     setSize: row.set_size,
-    pricePerSet: row.price_per_item,
-    availableSets: row.available_items,
+    pricePerUnit: row.price_per_item,
+    availableSets: Math.floor(row.available_items / row.set_size),
     displayOrder: row.display_order,
     images: productImages,
     variants: productVariants,
@@ -228,7 +228,7 @@ function mapVariant(row: VariantRow): Omit<CatalogVariantRecord, 'images'> {
     productId: row.product_id,
     name: row.name,
     productCode: row.product_code,
-    pricePerSet: row.price_per_set,
+    pricePerUnit: row.price_per_item,
     availableSets: row.available_sets,
     isDefault: row.is_default,
     attributes: row.attributes,

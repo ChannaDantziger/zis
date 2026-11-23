@@ -4,19 +4,19 @@ import { readServerConfig, validateServerConfig } from './server-config.js';
 
 test('Development uses only DATABASE_URL_TRN', () => {
   const config = readServerConfig({
-    NODE_ENV: 'development',
+    DATABASE_TARGET: 'development', APP_ENV: 'development',
     DATABASE_URL: 'production-url',
     DATABASE_URL_TRN: 'development-url',
   });
 
   assert.equal(config.databaseUrl, 'development-url');
   assert.equal(config.databaseSource, 'DATABASE_URL_TRN');
-  assert.deepEqual(config.allowedOrigins, ['http://localhost:5173', 'http://127.0.0.1:5173']);
+  assert.deepEqual(config.allowedOrigins, ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174']);
 });
 
 test('Production uses only DATABASE_URL', () => {
   const config = readServerConfig({
-    NODE_ENV: 'production',
+    DATABASE_TARGET: 'production', APP_ENV: 'production',
     DATABASE_URL: 'production-url',
     DATABASE_URL_TRN: 'development-url',
   });
@@ -27,7 +27,7 @@ test('Production uses only DATABASE_URL', () => {
 
 test('Development does not fall back to DATABASE_URL', () => {
   const config = readServerConfig({
-    NODE_ENV: 'development',
+    DATABASE_TARGET: 'development',
     DATABASE_URL: 'production-url',
   });
 
@@ -35,13 +35,53 @@ test('Development does not fall back to DATABASE_URL', () => {
   assert.equal(config.databaseSource, undefined);
 });
 
-test('production config validation fails closed when critical settings are missing', () => {
-  const config = readServerConfig({ NODE_ENV: 'production', CORS_ALLOWED_ORIGINS: '*' });
-  assert.deepEqual(validateServerConfig(config, { NODE_ENV: 'production' }), [
-    'DATABASE_URL is required in production',
-    'SUPABASE_URL is required in production',
-    'SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY is required in production',
-    'CORS_ALLOWED_ORIGINS cannot use * in production',
+test('Development keeps storefront origins when custom origins are configured', () => {
+  const config = readServerConfig({
+    DATABASE_TARGET: 'development', APP_ENV: 'development',
+    CORS_ALLOWED_ORIGINS: 'http://localhost:5173,http://dev.example.test,http://localhost:5173',
+  });
+
+  assert.deepEqual(config.allowedOrigins, [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
+    'http://dev.example.test',
+  ]);
+});
+
+test('Production uses only explicitly configured origins', () => {
+  const config = readServerConfig({
+    DATABASE_TARGET: 'development', APP_ENV: 'production',
+    CORS_ALLOWED_ORIGINS: 'https://shop.example.test',
+  });
+
+  assert.deepEqual(config.allowedOrigins, ['https://shop.example.test']);
+});
+
+test('Development app can explicitly use the production database independently', () => {
+  const config = readServerConfig({
+    DATABASE_TARGET: 'production', APP_ENV: 'development', DATABASE_URL: 'production-url',
+    CORS_ALLOWED_ORIGINS: 'https://shop.example.test',
+  });
+
+  assert.equal(config.databaseSource, 'DATABASE_URL');
+  assert.deepEqual(config.allowedOrigins, [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
+    'https://shop.example.test',
+  ]);
+});
+
+test('production database and app config validation are independent', () => {
+  const config = readServerConfig({ DATABASE_TARGET: 'production', APP_ENV: 'production', CORS_ALLOWED_ORIGINS: '*' });
+  assert.deepEqual(validateServerConfig(config, { DATABASE_TARGET: 'production', APP_ENV: 'production' }), [
+    'DATABASE_URL is required when DATABASE_TARGET=production',
+    'SUPABASE_URL is required when DATABASE_TARGET=production',
+    'SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY is required when DATABASE_TARGET=production',
+    'CORS_ALLOWED_ORIGINS cannot use * when APP_ENV=production',
   ]);
 });
 

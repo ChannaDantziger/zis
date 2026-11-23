@@ -1,3 +1,9 @@
+import { createFaqRouter } from './routes/faq.routes.js';
+import type { FaqService } from './faq/faq.service.js';
+import { createAdminTestOrdersRouter } from './routes/admin-test-orders.routes.js';
+import type { TestPaymentService } from './commerce/test-payment.service.js';
+import { createAdminManualPaymentRouter } from './routes/admin-manual-payment.routes.js';
+import type { ManualPaymentService } from './commerce/manual-payment.service.js';
 import express from 'express';
 import { createOrderRouter } from './routes/order.routes.js';
 import type { OrderService } from './commerce/order.types.js';
@@ -25,6 +31,12 @@ import { createAdminCatalogRouter } from './routes/admin-catalog.routes.js';
 import type { AdminCatalogService } from './catalog/admin-catalog.types.js';
 import { createAdminDashboardRouter } from './routes/admin-dashboard.routes.js';
 import type { DashboardService } from './dashboard/dashboard.types.js';
+import { createAdminHomeRouter } from './routes/admin-home.routes.js';
+import type { HomeService } from './dashboard/home.types.js';
+import { createAdminHomeTasksRouter } from './routes/admin-home-tasks.routes.js';
+import type { HomeTasksRepository } from './tasks/home-tasks.types.js';
+import { createAdminOrderCorrectionRouter } from './routes/admin-order-correction.routes.js';
+import type { OrderCorrectionService } from './operations/order-correction.service.js';
 import type { CommerceService } from './commerce/commerce.types.js';
 import { createCommerceRouter } from './routes/commerce.routes.js';
 import { createAdminOrderStatusRouter } from './routes/admin-order-status.routes.js';
@@ -39,6 +51,9 @@ import type { EventGalleryService } from './event-gallery/event-gallery.types.js
 import { createEventGalleryRouter } from './routes/event-gallery.routes.js';
 
 export interface AppDependencies {
+  faqService?: FaqService;
+  testPaymentService?: TestPaymentService;
+  manualPaymentService?: ManualPaymentService;
   orderService?: OrderService;
   notificationsService?: NotificationsService;
   inventoryAdminService?: InventoryAdminService;
@@ -53,6 +68,9 @@ export interface AppDependencies {
   storageService?: StorageService;
   adminCatalogService?: AdminCatalogService;
   dashboardService?: DashboardService;
+  homeService?: HomeService;
+  homeTasksService?: HomeTasksRepository;
+  orderCorrectionService?: OrderCorrectionService;
   commerceService?: CommerceService;
   orderStatusService?: OrderStatusService;
   commerceSettingsService?: CommerceSettingsService;
@@ -96,6 +114,16 @@ export function createApp(dependencies: AppDependencies = {}) {
   if (dependencies.dashboardService && dependencies.resolveAdminUserId) {
     app.use(createAdminDashboardRouter(dependencies.dashboardService, dependencies.resolveAdminUserId));
   }
+  if (dependencies.homeService && dependencies.resolveAdminUserId) {
+    app.use(createAdminHomeRouter(dependencies.homeService, dependencies.resolveAdminUserId));
+  }
+  if (dependencies.homeTasksService && dependencies.resolveAdminUserId) {
+    app.use(createAdminHomeTasksRouter(dependencies.homeTasksService, dependencies.resolveAdminUserId));
+  }
+  if (dependencies.orderCorrectionService && dependencies.resolveAdminUserId) {
+    app.use(createAdminOrderCorrectionRouter(dependencies.orderCorrectionService, dependencies.resolveAdminUserId));
+  }
+  if (dependencies.manualPaymentService && dependencies.resolveAdminUserId) app.use(createAdminManualPaymentRouter(dependencies.manualPaymentService, dependencies.resolveAdminUserId));
   if (dependencies.orderStatusService && dependencies.resolveAdminUserId) {
     app.use(createAdminOrderStatusRouter(dependencies.orderStatusService, dependencies.resolveAdminUserId));
   }
@@ -115,6 +143,8 @@ export function createApp(dependencies: AppDependencies = {}) {
     app.use(createAdminInventoryReadRouter(dependencies.inventoryAdminService, dependencies.resolveAdminUserId));
   }
   if (dependencies.orderService) app.use(createOrderRouter(dependencies.orderService));
+  if(dependencies.faqService && dependencies.resolveAdminUserId) app.use(createFaqRouter(dependencies.faqService,dependencies.resolveAdminUserId));
+  if(dependencies.orderService?.createTest && dependencies.testPaymentService && dependencies.resolveAdminUserId) app.use(createAdminTestOrdersRouter(dependencies.orderService,dependencies.testPaymentService,dependencies.resolveAdminUserId));
   app.use(notFoundHandler);
   app.use(errorHandler);
 

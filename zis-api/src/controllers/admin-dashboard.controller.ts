@@ -14,6 +14,7 @@ export function createAdminDashboardController(service: DashboardService, resolv
       response.setHeader('Cache-Control', 'no-store');
       response.json(await service.listOrderPage({
         deliveryDate: readDate(request.query.deliveryDate), status: readOptionalText(request.query.status) as OrderStatus | undefined,
+        paymentFilter: readOptionalText(request.query.paymentFilter) as 'pending' | 'not_pending' | undefined,
         productVariantId: readOptionalText(request.query.productVariantId), location: readOptionalText(request.query.location),
         sortBy: (readOptionalText(request.query.sortBy) ?? 'status') as 'status', sortDirection: (readOptionalText(request.query.sortDirection) ?? 'asc') as 'asc',
         page: readPageNumber(request.query.page, 1), pageSize: readPageNumber(request.query.pageSize, DEFAULT_PAGE_SIZE),

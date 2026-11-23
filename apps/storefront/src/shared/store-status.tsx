@@ -4,6 +4,7 @@ import { apiRequest } from './api/http-client';
 
 export interface StoreStatus {
   storeOpen: boolean;
+  minimumProductSubtotal?: string;
   lockMessage: string | null;
   dispatchTime: string | null;
   sameDayCutoffTime: string;

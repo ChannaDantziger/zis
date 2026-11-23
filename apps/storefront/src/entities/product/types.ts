@@ -12,30 +12,18 @@ export interface CatalogImage {
   sortOrder: number;
 }
 
-export interface CatalogVariant {
-  productVariantId: string;
-  name: string;
-  productCode: string;
-  pricePerSet: string;
-  availableSets: number;
-  isDefault: boolean;
-  attributes: Record<string, unknown> | null;
-  primaryImage: CatalogImage | null;
-  gallery: CatalogImage[];
-}
-
 export interface CatalogProduct {
   productId: string;
   category: CatalogCategory;
   name: string;
   description: string | null;
   setSize: number;
-  pricePerSet: string;
+  pricePerUnit: string;
   availableSets: number;
   displayOrder: number;
   primaryImage: CatalogImage | null;
   gallery: CatalogImage[];
-  variants: CatalogVariant[];
+  variants: unknown[];
 }
 
 export interface CatalogQuery {

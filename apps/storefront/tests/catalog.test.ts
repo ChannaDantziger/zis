@@ -1,17 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readCatalogQuery, updateCatalogQuery } from '../src/features/catalog/query';
-import { ProductSelection } from '../src/features/product-gallery/ProductSelection';
 import { getProductImages } from '../src/features/product-gallery/images';
-import type { CatalogProduct, CatalogVariant } from '../src/entities/product/types';
+import type { CatalogProduct } from '../src/entities/product/types';
 
 const primary = { imageId: 'primary', url: 'https://media.invalid/p', altText: 'Primary', imageType: 'primary' as const, sortOrder: 0 };
 const second = { ...primary, imageId: 'second', imageType: 'gallery' as const, sortOrder: 1 };
-const variant: CatalogVariant = { productVariantId: 'variant', name: 'Available', productCode: 'TEST', pricePerSet: '12.50',
-  availableSets: 5, isDefault: false, attributes: null, primaryImage: null, gallery: [] };
 const product: CatalogProduct = { productId: 'product', name: 'Test product', description: null,
-  category: { categoryId: 'category', name: 'Test category', slug: 'test' }, setSize: 6,
-  primaryImage: primary, gallery: [primary, second], variants: [{ ...variant, productVariantId: 'unavailable', availableSets: 0, isDefault: true }, variant] };
+  category: { categoryId: 'category', name: 'Test category', slug: 'test' }, setSize: 6, pricePerUnit: '12.50', availableSets: 5, displayOrder: 10,
+  primaryImage: primary, gallery: [primary, second], variants: [] };
 
 test('catalog URL parser normalizes malformed pages, sorting and excessive search', () => {
   const query = readCatalogQuery(new URLSearchParams({ page: '-3', sort: 'unsafe', direction: 'unsafe', search: ' x'.repeat(100) }));
@@ -34,18 +31,7 @@ test('filter changes reset page and preserve unrelated URL state; paging preserv
   assert.equal(current.get('page'), '4');
 });
 
-test('product selection starts with an available variant and quantity one', () => {
-  const selection = new ProductSelection();
-  selection.initialize(product);
-  assert.equal(selection.variantId, 'variant');
-  assert.equal(selection.quantitySets, 1);
-  selection.initialize({ ...product, variants: [] });
-  assert.equal(selection.variantId, '');
-});
-
-test('variant gallery stays independent from product media', () => {
-  assert.deepEqual(getProductImages(product, variant), []);
-  const own = { ...second, imageId: 'variant-primary' };
-  assert.deepEqual(getProductImages(product, { ...variant, primaryImage: own, gallery: [own] }).map((image) => image.imageId), ['variant-primary']);
+test('product gallery contains only product-level media', () => {
   assert.deepEqual(getProductImages({ ...product, primaryImage: null, gallery: [] }), []);
+  assert.deepEqual(getProductImages(product).map((image) => image.imageId), ['primary', 'second']);
 });

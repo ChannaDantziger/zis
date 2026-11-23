@@ -14,14 +14,14 @@ test('catalog service keeps product and variant images separate', async () => {
         name: 'Example',
         description: null,
         setSize: 1,
-        pricePerSet: '100.00', availableSets: 3, displayOrder: 10,
+        pricePerUnit: '100.00', availableSets: 3, displayOrder: 10,
         images: [{
           imageId: 'image-1', productId: 'product-1', productVariantId: null,
           storagePath: 'product/image-1.webp', altText: 'Example cake', imageType: 'primary', sortOrder: 0,
         }],
         variants: [{
           productVariantId: 'variant-1', productId: 'product-1', name: 'Default', productCode: 'EXAMPLE',
-          pricePerSet: '100.00', availableSets: 3, isDefault: true, attributes: null, images: [],
+          pricePerUnit: '100.00', availableSets: 3, isDefault: true, attributes: null, images: [],
         }],
       };
     },

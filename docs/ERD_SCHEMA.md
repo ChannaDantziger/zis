@@ -2,7 +2,7 @@
 
 ## מטרת המסמך
 
-מסמך זה מגדיר את המבנה הראשוני של בסיס הנתונים עבור ZIS, חברת־בת של LIS, לפני כתיבת קוד. הוא משמש בסיס לתכנון ה־ERD, מיגרציות Supabase, חוזי ה־API ומסכי ה־Admin.
+מסמך זה מגדיר את מבנה בסיס הנתונים הראשוני עבור ZIS. מיגרציה 014 מסירה את ישות שיטות המשלוח מהיעד; המסמך אינו הוכחה שהסכמה חלה במסד או תואמת למימוש.
 
 להשוואה בין הסכמה הזו לבין הטבלאות והצרכים המשתמעים מהאפיון, ראו [ERD_COMPARISON.md](ERD_COMPARISON.md).
 
@@ -39,7 +39,6 @@
 ### טבלאות משלוחים והגדרות חנות
 
 - `shipping_zones`
-- `shipping_methods`
 - `shipping_rules`
 - `store_settings`
 - `store_closures`
@@ -68,13 +67,11 @@ erDiagram
     product_variants ||--o{ product_images : uses
 
     shipping_zones ||--o{ shipping_rules : defines
-    shipping_methods ||--o{ shipping_rules : applies
 
     orders ||--|{ order_items : contains
     products ||--o{ order_items : references
     product_variants ||--o{ order_items : references
     shipping_zones ||--o{ orders : serves
-    shipping_methods ||--o{ orders : uses
     orders ||--o{ payments : has
     orders ||--o{ invoices : produces
     orders ||--o{ order_status_history : tracks
@@ -97,6 +94,6 @@ erDiagram
 
 ## מצב הסכמה — 18.09.2026
 
-זהו מפרט תכנון מפוצל; קובצי SQL קיימים אך התאמתם למסד חי לא אומתה בסקירה. אין להסיק מהתרשים הראשוני שהוא כולל את כל טבלאות 003. [פערי הסכמה וההרשאות](OPEN_ISSUES.md) חייבים להיסגר לפני חיבור נתונים אמיתיים. [סדר המיגרציות](../zis-db/README.md).
+זהו מפרט תכנון מפוצל; [014](../zis-db/migrations/014_single_shipping_method.sql) מגדירה הסרת טבלת שיטות המשלוח ושמירת תווית היסטורית בהזמנות. היא טרם הוחלה, לכן התרשים לעיל מתאר את הסכמה ההיסטורית מ־001 ולא מוכיח את מצב המסד החי. אין להסיק מהתרשים שהוא כולל את כל טבלאות 003. [פערי הסכמה וההרשאות](OPEN_ISSUES.md) חייבים להיסגר לפני חיבור נתונים אמיתיים. [סדר המיגרציות](../zis-db/README.md).
 
 [חזרה לאינדקס](PLAN_INDEX.md).

@@ -31,18 +31,57 @@ test('catalog pagination rejects repeated, fractional and unbounded values', asy
   await f.controller.listProducts({ query: { page: '2' } } as never, f.response);
   assert.deepEqual(f.calls, [[2]]); assert.equal(f.headers['Cache-Control'], 'no-store');
 });
+
+test('category filter is validated before catalog data access', async () => {
+  const f = fixture();
+  for (const categoryId of ['', 'not-a-uuid', [id, id]]) {
+    await assert.rejects(() => f.controller.listProducts({ query: { categoryId } } as never, f.response));
+  }
+  assert.deepEqual(f.calls, []);
+  await f.controller.listProducts({ query: { page: '2', categoryId: id } } as never, f.response);
+  assert.deepEqual(f.calls, [[2, undefined, id]]);
+});
+
+test('category pagination applies the same scope to the count and the page in a read-only snapshot', async () => {
+  const statements: Array<{ sql: string; values?: unknown[] }> = [];
+  let released = false;
+  const client = { query: async (sql: string, values?: unknown[]) => {
+    statements.push({ sql, values });
+    return { rows: sql.includes('count(*)') ? [{ total: '31' }] : sql.includes('as product') ? [{ product: { productId: id, categoryId: id } }] : [] };
+  }, release: () => { released = true; } } as unknown as SqlClient;
+  const result = await createCatalogManagementRepository(async () => client).listProducts(2, undefined, id);
+  const count = statements.find((statement) => statement.sql.includes('count(*)'))!;
+  const products = statements.find((statement) => statement.sql.includes('as product'))!;
+  assert.deepEqual(count.values, [null, id]);
+  assert.match(count.sql, /category_id=\$2/);
+  assert.deepEqual(products.values, [25, 25, null, id]);
+  assert.match(products.sql, /p\.category_id=\$4/);
+  assert.equal(result.totalItems, 31); assert.equal(result.page, 2);
+  assert.match(statements[0]!.sql, /read only/); assert.equal(statements.at(-1)?.sql, 'commit');
+  assert.equal(released, true);
+});
 test('variant edits cannot overwrite inventory or internal product code', async () => {
   const f = fixture();
-  await f.controller.updateVariant({ params: { productVariantId: id }, body: { name: ' שוקולד ', pricePerSet: '24.5', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'hidden', version, availableSets: 999, productCode: 'spoofed' } } as never, f.response);
-  assert.deepEqual(f.calls, [[{ productVariantId: id, name: 'שוקולד', pricePerSet: '24.50', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'hidden', version }, id]]);
+  await f.controller.updateVariant({ params: { productVariantId: id }, body: { name: ' שוקולד ', pricePerUnit: '24.5', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'hidden', version, availableSets: 999, productCode: 'spoofed' } } as never, f.response);
+  assert.deepEqual(f.calls, [[{ productVariantId: id, name: 'שוקולד', pricePerUnit: '24.50', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'hidden', version }, id]]);
+});
+
+test('a product with variant pricing can keep its null product price during a regular edit', async () => {
+  const f = fixture();
+  await f.controller.updateProduct({ params: { productId: id }, body: {
+    categoryId: id, name: 'מארז טעמים', description: 'תיאור חדש', setSize: 4,
+    pricePerUnit: null, availableItems: 0, displayOrder: 10, status: 'active', version,
+  } } as never, f.response);
+  const [input] = f.calls[0] as [{ pricePerUnit: string | null; name: string }];
+  assert.equal(input.pricePerUnit, null); assert.equal(input.name, 'מארז טעמים');
 });
 function databaseFixture(currentVersion: string) {
   const statements: Array<{ sql: string; values?: unknown[] }> = [];
   let released = false;
-  const client = { query: async (sql: string, values?: unknown[]) => { statements.push({ sql, values }); return { rows: sql.includes('for update') ? [{ version: currentVersion, price_per_set: '10.00' }] : [] }; }, release: () => { released = true; } } as unknown as SqlClient;
+  const client = { query: async (sql: string, values?: unknown[]) => { statements.push({ sql, values }); return { rows: sql.includes('for update') ? [{ version: currentVersion, price_per_item: '10.00' }] : [] }; }, release: () => { released = true; } } as unknown as SqlClient;
   return { repository: createCatalogManagementRepository(async () => client), statements, released: () => released };
 }
-const variantInput = { productVariantId: id, name: 'New', pricePerSet: '25.00', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'active' as const, version };
+const variantInput = { productVariantId: id, name: 'New', pricePerUnit: '25.00', lowStockThresholdSets: 3, defaultProductionQuantitySets: 10, status: 'active' as const, version };
 test('stale catalog edit rolls back without updating or auditing', async () => {
   const f = databaseFixture('changed');
   await assert.rejects(() => f.repository.updateVariant(variantInput, id), (e: unknown) => (e as { statusCode: number }).statusCode === 409);
@@ -56,6 +95,6 @@ test('price update preserves inventory and commits its before value in the same 
   const update = f.statements.find((s) => s.sql.startsWith('update'))!;
   assert.ok(update); assert.equal(update.sql.includes('available_sets'), false);
   const audit = f.statements.find((s) => s.sql.includes('admin_audit_log'))!;
-  assert.equal((audit.values?.[4] as { price_per_set: string }).price_per_set, '10.00');
+  assert.equal((audit.values?.[4] as { price_per_item: string }).price_per_item, '10.00');
   assert.equal(f.statements.at(-1)?.sql, 'commit'); assert.equal(f.released(), true);
 });

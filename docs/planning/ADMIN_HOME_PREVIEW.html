@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>זיס · מסך הבית לאישור</title>
+  <link rel="stylesheet" href="admin-home-preview.css">
+  <link rel="stylesheet" href="admin-home-tasks-preview.css">
+  <script src="admin-home-preview.js" defer></script>
+  <script src="admin-home-tasks-preview.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">דילוג לתוכן</a>
+<div class="review-strip"><span><b>מסך 01</b> · בית הניהול · נתוני המחשה</span><a href="#explanation">הסבר קצר ↓</a></div>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">ZIS<span>ניהול החנות</span></div>
+    <nav aria-label="אזורי מסך הבית">
+      <a class="active" href="#main"><span aria-hidden="true">⌂</span> מסלול היום</a>
+      <a href="#stages"><span aria-hidden="true">▤</span> הזמנות היום</a>
+      <a href="#tasks"><span aria-hidden="true">☑</span> דורש טיפול</a>
+      <a href="#production"><span aria-hidden="true">◴</span> כמויות לייצור</a>
+      <a href="#cities"><span aria-hidden="true">⌖</span> הזמנות לפי עיר</a>
+    </nav>
+    <div class="sidebar-bottom">הכל מתחיל<br><b>ביום מסודר.</b><small>תצוגת בית לאישור</small></div>
+  </aside>
+  <main id="main">
+    <header class="page-heading"><div><div id="today-label" class="eyebrow"></div><h1>בוקר טוב, מתחילים לזוז</h1><p>ההזמנות, ההכנות והמשימות של היום.</p></div><button id="reset" class="quiet">↻ איפוס ההדגמה</button></header>
+    <section class="metrics" aria-label="סיכומי היום" id="metrics"></section>
+    <section id="attention" class="attention" aria-label="משימות הדורשות טיפול"></section>
+    <section class="panel" id="stages">
+      <div class="section-heading"><div><h2>הזמנות לפי שלב</h2><p>היום · לחצי על שלב כדי לראות את ההזמנות</p></div><span id="stage-date" class="day-pill"></span></div>
+      <div id="status-chart" class="status-chart" aria-label="חלוקת ההזמנות הפעילות לפי שלב"></div>
+      <div id="status-legend" class="status-legend" aria-label="בחירת שלב"></div>
+      <div id="stage-details" class="stage-details" aria-live="polite"></div>
+    </section>
+    <section class="panel" id="production">
+      <div class="section-heading"><div><h2>מה צריך להכין</h2><p>לפי קטגוריה · סטים שנותרו להכנה</p></div><strong id="production-total" class="total"></strong></div>
+      <div class="filters"><div class="switch" role="group" aria-label="טווח ייצור"><button class="is-active" data-range="production" data-mode="day" aria-pressed="true">יומי</button><button data-range="production" data-mode="week" aria-pressed="false">שבועי</button></div><label>תאריך <input id="production-date" type="date" required></label><button class="quiet" data-today="production">היום</button><span id="production-period" class="muted"></span></div>
+      <div id="production-groups"></div><div id="production-details" class="breakdown" aria-live="polite" hidden></div>
+    </section>
+    <div class="bottom-grid">
+      <section class="panel" id="cities"><div class="section-heading"><div><h2>הזמנות לפי עיר</h2><p>לפי תאריך האספקה</p></div><span id="city-total" class="total"></span></div>
+        <div class="filters"><div class="switch" role="group" aria-label="טווח ערים"><button class="is-active" data-range="cities" data-mode="day" aria-pressed="true">יומי</button><button data-range="cities" data-mode="week" aria-pressed="false">שבועי</button></div><label>תאריך <input id="cities-date" type="date" required></label><button class="quiet" data-today="cities">היום</button></div>
+        <div id="cities-period" class="muted"></div><div id="city-chart" class="city-chart"></div><div id="city-details" class="breakdown" aria-live="polite" hidden></div>
+      </section>
+      <section class="panel reserved"><div class="reserved-icon" aria-hidden="true">◇</div><h2>חוסרים וחריגים</h2><p>נגדיר יחד בהמשך.</p><span>המקום הזה שמור לשלב הבא</span></section>
+    </div>
+    <section class="panel tasks-panel" id="tasks"><div class="section-heading"><div><h2>דורש טיפול · משימות</h2><p>לרשום, לעדכן ולראות את כל ההערות</p></div><strong id="task-total" class="total"></strong></div>
+      <form id="task-create" class="task-create"><label>מה צריך לעשות? <input id="task-title" maxlength="100" placeholder="למשל: לבדוק הקדשה להזמנה" required></label><label>פרטים נוספים <textarea id="task-description" rows="2" placeholder="כל מידע שחשוב לזכור"></textarea></label><label>מצב חדש <select id="task-initial-status"><option value="open">פתוח</option><option value="in_progress">בטיפול</option><option value="closed">סגור</option></select></label><button class="task-add" type="submit">הוספת משימה</button></form>
+      <div id="task-columns" class="task-columns"></div>
+    </section>
+    <section id="explanation" class="explanation"><h2>על המסך, בקצרה</h2><p>לחיצה על “פרטים” מציגה תקציר מתאים לשלב ואת כל פרטי ההזמנה: לקוחה, משלוח, מוצרים, הקדשה, הערות, סכומים והיסטוריה. אין פרטי אשראי. “פרטים נוספים” סגור ומשמש רק לתיקון סטטוס שנבחר בטעות, עם אישור נוסף.</p><p>בפירוט לפי עיר מופיעה כתובת לכל הזמנה. טווח הייצור השבועי מתחיל ביום שנבחר ומסתיים שבעה ימים אחריו.</p><p>בתחתית אפשר להוסיף משימה, להעביר אותה בין פתוח, בטיפול וסגור ולקרוא את כל ההערות.</p><small>נתונים, כתובות וטלפונים להמחשה בלבד. החיבור למערכת ייעשה לאחר אישור המסכים ותכנון השרת.</small></section>
+  </main>
+</div>
+<dialog id="order-dialog" aria-labelledby="dialog-title"><div class="dialog-top"><span class="eyebrow">פרטי הזמנה · הדגמה</span><button id="close-dialog" class="quiet" aria-label="סגירת פרטי הזמנה">✕ סגירה</button></div><div id="dialog-content"></div></dialog>
+<dialog id="task-dialog" aria-labelledby="task-dialog-title"><div class="dialog-top"><span class="eyebrow">משימה · כל ההערות</span><button id="close-task-dialog" class="quiet" aria-label="סגירת פרטי משימה">✕ סגירה</button></div><div id="task-dialog-content"></div></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

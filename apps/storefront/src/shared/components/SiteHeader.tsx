@@ -9,8 +9,9 @@ export const SiteHeader = observer(function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigation = <>
     <Button component={NavLink} to="/" end variant="subtle">דף הבית</Button>
-    <Button component={NavLink} to="/catalog" variant="subtle">קטלוג</Button>
+    <Button component={NavLink} to="/#catalog" variant="subtle">קטלוג</Button>
     <Button component={Link} to="/#gallery" variant="subtle">גלריה</Button>
+    <Button component={Link} to="/#faq" variant="subtle">שאלות ותשובות</Button>
     <Button component={Link} to="/cart" variant="subtle">העגלה שלי</Button>
   </>;
   return <header className="site-header content-width">

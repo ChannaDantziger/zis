@@ -15,7 +15,7 @@ export interface CatalogVariantRecord {
   productId: string;
   name: string;
   productCode: string;
-  pricePerSet: string;
+  pricePerUnit: string;
   availableSets: number;
   isDefault: boolean;
   attributes: Record<string, unknown> | null;
@@ -28,7 +28,7 @@ export interface CatalogProductRecord {
   name: string;
   description: string | null;
   setSize: number;
-  pricePerSet: string;
+  pricePerUnit: string;
   availableSets: number;
   displayOrder: number;
   images: CatalogImageRecord[];

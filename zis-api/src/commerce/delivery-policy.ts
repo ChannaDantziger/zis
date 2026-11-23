@@ -14,7 +14,6 @@ export function assertDeliveryDateAllowed(date: string, now: Date, policy: Deliv
   const localNow = getLocalParts(now, policy.timezone);
   const today = toUtcDate(localNow.year, localNow.month, localNow.day);
   const daysFromToday = Math.round((requestedDate.getTime() - today.getTime()) / DAY_MS);
-
   if (!policy.storeOpen) {
     throw new ApiError(422, 'BUSINESS_RULE_VIOLATION', 'Store is closed');
   }

@@ -21,6 +21,38 @@ function deferred() {
 }
 beforeEach(() => { catalogStore.reset(); });
 
+test('category navigation resets pagination, scopes every page and supplies the new product category', async () => {
+  const store = new CatalogStore(), calls = [];
+  globalThis.catalogRequest = async (path) => { calls.push(path); return { ...page(1), categories: [{ categoryId: 'chosen', name: 'Chosen' }] }; };
+  store.page = 3; store.selectCategory('chosen');
+  await store.load(2);
+  assert.equal(store.page, 2);
+  assert.deepEqual(calls, ['/admin/products?page=1&categoryId=chosen', '/admin/products?page=2&categoryId=chosen']);
+  store.newProduct(); assert.equal(store.product.categoryId, 'chosen');
+  store.setEditorMode('advanced'); store.editProduct(product);
+  assert.equal(store.editorMode, 'basic');
+  store.reset(); assert.equal(store.selectedCategoryId, '');
+});
+
+test('a category response arriving late cannot replace the newly selected category', async () => {
+  const store = new CatalogStore(), first = deferred(), second = deferred();
+  globalThis.catalogRequest = (path) => path.includes('first') ? first.promise : second.promise;
+  store.selectedCategoryId = 'first'; const old = store.load();
+  store.selectedCategoryId = 'second'; const current = store.load();
+  second.resolve({ ...page(1), data: [{ ...product, categoryId: 'second' }] }); await current;
+  first.resolve({ ...page(1), data: [{ ...product, categoryId: 'first' }] }); await old;
+  assert.equal(store.catalog.data[0].categoryId, 'second');
+  assert.equal(store.selectedCategoryId, 'second');
+});
+
+test('product changes are tracked without treating refreshed publication status as an unsaved edit', () => {
+  const store = new CatalogStore(); store.editProduct(product);
+  assert.equal(store.productHasChanges, false);
+  store.setProduct('name', 'Changed'); assert.equal(store.productHasChanges, true);
+  store.acceptProduct({ ...product, name: 'Changed', status: 'active' });
+  assert.equal(store.productHasChanges, false);
+});
+
 test('the latest catalog page wins even when earlier requests resolve later', async () => {
   const store = new CatalogStore(), first = deferred(), second = deferred();
   globalThis.catalogRequest = (path) => path.endsWith('=1') ? first.promise : second.promise;
@@ -64,21 +96,6 @@ test('successful product creation followed by a refresh failure retries only rea
   await store.saveProduct();
   assert.equal(calls.filter((method) => method === 'POST').length, 1);
   assert.equal(store.product.productId, 'product'); assert.equal(store.productNeedsRefresh, false);
-});
-
-test('successful variant creation followed by a refresh failure retries only reads', async () => {
-  const store = new CatalogStore(); store.editProduct(product); store.editVariant();
-  const calls = []; let failed = false;
-  globalThis.catalogRequest = async (path, init) => {
-    calls.push(init?.method ?? 'GET');
-    if (init?.method === 'POST') return { productVariantId: 'variant' };
-    if (!failed) { failed = true; throw new Error('network'); }
-    return path.includes('?') ? page(1) : product;
-  };
-  await store.saveVariant(); assert.equal(store.variantNeedsRefresh, true);
-  await store.saveVariant();
-  assert.equal(calls.filter((method) => method === 'POST').length, 1);
-  assert.equal(store.variant, null); assert.equal(store.variantNeedsRefresh, false);
 });
 
 test('uploaded media is reused after failed metadata creation', async () => {

@@ -1,0 +1,12 @@
+{
+  "name": "zis-payment-review",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --import ../../zis-api/node_modules/tsx/dist/loader.mjs --test --test-concurrency=1 current-service.test.mjs candidate-service.test.mjs acceptance.test.mjs",
+    "test:acceptance": "node --import ../../zis-api/node_modules/tsx/dist/loader.mjs --test acceptance.test.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.16"
+  }
+}

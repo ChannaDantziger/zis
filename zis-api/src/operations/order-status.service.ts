@@ -12,6 +12,8 @@ function validateRequest(request: BulkStatusRequest): void {
   const ids = new Set<string>();
   for (const item of request.items) {
     if (!item.orderId || !item.version || ids.has(item.orderId)) throw new ApiError(400, 'VALIDATION_ERROR', 'items must contain unique orderId and version values');
+    if (item.packageCount !== undefined && (!Number.isInteger(item.packageCount) || item.packageCount < 1 || item.packageCount > 9999 || !['packed', 'in_transit'].includes(request.targetStatus)))
+      throw new ApiError(400, 'VALIDATION_ERROR', 'packageCount must be a positive integer for packing or dispatch');
     ids.add(item.orderId);
   }
 }

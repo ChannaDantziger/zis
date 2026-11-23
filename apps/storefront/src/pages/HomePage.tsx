@@ -1,6 +1,7 @@
 import { Button, Group, Image, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { Link } from 'react-router-dom';
+import { FaqSection } from '../features/faq/FaqSection';
 import { CatalogSection } from '../features/catalog/CatalogSection';
 import { EventGallery } from '../features/event-gallery/EventGallery';
 import { useEventGalleryQuery } from '../features/event-gallery/query';
@@ -12,9 +13,9 @@ export function HomePage() {
     <section className="hero content-width" aria-labelledby="hero-title">
       <Stack className="hero-copy" gap="xl">
         <Text className="eyebrow">זיס</Text>
-        <Title id="hero-title" order={1}>משהו מתוק.<br />בדיוק בשבילך.</Title>
-        <Text size="lg" className="hero-description">מגלים את המוצרים, בוחרים את הכמויות המתאימות ומרכיבים עגלה בדרך שלכם.</Text>
-        <Group><Button component={Link} to="/catalog" rightSection={<IconArrowLeft size={18} />}>לקטלוג המלא</Button>
+        <Title id="hero-title" order={1}>משהו מתוק.<br />לאירוע שלך</Title>
+        {/* <Text size="lg" className="hero-description">מגלים את המוצרים, בוחרים את הכמויות המתאימות ומרכיבים עגלה בדרך שלכם.</Text> */}
+        <Group><Button component={Link} to="/#catalog" rightSection={<IconArrowLeft size={18} />}>לקטלוג המלא</Button>
           <Button component="a" href="#gallery" variant="outline">לגלריה</Button></Group>
         <Text size="sm" c="dimmed">בחירת אפשרות וכמות יחידות קנייה בכל מוצר</Text>
       </Stack>
@@ -23,6 +24,6 @@ export function HomePage() {
           <Image className="hero-image" src={image.url} alt={image.altText} fit="cover" fallbackSrc="/zis-logo-dark.png" />
         </a> : <div className="hero-brand" aria-hidden="true"><Image src="/zis-logo-dark.png" alt="" w="58%" /></div>}
     </section>
-    <div className="content-width"><CatalogSection /><EventGallery /></div>
+    <div className="content-width"><CatalogSection /><EventGallery /><FaqSection /></div>
   </>;
 }

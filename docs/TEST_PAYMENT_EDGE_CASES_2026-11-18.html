@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ZIS · מקרי קצה של הזמנת ניסוי ותשלום מדומה</title>
+  <style>
+    :root{font-family:Arial,"Noto Sans Hebrew",sans-serif;color:#172b35;background:#f5f7f6}
+    *{box-sizing:border-box}body{margin:0;line-height:1.55}a{color:#126177}a:hover{text-decoration:none}
+    header{background:#173c49;color:white;padding:30px max(22px,calc((100vw - 1160px)/2));border-bottom:6px solid #dca746}
+    header a{color:#d9f2f7}h1{font-size:clamp(1.7rem,4vw,2.6rem);line-height:1.25;margin:8px 0}h2{margin:0 0 16px;font-size:1.45rem}h3{margin:0 0 7px;font-size:1.1rem}
+    main{max-width:1160px;margin:auto;padding:24px 18px 60px}section{background:white;border:1px solid #d7e0df;border-radius:16px;padding:22px;margin:18px 0;box-shadow:0 4px 20px #173c4909}
+    .intro{max-width:900px;color:#deeaec}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
+    .tile{border:1px solid #dce6e4;border-radius:12px;padding:14px;background:#fbfdfc}.tile strong{display:block;color:#12596d;font-size:1.15rem}
+    .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.step{background:#e8f3f1;border:1px solid #cbdedb;border-radius:10px;padding:9px 12px}.arrow{color:#67838a}
+    .note{background:#fff8e8;border-right:4px solid #dca746;padding:10px 14px;border-radius:7px}.bad{color:#9a3b29}.good{color:#21644d}.muted{color:#5c7076}
+    .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:920px}th,td{padding:12px 11px;border-bottom:1px solid #e3eae8;vertical-align:top;text-align:right}th{background:#eaf2f0;position:sticky;top:0}tbody tr:nth-child(even){background:#fbfdfc}tbody tr:hover{background:#f3f9f7}
+    .tag{display:inline-block;border-radius:999px;background:#e6f1f1;color:#205768;padding:2px 9px;font-size:.84rem;white-space:nowrap}.tag.high{background:#fce9e2;color:#9a3b29}.tag.open{background:#fff1cd;color:#795416}.tag.passed{background:#e3f3e7;color:#246742}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 18px}.toolbar button{border:1px solid #b5d0ce;border-radius:999px;background:white;color:#205768;padding:7px 14px;cursor:pointer}.toolbar button[aria-pressed=true]{background:#205768;color:white}
+    code{direction:ltr;unicode-bidi:embed;font-family:Consolas,monospace;background:#edf2f3;padding:1px 4px;border-radius:4px}pre{direction:ltr;text-align:left;overflow:auto;background:#102e3a;color:#eef7f8;padding:15px;border-radius:10px;line-height:1.5}pre code{background:none;color:inherit;padding:0}
+    .sql-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}.sql-card{border:1px solid #dce6e4;border-radius:12px;padding:14px}.sql-card p{margin:5px 0}.small{font-size:.9rem;color:#536970}
+    @media print{body{background:white}header{background:white;color:black;border-bottom:2px solid #555}header a{color:#126177}section{box-shadow:none;break-inside:avoid}.toolbar{display:none}table{min-width:0;font-size:9pt}th{position:static}}
+  </style>
+</head>
+<body>
+<header><div class="small" style="color:#c7e4e8">ZIS · דוח בדיקה מקומי · 18.11.2026</div><h1>מקרי קצה בהזמנת ניסוי ובתשלום מדומה</h1><p class="intro">18 מקרים במסלול כניסת מנהלת → יצירת הזמנת ניסוי → אישור ללא חיוב → הופעה בדשבורד → התחלת הכנה. המיפוי ממוקד במסלול הזה; הוא אינו מכסה את כל החנות.</p><a href="TEST_PAYMENT_EDGE_CASES_2026-11-18.md">למסמך המקור והראיות</a></header>
+<main>
+<section aria-labelledby="overview"><h2 id="overview">סוגי פעילות, מסכים ומשתמשים</h2><div class="grid">
+  <div class="tile"><strong>לקוחה / מנהלת בחנות</strong>מסכים: קטלוג, עגלה, Checkout, כניסת מנהלת, אישור הזמנה. פעילות: בחירה, Quote, יצירה, רענון ואישור ניסוי.</div>
+  <div class="tile"><strong>שרת API</strong>נתיבים: <code>POST /admin/test-orders</code>, <code>POST /admin/test-orders/:id/approve-payment</code>, <code>GET /orders/confirmation</code>. פעילות: הרשאה, בדיקות עסקיות וטרנזקציה.</div>
+  <div class="tile"><strong>מנהלת בניהול</strong>מסכים: דשבורד, פרטי הזמנה והכנה. פעילות: איתור הזמנת <code>ordered/paid</code> בתאריך האספקה והתחלת הכנה.</div>
+  <div class="tile"><strong>מצב בדיקה · 18.11.2026</strong><span class="good">19/19</span> בדיקות API, <span class="good">24/24</span> בדיקות תשלום ב־PGlite, <span class="good">30/30</span> בדיקות חנות ו־<span class="good">26/26</span> בדיקות ניהול עברו. 99 בדיקות בסך הכול; לא כל 18 המקרים אומתו מקצה לקצה.</div>
+</div></section>
+
+<section aria-labelledby="process"><h2 id="process">התהליך הרגיל</h2><div class="flow"><span class="step">כניסת מנהלת</span><span class="arrow">←</span><span class="step">Quote ויצירת הזמנת ניסוי <code>ordered/pending</code></span><span class="arrow">←</span><span class="step">אישור פרטי וגרסה</span><span class="arrow">←</span><span class="step">אישור מדומה: <code>paid</code>, סכום חיוב 0</span><span class="arrow">←</span><span class="step">דשבורד בתאריך האספקה: „התקבלה”</span><span class="arrow">←</span><span class="step">התחלת הכנה</span></div><p class="note">אישור התשלום אינו משנה לבדו את שלב ההזמנה ל„בהכנה”. הוא משאיר <code>status=ordered</code> ומשנה את <code>payment_status</code> ל־<code>paid</code>. אין כאן סליקה אמיתית.</p></section>
+
+<section aria-labelledby="cases"><h2 id="cases">כל 18 מקרי הקצה שמופו</h2><p class="small">העמודה „מצב” מתייחסת לראיות המקומיות בלבד. תרחיש שעבר בדיקת יחידה עדיין דורש בדיקת מסך ומסד מחוברים במקומות שצוינו.</p><div class="toolbar" role="group" aria-label="סינון לפי פעילות"><button type="button" data-filter="all" aria-pressed="true">הכול · 18</button><button type="button" data-filter="creation" aria-pressed="false">יצירה</button><button type="button" data-filter="recovery" aria-pressed="false">התאוששות</button><button type="button" data-filter="payment" aria-pressed="false">תשלום</button><button type="button" data-filter="operations" aria-pressed="false">ניהול</button></div><div class="table-wrap"><table><thead><tr><th>#</th><th>סוג פעילות</th><th>מסך / משתמש</th><th>מקרה קצה</th><th>תוצאה צפויה</th><th>מצב ופעולה הבאה</th></tr></thead><tbody>
+<tr data-kind="creation"><td>1</td><td>יצירה</td><td>Checkout · מנהלת</td><td>כניסה תקינה ויצירת ניסוי</td><td>הזמנה אחת עם <code>is_test</code> ושם/רחוב מסומנים „ניסוי”.</td><td><span class="tag passed">בדיקת API עברה</span> נדרש דפדפן ו־DB מבודד.</td></tr>
+<tr data-kind="creation"><td>2</td><td>הרשאה</td><td>כניסת מנהלת / API · אורח או נהג</td><td>תפקיד חסר, נהג או חשבון לא פעיל</td><td>401/403, ללא כתיבה.</td><td><span class="tag open">HTTP לא אומת בסבב</span> בדיקת socket מתאימה.</td></tr>
+<tr data-kind="creation"><td>3</td><td>אימות קלט</td><td>Checkout / API · לקוחה</td><td>גוף בקשה קובע <code>isTest</code>, סכום או סטטוס</td><td>דחייה; השרת קובע ערכים מורשים.</td><td><span class="tag passed">בדיקת API עברה</span></td></tr>
+<tr data-kind="creation"><td>4</td><td>כפילות</td><td>Checkout / DB · לקוחה</td><td>אותו מפתח Idempotency ואותה בקשה</td><td>אותה הזמנה, ללא יצירה שנייה.</td><td><span class="tag passed">בדיקת שירות קיימת</span> להשלים HTTP עם אובדן תשובה.</td></tr>
+<tr data-kind="creation"><td>5</td><td>כפילות</td><td>API / DB · לקוחה</td><td>אותו מפתח עם גוף שונה</td><td>409, ללא הזמנה נוספת.</td><td><span class="tag passed">בדיקת שירות קיימת</span> להשלים DB משולב.</td></tr>
+<tr data-kind="recovery"><td>6</td><td>התאוששות</td><td>Checkout · לקוחה</td><td>תשובת יצירה אבדה</td><td>ניסיון חוזר עם אותו גוף ומפתח.</td><td><span class="tag passed">בדיקת חנות עברה</span> רענון דף לפני תשובה דורש החלטה.</td></tr>
+<tr data-kind="recovery"><td>7</td><td>התאוששות</td><td>אישור הזמנה · לקוחה</td><td>GET אישור נכשל אחרי POST מוצלח</td><td>אין POST נוסף; token נשמר ונעשה GET חוזר.</td><td><span class="tag passed">בדיקת חנות עברה</span> להשלים בדיקת מסך.</td></tr>
+<tr data-kind="recovery"><td>8</td><td>רענון דף</td><td>אישור הזמנה · מנהלת</td><td>רענון לפני אישור מדומה</td><td>שחזור ההזמנה, כניסה חוזרת ואישור בלי יצירה מחדש.</td><td><span class="tag open">כיסוי חלקי</span> בדיקת הניסוי עוברת; להוסיף Store חדש, שחזור וכניסה חוזרת.</td></tr>
+<tr data-kind="recovery"><td>9</td><td>הרשאה</td><td>Checkout · מנהלת</td><td>הרשאה פגה לפני יצירה/אישור</td><td>חסימה ובקשת כניסה חוזרת.</td><td><span class="tag open">קיים בקוד</span> לבדוק שעון ופקיעת token.</td></tr>
+<tr data-kind="recovery"><td>10</td><td>פרטיות</td><td>אישור הזמנה / API · לקוחה</td><td>אסימון אישור פג או בוטל</td><td>404 ללא חשיפת פרטי הזמנה.</td><td><span class="tag passed">בדיקת שירות עברה</span> נדרשת החלטת התאוששות.</td></tr>
+<tr data-kind="payment"><td>11</td><td>הרשאה</td><td>API תשלום · מנהלת</td><td>ניסיון לאשר הזמנה רגילה במסלול ניסוי</td><td>403, ללא חיוב או שינוי מלאי.</td><td><span class="tag passed">בדיקה ממוקדת עברה</span></td></tr>
+<tr data-kind="payment"><td>12</td><td>תחרות</td><td>עריכת pending / תשלום · מנהלת</td><td>גרסה או פריטים השתנו במקביל</td><td>עצירה, טעינת הגרסה והפריטים העדכניים.</td><td><span class="tag open">בדיקות חלקיות</span> לבדוק שתי בקשות ב־DB מבודד.</td></tr>
+<tr data-kind="payment"><td>13</td><td>כללים עסקיים</td><td>API תשלום · מנהלת</td><td>מחיר, תאריך או משלוח השתנו</td><td>אין מעבר ל־paid אם Quote כבר אינו תקף.</td><td><span class="tag passed">בדיקות מבודדות קודמות</span> לבדוק staging.</td></tr>
+<tr data-kind="payment"><td>14</td><td>מלאי</td><td>API / DB · מנהלת</td><td>מלאי אזל או גודל סט השתנה</td><td>Rollback מלא; אין תשלום או הפחתה חלקית.</td><td><span class="tag passed">יחידה ו־PGlite עברו</span> נדרשת בדיקת תחרות.</td></tr>
+<tr data-kind="payment"><td>15</td><td>ניסיון חוזר</td><td>Checkout / API · מנהלת</td><td>אישור הצליח אך תשובתו אבדה</td><td>רענון מגלה paid; אין הפחתת מלאי שנייה.</td><td><span class="tag passed">PGlite וחנות עברו</span> דרושה בדיקת מסך עם רענון דף.</td></tr>
+<tr data-kind="payment"><td>16</td><td>ניסיון חוזר</td><td>אישור הזמנה · מנהלת</td><td>הזמנת ניסוי כבר שולמה</td><td>אין כפתור אישור נוסף; paid מוצג.</td><td><span class="tag open">קיים בקוד</span> בדיקת דפדפן אחרי רענון.</td></tr>
+<tr data-kind="operations"><td>17</td><td>תאריך</td><td>דשבורד · מנהלת</td><td>הזמנה לתאריך אספקה אחר</td><td>מופיעה רק בטווח התאריכים המתאים.</td><td><span class="tag open">SQL מאומת בקוד</span> לבדוק בחירת תאריך במסך.</td></tr>
+<tr data-kind="operations"><td>18</td><td>תפעול</td><td>דשבורד · מנהלת</td><td>אישור מדומה הושלם</td><td><code>ordered/paid</code> = „התקבלה”; אפשר להתחיל הכנה.</td><td><span class="tag passed">בדיקות יחידה עברו</span> דרוש מסלול staging מלא.</td></tr>
+</tbody></table></div></section>
+
+<section aria-labelledby="findings"><h2 id="findings">שני מקרי קצה נוספים שמחייבים טיפול</h2><div class="grid"><div class="tile"><strong>אישור שלא נטען לאחר רענון</strong>כניסה חוזרת כמנהלת מוצגת רק לאחר אישור שרת שמסמן <code>isTest</code> ו־pending. כשל GET משאיר עצירה בטוחה; דרושה בדיקת מסך והודעת התאוששות ברורה. <a href="../apps/storefront/src/pages/CheckoutPage.tsx">קובץ המסך</a>.</div><div class="tile"><strong>רענון אישור מוחק תוספות סל</strong><code>refreshConfirmation()</code> מנקה את הסל בכל הצלחת GET. כאשר נוספו מוצרים לעריכת הזמנה ממתינה, רענון ידני עלול למחוק אותם. <a href="../apps/storefront/src/features/checkout/checkout.store.ts">קובץ ה־store</a>.</div></div></section>
+
+<section aria-labelledby="files"><h2 id="files">איפה נמצאת הלוגיקה העסקית?</h2><div class="sql-list">
+  <div class="sql-card"><h3>יצירת הזמנה</h3><p><a href="../zis-api/src/commerce/order.service.ts"><code>zis-api/src/commerce/order.service.ts</code></a></p><p>אימות תצורה, Idempotency, חישוב מחיר, יצירה, סימון ניסוי ואישור פרטי.</p></div>
+  <div class="sql-card"><h3>אישור תשלום מדומה</h3><p><a href="../zis-api/src/commerce/test-payment.service.ts"><code>zis-api/src/commerce/test-payment.service.ts</code></a></p><p>הקובץ המרכזי לשאלה שלך: הרשאת מנהלת, בדיקות מצב/גרסה, Quote חוזר, נעילת מלאי, תשלום 0, Audit ומעבר ל־paid.</p></div>
+  <div class="sql-card"><h3>הרשאות ונתיבים</h3><p><a href="../zis-api/src/controllers/admin-test-orders.controller.ts"><code>admin-test-orders.controller.ts</code></a> · <a href="../zis-api/src/routes/admin-test-orders.routes.ts"><code>admin-test-orders.routes.ts</code></a></p><p>בדיקת תפקיד operations_manager וקישור שתי פעולות הניסוי ל־API.</p></div>
+  <div class="sql-card"><h3>נתוני הזמנה</h3><p><a href="../zis-api/src/commerce/postgres-order.repository.ts"><code>postgres-order.repository.ts</code></a> · <a href="../zis-api/src/commerce/pending-order.repository.ts"><code>pending-order.repository.ts</code></a></p><p>שאילתות יצירה, אישור פרטי, מפתח בקשה ועריכת הזמנה ממתינה.</p></div>
+  <div class="sql-card"><h3>דשבורד</h3><p><a href="../zis-api/src/dashboard/postgres-home.repository.ts"><code>postgres-home.repository.ts</code></a> · <a href="../apps/admin-mobile/src/features/home/HomeStageChart.tsx"><code>HomeStageChart.tsx</code></a></p><p>שליפה לפי תאריך אספקה והצגת „התקבלה / שולמה · ממתינה להכנה”.</p></div>
+  <div class="sql-card"><h3>מסך הלקוחה</h3><p><a href="../apps/storefront/src/features/checkout/checkout.store.ts"><code>checkout.store.ts</code></a> · <a href="../apps/storefront/src/pages/CheckoutPage.tsx"><code>CheckoutPage.tsx</code></a></p><p>מצב הטופס, כניסה חוזרת, שמירת token פרטי, תשלום מדומה והתאוששות.</p></div>
+</div></section>
+
+<section aria-labelledby="sql"><h2 id="sql">משפטי SQL מרכזיים שהקוד מפעיל</h2><p class="note">המשפטים להלן הם דוגמאות מתוך קוד השרת, עם פרמטרים <code>$1</code>, <code>$2</code>. הם מוצגים להבנת המסלול, לא כהוראות להרצה ידנית. השרת מפעיל גם שאילתות נוספות לאימות מחיר, אזור ומלאי.</p><div class="sql-list">
+  <div class="sql-card"><h3>1 · בדיקת הרשאת מנהלת</h3><p class="small"><a href="../zis-api/src/commerce/test-payment.service.ts">test-payment.service.ts:16</a></p><pre><code>select exists(
+  select 1 from public.admin_users
+  where admin_user_id=$1
+    and status='active'
+    and role='operations_manager'
+) as allowed</code></pre></div>
+  <div class="sql-card"><h3>2 · נעילת ההזמנה</h3><p class="small"><a href="../zis-api/src/commerce/test-payment.service.ts">test-payment.service.ts:18</a></p><pre><code>select order_id, is_test, status,
+       payment_status, total::text,
+       shipping_zone_id
+from public.orders
+where order_id=$1
+for update</code></pre></div>
+  <div class="sql-card"><h3>3 · מניעת אישור כפול</h3><p class="small"><a href="../zis-api/src/commerce/test-payment.service.ts">test-payment.service.ts:22</a></p><pre><code>select order_id
+from public.test_payment_approvals
+where order_id=$1</code></pre></div>
+  <div class="sql-card"><h3>4 · רישום תשלום מדומה</h3><p class="small"><a href="../zis-api/src/commerce/test-payment.service.ts">test-payment.service.ts:33–35</a></p><pre><code>insert into public.test_payment_approvals
+  (order_id, admin_user_id, reason)
+values ($1, $2, $3);
+
+insert into public.payments
+  (order_id, provider, provider_transaction_id,
+   amount, status, is_simulated, provider_payload)
+values ($1::uuid, 'admin_test', $1::text,
+        0, 'paid', true,
+        '{"charged":false,"simulated":true}'::jsonb);</code></pre></div>
+  <div class="sql-card"><h3>5 · עדכון מצב תשלום</h3><p class="small"><a href="../zis-api/src/commerce/test-payment.service.ts">test-payment.service.ts:35–36</a></p><pre><code>update public.orders
+set payment_status='paid',
+    payment_confirmed_at=$2,
+    updated_at=clock_timestamp()
+where order_id=$1
+returning extract(epoch from updated_at)::text
+  as version;</code></pre><p class="small">לאחר מכן השירות רושם היסטוריית סטטוס ו־Audit באותה טרנזקציה.</p></div>
+  <div class="sql-card"><h3>6 · הפחתת מלאי</h3><p class="small"><a href="../zis-api/src/commerce/test-payment.service.ts">test-payment.service.ts:59–64</a></p><pre><code>update public.products
+set available_items=available_items-$2
+where product_id=$1
+  and available_items &gt;= $2
+returning available_items as after;</code></pre><p class="small">למוצר עם וריאציה היסטורית מופעלת שאילתה מקבילה על <code>product_variants</code>; אחר כך נרשמת תנועת מלאי.</p></div>
+  <div class="sql-card"><h3>7 · יצירה ו־Idempotency</h3><p class="small"><a href="../zis-api/src/commerce/postgres-order.repository.ts">postgres-order.repository.ts:51–52, 99–109</a></p><pre><code>insert into public.order_creation_requests
+  (idempotency_key, request_hash)
+values ($1,$2)
+on conflict(idempotency_key) do nothing;
+
+select request_hash, order_id
+from public.order_creation_requests
+where idempotency_key=$1 for update;</code></pre><p class="small">אותה טרנזקציה מוסיפה אחר כך הזמנה, פריטים, היסטוריה ו־hash לאישור.</p></div>
+  <div class="sql-card"><h3>8 · אישור פרטי ודשבורד</h3><p class="small"><a href="../zis-api/src/commerce/postgres-order.repository.ts">postgres-order.repository.ts:22–27</a> · <a href="../zis-api/src/dashboard/postgres-home.repository.ts">postgres-home.repository.ts:20–45</a></p><pre><code>-- אישור פרטי: token בתוקף ולא בוטל
+where t.token_hash=$1
+  and t.revoked_at is null
+  and t.expires_at&gt;$2
+
+-- דשבורד: לפי תאריך אספקה
+where o.delivery_date between $1 and $2</code></pre></div>
+</div></section>
+
+<section aria-labelledby="next"><h2 id="next">מה צריך לעשות בהמשך?</h2><ol><li>להוסיף בדיקת חנות עם רענון דף, שחזור מתוך <code>sessionStorage</code>, כניסה חוזרת ואישור.</li><li>לתקן ניקוי סל בזמן רענון האישור כדי לשמור תוספות להזמנה ממתינה.</li><li>להחליט על התאוששות לאחר תפוגת token או תוצאת יצירה לא ידועה אחרי רענון.</li><li>לבדוק מסלול מלא בדפדפן וב־DB מבודד: הזמנה מסומנת, תשלום 0, Audit, מלאי ודשבורד בתאריך האספקה.</li></ol><p class="small">תאריך אימות: 18.11.2026. אין במסמך הוכחה למצב Production.</p></section>
+</main>
+<script>
+  const buttons = document.querySelectorAll('[data-filter]');
+  const rows = document.querySelectorAll('tbody tr[data-kind]');
+  buttons.forEach(button => button.addEventListener('click', () => {
+    const filter = button.dataset.filter;
+    buttons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+    rows.forEach(row => { row.hidden = filter !== 'all' && row.dataset.kind !== filter; });
+  }));
+</script>
+</body>
+</html>

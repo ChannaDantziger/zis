@@ -13,6 +13,14 @@ interface Counter {
 
 export function createRateLimitMiddleware(options: RateLimitOptions): RequestHandler {
   const counters = new Map<string, Counter>();
+  // Expire inactive clients even when their IP never makes another request.
+  const cleanupInterval = setInterval(() => {
+    const cutoff = Date.now() - options.windowMilliseconds;
+    for (const [key, counter] of counters) {
+      if (counter.startedAt <= cutoff) counters.delete(key);
+    }
+  }, Math.max(1_000, Math.min(options.windowMilliseconds, 60_000)));
+  cleanupInterval.unref();
 
   return (request, _response, next) => {
     const now = Date.now();

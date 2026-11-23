@@ -31,6 +31,7 @@ function normalizeOrdersQuery(query: AdminOrdersQuery): AdminOrdersQuery {
   if (normalized.status && !isOrderStatus(normalized.status)) {
     throw new ApiError(400, 'VALIDATION_ERROR', 'status is invalid');
   }
+  if (normalized.paymentFilter && !['pending', 'not_pending'].includes(normalized.paymentFilter)) throw new ApiError(400, 'VALIDATION_ERROR', 'paymentFilter is invalid');
   if (!SORT_FIELDS.includes(normalized.sortBy)) {
     throw new ApiError(400, 'VALIDATION_ERROR', 'sortBy is invalid');
   }

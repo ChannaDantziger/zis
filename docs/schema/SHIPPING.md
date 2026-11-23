@@ -1,4 +1,4 @@
-> מפרט תכנון, לא אישור לסכמה חיה. [מפת ERD](../ERD_SCHEMA.md) · [אינדקס](../PLAN_INDEX.md) · [פערים](../OPEN_ISSUES.md).
+> מפרט ותיאור יעד לסכמה לאחר [מיגרציה 014](../../zis-db/migrations/014_single_shipping_method.sql); המיגרציה טרם הוחלה. [מפת ERD](../ERD_SCHEMA.md) · [אינדקס](../PLAN_INDEX.md) · [פערים](../OPEN_ISSUES.md).
 > יש לקרוא יחד עם [עדכוני הסכמה](POLICIES_AND_UPDATES.md) ו־[מודל המלאי](../INVENTORY_MODEL.md); שדות 003/004 אינם משוכפלים בכל טבלה.
 
 ## טבלאות משלוחים והגדרות חנות
@@ -23,23 +23,7 @@
 - אינדקס `idx_shipping_zones_lookup` על `(city, neighborhood, is_active)`.
 - רצוי `UNIQUE (city, neighborhood)` כאשר אין כפילויות עסקיות.
 
-### `shipping_methods`
-
-סוגי משלוח, ללא אפשרות איסוף עצמי.
-
-| שדה | סוג | חובה | הסבר |
-|---|---|---:|---|
-| `shipping_method_id` | `uuid` | כן | Primary Key |
-| `name` | `text` | כן | שם שיטת המשלוח |
-| `code` | `text` | כן | מזהה פנימי |
-| `is_active` | `boolean` | כן | זמינות השיטה |
-| `created_at` | `timestamptz` | כן | זמן יצירה |
-| `updated_at` | `timestamptz` | כן | זמן עדכון |
-
-אילוצים:
-
-- `UNIQUE (code)`.
-- אין להכניס רשומה מסוג `pickup`.
+לאחר 014 לא קיימת טבלת `shipping_methods`: בחנות יש שירות משלוח יחיד ואין לנהל או לבחור מזהה עבורו. מחיר מחושב לפי אזור וטווח כמויות.
 
 ### `shipping_rules`
 
@@ -49,7 +33,6 @@
 |---|---|---:|---|
 | `shipping_rule_id` | `uuid` | כן | Primary Key |
 | `shipping_zone_id` | `uuid` | כן | FK ל־`shipping_zones.shipping_zone_id` |
-| `shipping_method_id` | `uuid` | כן | FK ל־`shipping_methods.shipping_method_id` |
 | `base_price` | `numeric(12,2)` | כן | מחיר בסיס |
 | `size_from_sets` | `integer` | כן | תחילת טווח הגודל |
 | `size_to_sets` | `integer` | לא | סוף טווח; null ללא הגבלה |
@@ -62,11 +45,11 @@
 
 אילוצים ואינדקסים:
 
-- FK ל־`shipping_zones` ול־`shipping_methods`.
+- FK ל־`shipping_zones` בלבד לאחר 014.
 - `CHECK (base_price >= 0 AND size_surcharge >= 0 AND time_surcharge >= 0 AND urgency_surcharge >= 0)`.
 - `CHECK (size_from_sets >= 1)`.
 - `CHECK (size_to_sets IS NULL OR size_to_sets >= size_from_sets)`.
-- אינדקס `idx_shipping_rules_calculation` על `(shipping_zone_id, shipping_method_id, is_active, size_from_sets, size_to_sets)`.
+- אינדקס `idx_shipping_rules_calculation` על `(shipping_zone_id, is_active, size_from_sets, size_to_sets)` לאחר 014.
 
 ### `store_settings`
 
@@ -79,7 +62,7 @@
 | `lock_mode` | `text` | כן | `open`, `closed`, `scheduled` |
 | `lock_message` | `text` | לא | הודעה ללקוח |
 | `minimum_product_subtotal` | `numeric(12,2)` | כן | מינימום סכום מוצרים להזמנה, ללא דמי משלוח; שם קודם `minimum_order_total` |
-| `max_advance_days` | `integer` | לא | כמה ימים קדימה ניתן להזמין |
+| `max_advance_days` | `integer` | לא | עמודת תאימות ישנה; אינה מקור טווח ההזמנה בקוד המקומי. המקור הוא ההגדרה בניהול הנשמרת ב־`system_defaults` |
 | `updated_by` | `uuid` | לא | FK ל־`admin_users.admin_user_id` |
 | `updated_at` | `timestamptz` | כן | זמן עדכון |
 
@@ -109,7 +92,7 @@
 - `system_defaults.dispatch_time` הוא שעת היציאה הכללית הניתנת לעריכה. `shipping_zones.dispatch_time time` הוא override אזורי אופציונלי; הוא אינו תנאי להפעלת עיר.
 - `shipping_rules` הוא מקור מחירי המשלוח. אזור ללא כלל פעיל תואם נדחה ב־Quote; אין הנחת משלוח חינם implicit.
 - `store_settings.store_open` ו־`lock_message` הם מקור אמת לסגירה כללית. `GET /store-status` מחזיר אותם, הלקוח משבית "הוסף לסל", והשרת דוחה quote/Order גם אם נשלחה קריאה ישירה.
-- זמינות תאריך מחושבת בשרת לפי `business_timezone`, `max_advance_days`, `same_day_cutoff_time`, עיר פעילה וסגירות `store_closures`. לוח חגים אינו מופעל בשלב זה.
+- החלטת בעלת האתר מ־08.11: זמינות תאריך מחושבת בשרת לפי `business_timezone`, `max_advance_days`, `same_day_cutoff_time` וסגירות `store_closures`, ללא תלות באזור. מלאי גם הוא כללי. העיר ואזור המשלוח משמשים כתובת ומחיר בלבד. לוח חגים אינו מופעל בשלב זה; יש לאמת שקוד ו־DB תואמים להחלטה.
 - אין חלונות אישיים למהדורה זו. תאריך היום מושבת אחרי ה־cutoff; התאריך שנבחר נשמר ב־`orders.delivery_date`. שם אולם אופציונלי נשמר בהזמנה, לא באזור המשלוח.
 
 ראו את [תוכנית התפעול](../planning/OPERATIONS_DELIVERY_PLAN.md) לחוזי API, ניסוח הלקוח ועצי בדיקה.

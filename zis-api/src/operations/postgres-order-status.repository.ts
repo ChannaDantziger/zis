@@ -2,7 +2,7 @@ import type { SqlClient, SqlClientFactory } from '../inventory/postgres-inventor
 import type { OrderStatus } from '../domain/order-status.js';
 import type { BulkStatusRequest, BulkStatusResultItem, OrderStatusRepository } from './order-status.types.js';
 
-interface CurrentOrder { [key: string]: unknown; order_number: string; status: OrderStatus; payment_status: string; version: string; }
+interface CurrentOrder { [key: string]: unknown; order_number: string; status: OrderStatus; payment_status: string; package_count: number | null; version: string; }
 
 export function createPostgresOrderStatusRepository(factory: SqlClientFactory): OrderStatusRepository {
   return { applyBulkStatus: (request) => applyBulkStatus(factory, request) };
@@ -13,7 +13,7 @@ async function applyBulkStatus(factory: SqlClientFactory, request: BulkStatusReq
   const results: BulkStatusResultItem[] = [];
   try {
     await client.query('begin');
-    for (const item of request.items) results.push(await applyOne(client, item.orderId, item.version, request.targetStatus, request.adminUserId, request.adminRole));
+    for (const item of request.items) results.push(await applyOne(client, item.orderId, item.version, request.targetStatus, request.adminUserId, request.adminRole, item.packageCount));
     await client.query('commit');
     return results;
   } catch (error) {
@@ -22,15 +22,18 @@ async function applyBulkStatus(factory: SqlClientFactory, request: BulkStatusReq
   } finally { client.release?.(); }
 }
 
-async function applyOne(client: SqlClient, orderId: string, version: string, targetStatus: OrderStatus, adminUserId: string, adminRole?: BulkStatusRequest['adminRole']): Promise<BulkStatusResultItem> {
-  const current = await client.query<CurrentOrder>(`select order_number, status, payment_status, extract(epoch from updated_at)::text as version from public.orders where order_id = $1 for update`, [orderId]);
+async function applyOne(client: SqlClient, orderId: string, version: string, targetStatus: OrderStatus, adminUserId: string, adminRole?: BulkStatusRequest['adminRole'], packageCount?: number): Promise<BulkStatusResultItem> {
+  const current = await client.query<CurrentOrder>(`select order_number, status, payment_status, package_count, extract(epoch from updated_at)::text as version from public.orders where order_id = $1 for update`, [orderId]);
   const order = current.rows[0];
   if (!order) return { orderId, ok: false, reason: 'ORDER_NOT_FOUND' };
   if (order.version !== version) return { orderId, ok: false, orderNumber: order.order_number, fromStatus: order.status, reason: 'ORDER_CHANGED' };
   const reason = transitionError(order.status, order.payment_status, targetStatus, adminRole);
   if (reason) return { orderId, ok: false, orderNumber: order.order_number, fromStatus: order.status, reason };
-  await client.query(`update public.orders set status = $1, updated_at = now() where order_id = $2`, [targetStatus, orderId]);
-  await client.query(`insert into public.order_status_history (order_id, from_status, to_status, changed_by) values ($1, $2, $3, $4)`, [orderId, order.status, targetStatus, adminUserId]);
+  if (targetStatus === 'in_transit' && !packageCount && !order.package_count)
+    return { orderId, ok: false, orderNumber: order.order_number, fromStatus: order.status, reason: 'PACKAGE_COUNT_REQUIRED' };
+  await client.query(`update public.orders set status = $1, package_count = coalesce($3, package_count), updated_at = now() where order_id = $2`, [targetStatus, orderId, packageCount ?? null]);
+  await client.query(`insert into public.order_status_history (order_id, from_status, to_status, changed_by, note) values ($1, $2, $3, $4, $5)`,
+    [orderId, order.status, targetStatus, adminUserId, packageCount ? `${packageCount} מארזים` : null]);
   return { orderId, ok: true, orderNumber: order.order_number, fromStatus: order.status, toStatus: targetStatus };
 }
 

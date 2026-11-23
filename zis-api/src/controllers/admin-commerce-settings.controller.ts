@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { ApiError } from '../http/api-error.js';
 import type { AdminUserResolver } from './admin-inventory.controller.js';
 import type { CommerceSettingsService } from '../operations/commerce-settings.types.js';
+import { MAX_DELIVERY_ADVANCE_DAYS } from '../operations/delivery-horizon.js';
 
 const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 const LOCK_MODES = ['open', 'closed', 'scheduled'] as const;
@@ -16,7 +17,7 @@ export function createAdminCommerceSettingsController(service: CommerceSettingsS
         lockMode: optionalEnum(body.lockMode, LOCK_MODES, 'lockMode'),
         lockMessage: optionalNullableText(body.lockMessage, 'lockMessage'),
         minimumProductSubtotal: optionalMoney(body.minimumProductSubtotal, 'minimumProductSubtotal'),
-        maxAdvanceDays: optionalNonNegativeInteger(body.maxAdvanceDays, 'maxAdvanceDays'),
+        maxAdvanceDays: optionalDeliveryHorizon(body.maxAdvanceDays),
         dispatchTime: optionalTime(body.dispatchTime, 'dispatchTime'),
         sameDayCutoffTime: body.sameDayCutoffTime === undefined ? undefined : time(body.sameDayCutoffTime, 'sameDayCutoffTime'),
         workingDays: optionalDays(body.workingDays),
@@ -28,15 +29,11 @@ export function createAdminCommerceSettingsController(service: CommerceSettingsS
     }),
     createZone: withManager(resolveAdminUserId, async (request, response, adminUserId) => {
       const body = asRecord(request.body);
-      response.status(201).json(await service.createShippingZone({ name: requiredText(body.name, 'name'), city: requiredText(body.city, 'city'), neighborhood: nullableText(body.neighborhood, 'neighborhood'), dispatchTime: nullableTime(body.dispatchTime, 'dispatchTime'), isActive: requiredBoolean(body.isActive, 'isActive') }, adminUserId));
+      response.status(201).json(await service.createShippingZone({ name: requiredText(body.name, 'name'), city: requiredText(body.city, 'city'), basePrice: money(body.basePrice, 'basePrice'), neighborhood: nullableText(body.neighborhood, 'neighborhood'), dispatchTime: nullableTime(body.dispatchTime, 'dispatchTime'), isActive: requiredBoolean(body.isActive, 'isActive') }, adminUserId));
     }),
     updateZone: withManager(resolveAdminUserId, async (request, response, adminUserId) => {
       const body = asRecord(request.body);
       response.status(200).json(await service.updateShippingZone({ shippingZoneId: uuid(request.params.shippingZoneId, 'shippingZoneId'), name: optionalText(body.name, 'name'), city: optionalText(body.city, 'city'), neighborhood: optionalNullableText(body.neighborhood, 'neighborhood'), dispatchTime: optionalTime(body.dispatchTime, 'dispatchTime'), isActive: optionalBoolean(body.isActive, 'isActive') }, adminUserId));
-    }),
-    updateMethod: withManager(resolveAdminUserId, async (request, response, adminUserId) => {
-      const body = asRecord(request.body);
-      response.status(200).json(await service.updateShippingMethod({ shippingMethodId: uuid(request.params.shippingMethodId, 'shippingMethodId'), name: optionalText(body.name, 'name'), isActive: optionalBoolean(body.isActive, 'isActive') }, adminUserId));
     }),
     createRule: withManager(resolveAdminUserId, async (request, response, adminUserId) => {
       const body = asRecord(request.body);
@@ -47,7 +44,7 @@ export function createAdminCommerceSettingsController(service: CommerceSettingsS
       const sizeFromSets = optionalPositiveInteger(body.sizeFromSets, 'sizeFromSets');
       const sizeToSets = body.sizeToSets === undefined || body.sizeToSets === null ? body.sizeToSets as null | undefined : nonNegativeInteger(body.sizeToSets, 'sizeToSets');
       if (sizeFromSets !== undefined && sizeToSets !== undefined && sizeToSets !== null && sizeToSets < sizeFromSets) throw invalid('sizeToSets must be greater than or equal to sizeFromSets');
-      response.status(200).json(await service.updateShippingRule({ shippingRuleId: uuid(request.params.shippingRuleId, 'shippingRuleId'), shippingZoneId: body.shippingZoneId === undefined ? undefined : uuid(body.shippingZoneId, 'shippingZoneId'), shippingMethodId: body.shippingMethodId === undefined ? undefined : uuid(body.shippingMethodId, 'shippingMethodId'), basePrice: optionalMoney(body.basePrice, 'basePrice'), sizeFromSets, sizeToSets, sizeSurcharge: optionalMoney(body.sizeSurcharge, 'sizeSurcharge'), timeSurcharge: optionalMoney(body.timeSurcharge, 'timeSurcharge'), urgencySurcharge: optionalMoney(body.urgencySurcharge, 'urgencySurcharge'), isActive: optionalBoolean(body.isActive, 'isActive') }, adminUserId));
+      response.status(200).json(await service.updateShippingRule({ shippingRuleId: uuid(request.params.shippingRuleId, 'shippingRuleId'), shippingZoneId: body.shippingZoneId === undefined ? undefined : uuid(body.shippingZoneId, 'shippingZoneId'), basePrice: optionalMoney(body.basePrice, 'basePrice'), sizeFromSets, sizeToSets, sizeSurcharge: optionalMoney(body.sizeSurcharge, 'sizeSurcharge'), timeSurcharge: optionalMoney(body.timeSurcharge, 'timeSurcharge'), urgencySurcharge: optionalMoney(body.urgencySurcharge, 'urgencySurcharge'), isActive: optionalBoolean(body.isActive, 'isActive') }, adminUserId));
     }),
     createClosure: withManager(resolveAdminUserId, async (request, response, adminUserId) => {
       const body = asRecord(request.body);
@@ -70,7 +67,7 @@ function readRule(body: Record<string, unknown>) {
   const sizeToSets = body.sizeToSets === undefined || body.sizeToSets === null ? null : nonNegativeInteger(body.sizeToSets, 'sizeToSets');
   const sizeFromSets = positiveInteger(body.sizeFromSets, 'sizeFromSets');
   if (sizeToSets !== null && sizeToSets < sizeFromSets) throw invalid('sizeToSets must be greater than or equal to sizeFromSets');
-  return { shippingZoneId: uuid(body.shippingZoneId, 'shippingZoneId'), shippingMethodId: uuid(body.shippingMethodId, 'shippingMethodId'), basePrice: money(body.basePrice, 'basePrice'), sizeFromSets, sizeToSets, sizeSurcharge: money(body.sizeSurcharge, 'sizeSurcharge'), timeSurcharge: money(body.timeSurcharge, 'timeSurcharge'), urgencySurcharge: money(body.urgencySurcharge, 'urgencySurcharge'), isActive: requiredBoolean(body.isActive, 'isActive') };
+  return { shippingZoneId: uuid(body.shippingZoneId, 'shippingZoneId'), basePrice: money(body.basePrice, 'basePrice'), sizeFromSets, sizeToSets, sizeSurcharge: money(body.sizeSurcharge || '0', 'sizeSurcharge'), timeSurcharge: money(body.timeSurcharge || '0', 'timeSurcharge'), urgencySurcharge: money(body.urgencySurcharge || '0', 'urgencySurcharge'), isActive: requiredBoolean(body.isActive, 'isActive') };
 }
 
 function withAdmin(resolve: AdminUserResolver, handler: (request: Request, response: Response, adminUserId: string) => Promise<Response | void>) {
@@ -87,7 +84,7 @@ function withManager(resolve: AdminUserResolver, handler: (request: Request, res
     const identity = await resolve(request);
     if (identity.status === 'unauthenticated') throw new ApiError(401, 'AUTHENTICATION_REQUIRED', 'Authentication required');
     if (identity.status === 'forbidden') throw new ApiError(403, 'ADMIN_ACCESS_REQUIRED', 'Active admin access required');
-    if (identity.role === 'delivery_driver') throw new ApiError(403, 'OPERATIONS_MANAGER_REQUIRED', 'Operations manager access required');
+    if (identity.role !== 'operations_manager') throw new ApiError(403, 'OPERATIONS_MANAGER_REQUIRED', 'Operations manager access required');
     await handler(request, response, identity.adminUserId);
   };
 }
@@ -105,6 +102,7 @@ function positiveInteger(value: unknown, field: string): number { const result =
 function optionalPositiveInteger(value: unknown, field: string): number | undefined { return value === undefined ? undefined : positiveInteger(value, field); }
 function nonNegativeInteger(value: unknown, field: string): number { const result = number(value, field); if (!Number.isInteger(result) || result < 0) throw invalid(`${field} must be a non-negative integer`); return result; }
 function optionalNonNegativeInteger(value: unknown, field: string): number | undefined { return value === undefined ? undefined : nonNegativeInteger(value, field); }
+function optionalDeliveryHorizon(value: unknown): number | undefined { const result = optionalNonNegativeInteger(value, 'maxAdvanceDays'); if (result !== undefined && result > MAX_DELIVERY_ADVANCE_DAYS) throw invalid('maxAdvanceDays exceeds the supported limit'); return result; }
 function money(value: unknown, field: string): string { if ((typeof value !== 'string' && typeof value !== 'number') || !/^\d+(\.\d{1,2})?$/.test(String(value))) throw invalid(`${field} must be a non-negative amount with up to two decimals`); return Number(value).toFixed(2); }
 function optionalMoney(value: unknown, field: string): string | undefined { return value === undefined ? undefined : money(value, field); }
 function time(value: unknown, field: string): string { if (typeof value !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) throw invalid(`${field} must use HH:mm format`); return value; }

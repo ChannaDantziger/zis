@@ -1,18 +1,18 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { getProduct } from '../entities/product/api';
-import type { CatalogProduct, CatalogVariant } from '../entities/product/types';
+import type { CatalogProduct } from '../entities/product/types';
 import { ApiError } from '../shared/api/http-client';
 import { CART_STORAGE_KEY, MAX_CART_LINES, MAX_QUANTITY_SETS, isQuantity, priceInAgorot, readCart, writeCart, type CartReference } from './cart.persistence';
 
 interface CartDetails {
   product: CatalogProduct;
-  variant: CatalogVariant | null;
   priceChanged: boolean;
   availabilityChanged: boolean;
 }
 
 type CartStorage = Pick<Storage, 'getItem' | 'setItem'>;
 type ProductLoader = (id: string) => Promise<CatalogProduct>;
+export const OUT_OF_STOCK_MESSAGE = 'מצטערים, המלאי אזל. תוכלו לבחור מוצר אחר, לא פחות טעים ומרשים, מאותה קטגוריה.';
 
 export class CartStore {
   items: CartReference[] = [];
@@ -44,9 +44,9 @@ export class CartStore {
     for (const item of this.items) {
       const key = cartKey(item);
       const details = this.details.get(key);
-      const amount = details ? priceInAgorot(details.variant?.pricePerSet ?? details.product.pricePerSet) : null;
-      if (amount === null || this.missing.has(key)) return null;
-      subtotal += amount * item.quantitySets;
+      const amount = details ? priceInAgorot(details.product.pricePerUnit) : null;
+      if (amount === null || !details || !Number.isSafeInteger(details.product.setSize) || details.product.setSize < 1 || this.missing.has(key)) return null;
+      subtotal += amount * details.product.setSize * item.quantitySets;
       if (!Number.isSafeInteger(subtotal)) return null;
     }
     return subtotal;
@@ -56,27 +56,28 @@ export class CartStore {
     return this.items.length > 0 && !this.isRefreshing && !this.refreshError && this.subtotalAgorot !== null
       && this.items.every((item) => {
         const details = this.details.get(cartKey(item));
-        return details && item.quantitySets <= (details.variant?.availableSets ?? details.product.availableSets);
+        return details && item.quantitySets <= details.product.availableSets;
       });
   }
 
   open() { this.isOpen = true; }
   close() { this.isOpen = false; }
 
-  addItem(product: CatalogProduct, variant: CatalogVariant | null, quantitySets: number): boolean {
-    if ((variant && !product.variants.some((entry) => entry.productVariantId === variant.productVariantId))
-      || (!variant && product.variants.length > 0) || !isQuantity(quantitySets)) return false;
-    const key = cartKey({ productId: product.productId, productVariantId: variant?.productVariantId ?? null });
+  addItem(product: CatalogProduct, quantitySets: number): boolean {
+    if (product.variants.length > 0 || !isQuantity(quantitySets)) return false;
+    const key = cartKey({ productId: product.productId });
     const existing = this.items.find((item) => cartKey(item) === key);
     if (!existing && this.items.length >= MAX_CART_LINES) return false;
     const nextQuantity = (existing?.quantitySets ?? 0) + quantitySets;
-    const price = variant?.pricePerSet ?? product.pricePerSet;
-    const available = variant?.availableSets ?? product.availableSets;
+    const price = product.pricePerUnit;
+    const available = product.availableSets;
     if (nextQuantity > MAX_QUANTITY_SETS || nextQuantity > available) return false;
-    if (priceInAgorot(price) === null) return false;
+    const unitAgorot = priceInAgorot(price);
+    if (unitAgorot === null || !Number.isSafeInteger(product.setSize) || product.setSize < 1
+      || !Number.isSafeInteger(unitAgorot * product.setSize * nextQuantity)) return false;
     if (existing) existing.quantitySets = nextQuantity;
-    else this.items.push({ productId: product.productId, productVariantId: variant?.productVariantId ?? null, quantitySets });
-    this.details.set(key, { product, variant, priceChanged: false, availabilityChanged: false });
+    else this.items.push({ productId: product.productId, quantitySets });
+    this.details.set(key, { product, priceChanged: false, availabilityChanged: false });
     this.missing.delete(key);
     this.persist();
     return true;
@@ -93,6 +94,16 @@ export class CartStore {
     this.items = this.items.filter((item) => cartKey(item) !== key);
     this.details.delete(key);
     this.missing.delete(key);
+    this.persist();
+  }
+
+  clear() {
+    this.refreshVersion++;
+    this.items = [];
+    this.details.clear();
+    this.missing.clear();
+    this.refreshError = '';
+    this.isRefreshing = false;
     this.persist();
   }
 
@@ -114,13 +125,12 @@ export class CartStore {
             }
             return;
           }
-          this.refreshError = 'לא ניתן לבדוק כרגע את המחירים והזמינות. נסו שוב לפני המשך ההזמנה.';
+          this.refreshError = 'לא ניתן לטעון כרגע את פרטי העגלה. נסו שוב לפני המשך ההזמנה.';
           return;
         }
         for (const item of references) {
           const product = result.value;
-          const variant = item.productVariantId ? product.variants.find((entry) => entry.productVariantId === item.productVariantId) ?? null : null;
-          if ((item.productVariantId && !variant) || (!item.productVariantId && product.variants.length > 0)) {
+          if (product.variants.length > 0) {
             this.missing.add(cartKey(item));
             this.details.delete(cartKey(item));
             continue;
@@ -128,9 +138,10 @@ export class CartStore {
           const key = cartKey(item);
           const previous = this.details.get(key);
           this.details.set(key, {
-            product, variant,
-            priceChanged: Boolean(previous && priceInAgorot(previous.variant?.pricePerSet ?? previous.product.pricePerSet) !== priceInAgorot(variant?.pricePerSet ?? product.pricePerSet)),
-            availabilityChanged: Boolean(previous && (previous.variant?.availableSets ?? previous.product.availableSets) !== (variant?.availableSets ?? product.availableSets)),
+            product,
+            priceChanged: Boolean(previous && (priceInAgorot(previous.product.pricePerUnit) !== priceInAgorot(product.pricePerUnit)
+              || previous.product.setSize !== product.setSize)),
+            availabilityChanged: Boolean(previous && previous.product.availableSets !== product.availableSets),
           });
           this.missing.delete(key);
         }
@@ -148,8 +159,8 @@ export class CartStore {
   }
 }
 
-export function cartKey(item: Pick<CartReference, 'productId' | 'productVariantId'>): string {
-  return item.productVariantId ?? `product:${item.productId}`;
+export function cartKey(item: { productId: string }): string {
+  return `product:${item.productId}`;
 }
 
 function browserStorage(): CartStorage | undefined {
