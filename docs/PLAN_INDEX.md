@@ -73,6 +73,8 @@
 | [PRODUCTION_DEPLOYMENT_PLAN](PRODUCTION_DEPLOYMENT_PLAN.md) | תוכנית מפורטת Git → Docker/Registry → Hosting, חלוקת אחריות, שערי Staging/Production ו־rollback | תוכנית; פריסה טרם מומשה |
 | [HOSTINGER_DEPLOYMENT_ARCHITECTURE](HOSTINGER_DEPLOYMENT_ARCHITECTURE.md) | מבנה VPS אחד, שלושה images, כתובות, Compose/CI וגבולות אבטחה | תכנון פריסה 19.11; תשתית טרם נבדקה |
 | [HOSTINGER_DOCKER_PREVIEW](HOSTINGER_DOCKER_PREVIEW.md) | קובצי Docker/Compose/CI/Deploy שהוכנו ל־Preview סגור והוראות חיבור וגישה | קוד מקומי 19.11; Node/Vite build עברו, Docker/VPS טרם אומתו |
+| [HOSTINGER_REMOTE_ACCESS](HOSTINGER_REMOTE_ACCESS.md) | גישת HTTPS לעובדים מרחוק, Traefik, טיוטת Compose ודרישות לפני חיבור | טיוטה 22.11; תצורת VPS, כתובות ופריסה טרם אומתו |
+| [HOSTINGER_EMPLOYEE_RELEASE](HOSTINGER_EMPLOYEE_RELEASE.md) | שלבי העלאת ניסוי העובדים: GHCR, digests, Hostinger ו־HTTPS | הכנה מקומית 23.11; DNS, החלטת ניסוי ופריסה ממתינים |
 | [HOSTINGER_NEXT_STEPS](HOSTINGER_NEXT_STEPS.md) | החלטת נתונים חיים, גיבויים, Git, חיבור Hostinger ובדיקת תפעול | החלטה ודיווח בעלת האתר 19.11; תשתית ובדיקות תפעול פתוחות |
 | [PRODUCTION_GIT_BRANCHES](PRODUCTION_GIT_BRANCHES.md) | החלטת ענף production, מסלול PR ופקודות לקראת Hostinger Docker VPS | ענף מקומי ומרוחק קיים לפי בדיקה 18.11; CI/Hosting טרם הוגדרו |
 | [PRODUCTION_READINESS_PHASE_0](PRODUCTION_READINESS_PHASE_0.md) | תוצר שלב 0: חסמי השקת חנות בנפרד מחסמי Staging/CI/Docker, ראיות, אחראים ותנאי סגירה | סקירת תיעוד וקבצים מ־17.11.2026; לא בדיקת שירות חי |

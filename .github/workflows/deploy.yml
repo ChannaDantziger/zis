@@ -1,45 +1,103 @@
-name: Deploy ZIS preview to Hostinger
-
+name: Publish and deploy ZIS
 on:
   push:
     branches: [production]
-
+  workflow_dispatch:
 permissions:
   contents: read
-
 concurrency:
-  group: zis-hostinger-preview
+  group: zis-hostinger
   cancel-in-progress: false
-
 jobs:
-  verify:
+  publish:
+    if: github.ref == 'refs/heads/production'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      api: ${{ steps.images.outputs.api }}
+      storefront: ${{ steps.images.outputs.storefront }}
+      admin: ${{ steps.images.outputs.admin }}
     steps:
       - uses: actions/checkout@v5
-      - name: Build API image
-        run: docker build --file zis-api/Dockerfile --tag zis-api:verify .
-      - name: Build storefront image
-        run: docker build --file apps/storefront/Dockerfile --tag zis-storefront:verify .
-      - name: Build admin image
-        run: docker build --file apps/admin-mobile/Dockerfile --tag zis-admin:verify .
-
+      - name: Build all images
+        env:
+          REPOSITORY: ${{ github.repository }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          prefix="ghcr.io/${REPOSITORY,,}"
+          for pair in 'api zis-api/Dockerfile' 'storefront apps/storefront/Dockerfile' 'admin apps/admin-mobile/Dockerfile'; do
+            read -r service file <<< "$pair"
+            docker build --label "org.opencontainers.image.source=https://github.com/$REPOSITORY" -f "$file" -t "$prefix-$service:$COMMIT" .
+          done
+      - name: Publish image digests
+        id: images
+        env:
+          REGISTRY_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          REPOSITORY: ${{ github.repository }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          prefix="ghcr.io/${REPOSITORY,,}"
+          for service in api storefront admin; do
+            image="$prefix-$service:$COMMIT"
+            docker push "$image"
+            reference=$(docker inspect --format='{{index .RepoDigests 0}}' "$image")
+            echo "$service=$reference" >> "$GITHUB_OUTPUT"
+            echo "$service: $reference" >> "$GITHUB_STEP_SUMMARY"
+          done
+          docker logout ghcr.io
   deploy:
-    needs: verify
-    if: ${{ vars.HOSTINGER_DEPLOY_ENABLED == 'true' }}
+    needs: publish
+    if: github.ref == 'refs/heads/production' && vars.HOSTINGER_DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Deploy loopback-only preview
+      - name: Check image access and hostnames
+        env:
+          API_IMAGE: ${{ needs.publish.outputs.api }}
+          STORE_IMAGE: ${{ needs.publish.outputs.storefront }}
+          ADMIN_IMAGE: ${{ needs.publish.outputs.admin }}
+          STORE_HOST: ${{ vars.ZIS_STORE_HOST }}
+          ADMIN_HOST: ${{ vars.ZIS_ADMIN_HOST }}
+        run: |
+          set -euo pipefail
+          for host in "$STORE_HOST" "$ADMIN_HOST"; do
+            [[ "$host" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]] || { echo 'Set valid hostnames without scheme or paths'; exit 1; }
+          done
+          [[ "$STORE_HOST" != "$ADMIN_HOST" ]] || { echo 'Use distinct hostnames'; exit 1; }
+          docker manifest inspect "$API_IMAGE" >/dev/null
+          docker manifest inspect "$STORE_IMAGE" >/dev/null
+          docker manifest inspect "$ADMIN_IMAGE" >/dev/null
+      - name: Request Hostinger deployment
         uses: hostinger/deploy-on-vps@v2
         with:
           api-key: ${{ secrets.HOSTINGER_API_KEY }}
           virtual-machine: ${{ vars.HOSTINGER_VM_ID }}
-          project-name: zis-preview
-          docker-compose-path: docker-compose.yml
+          project-name: zis
+          docker-compose-path: deploy/compose.hostinger.yml
           environment-variables: |
+            ZIS_API_IMAGE=${{ needs.publish.outputs.api }}
+            ZIS_STORE_IMAGE=${{ needs.publish.outputs.storefront }}
+            ZIS_ADMIN_IMAGE=${{ needs.publish.outputs.admin }}
+            ZIS_STORE_HOST=${{ vars.ZIS_STORE_HOST }}
+            ZIS_ADMIN_HOST=${{ vars.ZIS_ADMIN_HOST }}
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             SUPABASE_URL=${{ secrets.SUPABASE_URL }}
             SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-            CORS_ALLOWED_ORIGINS=${{ vars.CORS_ALLOWED_ORIGINS }}
             ORDER_CONFIRMATION_TOKEN_SECRET=${{ secrets.ORDER_CONFIRMATION_TOKEN_SECRET }}
             ORDER_CONFIRMATION_TOKEN_TTL_SECONDS=${{ vars.ORDER_CONFIRMATION_TOKEN_TTL_SECONDS }}
+      - name: Wait for HTTPS readiness
+        env:
+          STORE_HOST: ${{ vars.ZIS_STORE_HOST }}
+          ADMIN_HOST: ${{ vars.ZIS_ADMIN_HOST }}
+        run: |
+          set -euo pipefail
+          for host in "$STORE_HOST" "$ADMIN_HOST"; do
+            curl --fail --silent --show-error --retry 24 --retry-delay 10 --retry-all-errors --connect-timeout 5 --max-time 10 "https://$host/api/health/ready" >/dev/null
+            curl --fail --silent --show-error --connect-timeout 5 --max-time 10 "https://$host/" >/dev/null
+          done
