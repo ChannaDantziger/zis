@@ -1,0 +1,28 @@
+# Draft overlay for review only. Requires verified DNS, TLS, connectivity and image delivery.
+# Do not deploy until the conditions in docs/HOSTINGER_REMOTE_ACCESS.md are met.
+services:
+  storefront:
+    networks:
+      - private
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=zis-private"
+      - "traefik.http.routers.zis-storefront.rule=Host(`${ZIS_STORE_HOST:?Set the storefront HTTPS hostname}`)"
+      - "traefik.http.routers.zis-storefront.entrypoints=websecure"
+      - "traefik.http.routers.zis-storefront.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.zis-storefront.service=zis-storefront"
+      - "traefik.http.services.zis-storefront.loadbalancer.server.port=8080"
+  admin:
+    networks:
+      - private
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=zis-private"
+      - "traefik.http.routers.zis-admin.rule=Host(`${ZIS_ADMIN_HOST:?Set the admin HTTPS hostname}`)"
+      - "traefik.http.routers.zis-admin.entrypoints=websecure"
+      - "traefik.http.routers.zis-admin.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.zis-admin.service=zis-admin"
+      - "traefik.http.services.zis-admin.loadbalancer.server.port=8080"
+networks:
+  private:
+    name: zis-private
