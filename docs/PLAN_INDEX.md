@@ -194,3 +194,8 @@
 | [ORDER_TEST_DIAGNOSTICS_BEIT_SHEMESH](ORDER_TEST_DIAGNOSTICS_BEIT_SHEMESH.sql) | בדיקות קריאה בלבד להזמנת הניסוי החדשה בבית שמש; להרצה ידנית בלבד |
 
 קישורי המקור החיצוניים מקומיים למחשב זה; עותק ההנחיות ועותקי HTML לבדיקה נמצאים במאגר. שני קובצי לוגו זיס נבדקו ושולבו בתצוגה ב־22–23.09. יתר נכסי המקור ו־Word/PDF לא נבדקו כמקורות דרישות מחייבים.
+
+## העלאת ניסוי העובדים — עדכון 23.11
+
+- [HOSTINGER_EMPLOYEE_RELEASE](HOSTINGER_EMPLOYEE_RELEASE.md) — רצף GitHub/GHCR/HTTPS, אחריות והחלטות.
+- [HOSTINGER_REMOTE_ACCESS](HOSTINGER_REMOTE_ACCESS.md) — Traefik וגישה מרחוק.
