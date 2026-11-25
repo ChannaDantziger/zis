@@ -4,12 +4,14 @@ import type { ManagedCatalog, ManagedProduct } from './catalog.types.js';
 import type { ManagedCategory } from './catalog.types.js';
 
 const EMPTY_PRODUCT = { productId: '', categoryId: '', name: '', description: null as string | null, setSize: 1, pricePerUnit: '0.00', availableItems: 0, displayOrder: 10, status: 'active' as const, version: '', isVisible: false, visibilityReasons: ['המוצר טרם נשמר'], images: [] };
+const IMAGE_RETRY_COOLDOWN_MS = 60_000;
 
 export class CatalogStore {
   private generation = 0;
   private loadSequence = 0;
   private savedProductId = '';
   private productSnapshot = '';
+  private lastImageRefresh = 0;
   catalog: ManagedCatalog | null = null;
   product: ManagedProduct | null = null;
   page = 1;
@@ -27,6 +29,12 @@ export class CatalogStore {
   setEditorMode(mode: 'basic' | 'advanced') { if (!this.saving) this.editorMode = mode; }
   selectCategory(categoryId: string) { if (this.saving || !this.close()) return; this.selectedCategoryId = categoryId; this.page = 1; this.success = ''; void this.load(1); }
   get productNeedsRefresh() { return !!this.savedProductId; }
+  refreshFailedImages() {
+    const now = Date.now();
+    if (this.loading || now - this.lastImageRefresh < IMAGE_RETRY_COOLDOWN_MS) return;
+    this.lastImageRefresh = now;
+    void this.load();
+  }
   reset() { this.savedProductId = ''; this.generation++; this.loadSequence++; this.catalog = null; this.product = null; this.category = null; this.selectedCategoryId = ''; this.editorMode = 'basic'; this.page = 1; this.loading = false; this.saving = false; this.error = this.success = ''; }
   async load(page = this.page) {
     const generation = this.generation, sequence = ++this.loadSequence;

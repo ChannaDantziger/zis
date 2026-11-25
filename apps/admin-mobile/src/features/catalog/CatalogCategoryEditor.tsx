@@ -2,16 +2,20 @@ import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Accordion, Anchor, Breadcrumbs, Button, Group, Menu, Modal, NumberInput, Stack, Switch, Text, TextInput } from '@mantine/core';
 import { catalogStore as store } from './catalog.store.js';
+import { bundlesStore } from './bundles.store.js';
 
 export const CatalogBreadcrumbs = observer(function CatalogBreadcrumbs() {
   const category = store.selectedCategory;
+  const bundle = bundlesStore.form;
+  const saving = store.saving || bundlesStore.saving;
   return <Breadcrumbs separator="/" aria-label="מיקום בקטלוג" style={{ flexWrap: 'wrap' }}>
-    {store.selectedCategoryId ? <Anchor component="button" type="button" disabled={store.saving} onClick={() => store.selectCategory('')}>הקטלוג שלי</Anchor> : <Text>הקטלוג שלי</Text>}
-    {category && (store.product ? <Anchor component="button" type="button" disabled={store.saving} onClick={() => store.close()}>{category.name}</Anchor> :
+    {store.selectedCategoryId ? <Anchor component="button" type="button" disabled={saving} onClick={() => { if (!bundle || bundlesStore.close()) store.selectCategory(''); }}>הקטלוג שלי</Anchor> : <Text>הקטלוג שלי</Text>}
+    {category && (store.product || bundle ? <Anchor component="button" type="button" disabled={saving} onClick={() => { if (bundle) bundlesStore.close(); else store.close(); }}>{category.name}</Anchor> :
       <Menu><Menu.Target><Button size="compact-sm" variant="subtle" disabled={store.saving}>{category.name} ▾</Button></Menu.Target>
         <Menu.Dropdown>{store.catalog?.categories.map((item) => <Menu.Item key={item.categoryId} onClick={() => store.selectCategory(item.categoryId)}>{item.name}</Menu.Item>)}</Menu.Dropdown>
       </Menu>)}
     {store.product && <Text aria-current="page">{store.product.productId ? store.product.name : 'מוצר חדש'}</Text>}
+    {bundle && <Text aria-current="page">{bundle.bundleId ? bundle.name : 'מארז חדש'}</Text>}
   </Breadcrumbs>;
 });
 

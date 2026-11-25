@@ -22,7 +22,8 @@ export class BundlesStore {
     this.loading = true; this.error = '';
     try { const items = await request<Bundle[]>(`/admin/bundles?categoryId=${encodeURIComponent(categoryId)}`);
       runInAction(() => { if (sequence === this.sequence) this.items = items; });
-    } catch (e) { runInAction(() => { if (sequence === this.sequence) this.error = errorMessage(e); }); }
+      return sequence === this.sequence;
+    } catch (e) { runInAction(() => { if (sequence === this.sequence) this.error = errorMessage(e); }); return false; }
     finally { runInAction(() => { if (sequence === this.sequence) this.loading = false; }); }
   }
   create(categoryId: string) { this.savedId = ''; this.pendingUpload = null; this.error = ''; this.accept({ bundleId: '', categoryId, name: '', description: null, unitCount: 1, status: 'draft', version: '', images: [] }); }
@@ -36,7 +37,7 @@ export class BundlesStore {
       const result = this.savedId ? { bundleId: this.savedId } : await request<{ bundleId: string }>(form.bundleId ? `/admin/bundles/${form.bundleId}` : '/admin/bundles',
         { method: form.bundleId ? 'PATCH' : 'POST', body: JSON.stringify(form) });
       runInAction(() => { this.savedId = result.bundleId; });
-      await this.load(form.categoryId);
+      if (!await this.load(form.categoryId)) throw new Error('טעינת המארז לאחר השמירה נכשלה');
       const saved = this.items.find(item => item.bundleId === result.bundleId);
       if (!saved) throw new Error('המארז נשמר אך לא נטען מחדש');
       runInAction(() => { this.accept(saved); this.savedId = ''; catalogStore.selectedCategoryId = saved.categoryId; });
@@ -60,6 +61,9 @@ export class BundlesStore {
         runInAction(() => { pending.metadataSaved = true; });
       }
       await this.refreshForm();
+      if (!this.form?.images.some(image => image.storagePath === pending.storagePath && !image.isDeleted && image.url)) {
+        throw new Error('התמונה לא נטענה מהשרת. יש לנסות לרענן שוב');
+      }
       runInAction(() => { this.pendingUpload = null; });
     } catch (e) { runInAction(() => { this.error = errorMessage(e); }); }
     finally { runInAction(() => { this.saving = false; }); }
@@ -82,7 +86,7 @@ export class BundlesStore {
   }
   async refreshForm() {
     const form = this.form; if (!form) return;
-    await this.load(form.categoryId);
+    if (!await this.load(form.categoryId)) throw new Error('טעינת המארז מהשרת נכשלה');
     const updated = this.items.find(item => item.bundleId === form.bundleId);
     if (!updated) throw new Error('המארז לא נמצא לאחר הרענון');
     runInAction(() => this.accept(updated));

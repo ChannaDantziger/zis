@@ -35,6 +35,7 @@ export function createBundlesRepository(factory: SqlClientFactory) {
         const before = await client.query<Record<string, unknown>>('select *,extract(epoch from updated_at)::text as version from public.catalog_bundles where bundle_id=$1 for update', [id]);
         if (!before.rows[0]) throw new ApiError(404, 'BUNDLE_NOT_FOUND', 'המארז לא נמצא');
         if (before.rows[0].version !== input.version) throw new ApiError(409, 'CATALOG_VERSION_CONFLICT', 'המארז השתנה. יש לרענן ולנסות שוב');
+        if (before.rows[0].category_id !== input.categoryId) throw new ApiError(409, 'CATEGORY_CHANGE_NOT_ALLOWED', 'לא ניתן להעביר מארז לקטגוריה אחרת');
         await client.query('update public.catalog_bundles set category_id=$2,name=$3,description=$4,unit_count=$5,status=$6 where bundle_id=$1', [id,input.categoryId,input.name,input.description,input.unitCount,input.status]);
         await insertAudit(client, actor, 'bundle.updated', 'catalog_bundles', id, before.rows[0], input);
         return { bundleId: id };

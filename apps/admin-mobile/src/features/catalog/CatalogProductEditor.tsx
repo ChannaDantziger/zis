@@ -33,9 +33,6 @@ export const CatalogProductEditor = observer(function CatalogProductEditor() {
       </SimpleGrid>
       {advanced && <Stack gap="sm">
         <Title order={3} size="h4">הגדרות נוספות</Title>
-        <Select label="קטגוריה" disabled={disabled} required searchable allowDeselect={false}
-          data={store.catalog?.categories.map((category) => ({ value: category.categoryId, label: category.name })) ?? []}
-          value={form.categoryId} onChange={(value) => value && store.setProduct('categoryId', value)} />
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <NumberInput disabled={disabled} label="יחידות בכל סט" min={1} allowDecimal={false} required value={form.setSize} onChange={(value) => store.setProduct('setSize', Number(value))} />
           <NumberInput disabled={disabled} label="סדר הצגה" min={0} step={10} allowDecimal={false} required value={form.displayOrder} onChange={(value) => store.setProduct('displayOrder', Number(value))} />

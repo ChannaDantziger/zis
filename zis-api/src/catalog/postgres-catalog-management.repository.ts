@@ -28,6 +28,7 @@ export function createCatalogManagementRepository(factory: SqlClientFactory): Ad
     listProducts: (page, productId, categoryId) => list(factory, page, productId, categoryId),
     updateProduct: (input, actor) => withTransaction(factory, async (client) => {
       const before = await lock(client, 'products', 'product_id', input.productId, input.version);
+      if (before.category_id !== input.categoryId) throw new ApiError(409, 'CATEGORY_CHANGE_NOT_ALLOWED', 'לא ניתן להעביר מוצר לקטגוריה אחרת');
       await client.query(`update public.products set category_id=$2, name=$3, description=$4,
         set_size=$5, price_per_item=$6, available_items=$7, display_order=$8, status=$9,
         archived_at=case when $9='archived' then coalesce(archived_at, now()) else null end,

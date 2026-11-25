@@ -4,7 +4,6 @@ import { Alert, Badge, Button, Card, FileInput, Group, Image, NumberInput, Selec
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { bundlesStore as bundles } from './bundles.store.js';
 import type { BundleImage } from './bundles.store.js';
-import { catalogStore } from './catalog.store.js';
 
 const INITIAL_ITEMS = 3;
 export const BundleSection = observer(function BundleSection({ categoryId }: { categoryId: string }) {
@@ -26,6 +25,8 @@ export const BundleSection = observer(function BundleSection({ categoryId }: { c
 
 export const BundleEditor = observer(function BundleEditor() {
   const form = bundles.form;
+  const [file, setFile] = useState<File | null>(null);
+  useEffect(() => { setFile(null); }, [form?.bundleId]);
   if (!form) return null;
   return <Stack>
     <Group justify="space-between"><Title order={2}>{form.bundleId ? form.name : 'מארז חדש'}</Title><Button variant="subtle" onClick={() => bundles.close()}>חזרה לקטגוריה</Button></Group>
@@ -35,7 +36,6 @@ export const BundleEditor = observer(function BundleEditor() {
       <Title order={3}>פרטי המארז</Title>
       <TextInput label="שם המארז" required maxLength={200} value={form.name} onChange={e => bundles.set('name', e.currentTarget.value)} />
       <Textarea label="תיאור המארז" value={form.description ?? ''} onChange={e => bundles.set('description', e.currentTarget.value || null)} />
-      <Select label="קטגוריה" required allowDeselect={false} data={catalogStore.catalog?.categories.map(c => ({ value: c.categoryId, label: c.name })) ?? []} value={form.categoryId} onChange={value => value && bundles.set('categoryId', value)} />
       <NumberInput label="מספר יחידות במארז" required min={1} allowDecimal={false} value={form.unitCount} onChange={value => bundles.set('unitCount', Number(value))} />
       {form.bundleId && <Select label="מצב" allowDeselect={false} value={form.status} data={[{value:'draft',label:'טיוטה'},{value:'hidden',label:'מוסתר'}]} onChange={value => value && bundles.set('status', value as BundleStatus)} />}
       <Button type="submit" loading={bundles.saving} disabled={!form.name.trim() || !form.categoryId || !Number.isSafeInteger(form.unitCount) || form.unitCount < 1}>{form.bundleId ? 'שמירת שינויים' : 'שמירה והוספת תמונה'}</Button>
@@ -43,8 +43,10 @@ export const BundleEditor = observer(function BundleEditor() {
     {form.bundleId && <Card withBorder><Stack><Title order={3}>תמונות מארז</Title>
       {bundles.changed && <Alert color="yellow">שמרי את השינויים לפני עריכת התמונות.</Alert>}
       {form.images.map(image => <BundleImageRow key={image.imageId} image={image} />)}
-      {bundles.pendingUpload ? <Button variant="light" disabled={bundles.saving} onClick={() => void bundles.upload()}>נסי שוב לשמור את התמונה</Button> :
-        <FileInput label="הוספת תמונה" placeholder="בחרי קובץ" accept="image/jpeg,image/png,image/webp" value={null} disabled={bundles.changed || bundles.saving} onChange={file => { if (file) void bundles.upload(file); }} />}
+      {bundles.pendingUpload ? <Button variant="light" disabled={bundles.saving} onClick={() => { void bundles.upload().then(() => { if (!bundles.pendingUpload && !bundles.error) setFile(null); }); }}>נסי שוב לשמור את התמונה</Button> :
+        <><FileInput label="בחירת תמונה" placeholder="בחרי קובץ" accept="image/jpeg,image/png,image/webp" value={file} disabled={bundles.changed || bundles.saving} onChange={setFile} />
+          {file && <Text size="sm" c="dimmed">התמונה נבחרה וטרם נשמרה. לחצי על שמירת תמונה.</Text>}
+          <Button variant="light" disabled={!file || bundles.changed || bundles.saving} loading={bundles.saving} onClick={() => { if (file) void bundles.upload(file).then(() => { if (!bundles.pendingUpload && !bundles.error) setFile(null); }); }}>שמירת תמונה</Button></>}
       <Text size="sm" c="dimmed">JPEG, PNG או WebP עד 5 MiB. התמונה הראשונה היא התמונה הראשית.</Text>
     </Stack></Card>}
   </Stack>;

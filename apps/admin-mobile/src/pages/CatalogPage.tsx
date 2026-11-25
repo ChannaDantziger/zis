@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Alert, Button, Card, Group, Image, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { catalogStore as store } from '../features/catalog/catalog.store.js';
@@ -16,8 +16,14 @@ export const CatalogPage = observer(function CatalogPage() {
   const [expanded, setExpanded] = useState(false);
   const [remainingProducts, setRemainingProducts] = useState<ManagedProduct[]>([]);
   const [moreError, setMoreError] = useState('');
+  const wasEditingBundle = useRef(false);
   useEffect(() => { void store.load(); return () => { store.close(false); }; }, []);
   const category = store.selectedCategory;
+  const editingBundle = !!bundlesStore.form;
+  useEffect(() => {
+    if (wasEditingBundle.current && !editingBundle && store.selectedCategoryId) void store.load();
+    wasEditingBundle.current = editingBundle;
+  }, [editingBundle]);
   useEffect(() => { setExpanded(false); }, [store.selectedCategoryId]);
   useEffect(() => {
     let active = true;
@@ -32,7 +38,7 @@ export const CatalogPage = observer(function CatalogPage() {
       .catch(() => { if (active) setMoreError('טעינת יתר המוצרים נכשלה. צמצמי והרחיבי לניסיון נוסף.'); });
     return () => { active = false; };
   }, [expanded, store.selectedCategoryId, store.catalog]);
-  if (bundlesStore.form) return <Stack maw={1100} mx="auto" gap="lg"><BundleEditor /></Stack>;
+  if (bundlesStore.form) return <Stack maw={1100} mx="auto" gap="lg"><CatalogBreadcrumbs /><BundleEditor /></Stack>;
   return <Stack maw={1100} mx="auto" gap="lg">
     <CatalogBreadcrumbs />
     <Group justify="space-between"><div>
@@ -51,9 +57,9 @@ export const CatalogPage = observer(function CatalogPage() {
       {store.loading ? <LoadingState /> : !store.selectedCategoryId ? <>
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
           {store.catalog?.categories.map((item) => <Card key={item.categoryId} withBorder radius="lg" component="button" type="button" ta="right"
-            disabled={store.saving} onClick={() => store.selectCategory(item.categoryId)}>
+            disabled={store.saving} style={{ cursor: store.saving ? 'not-allowed' : 'pointer' }} onClick={() => store.selectCategory(item.categoryId)}>
             <Stack gap="xs"><Text fw={700} size="lg">{item.name}{item.productCount !== undefined && ` (${item.productCount})`}</Text>
-              {!!item.previewImages?.length && <SimpleGrid cols={4}>{item.previewImages.map((image) => <Image key={image.productId} src={image.url} alt={image.productName} title={image.productName} h={64} fit="contain" />)}</SimpleGrid>}
+              {!!item.previewImages?.length && <SimpleGrid cols={4}>{item.previewImages.map((image) => <Image key={image.productId} src={image.url} alt={image.productName} title={image.productName} h={64} fit="contain" onError={() => store.refreshFailedImages()} />)}</SimpleGrid>}
               <Text size="sm" c="dimmed">{item.status === 'hidden' ? 'מוסתרת באתר · כניסה למוצרים' : 'לצפייה במוצרים ולהוספת מוצר'}</Text>
             </Stack>
           </Card>)}
