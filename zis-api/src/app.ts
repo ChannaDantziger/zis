@@ -44,6 +44,8 @@ import type { OrderStatusService } from './operations/order-status.types.js';
 import { createAdminCommerceSettingsRouter } from './routes/admin-commerce-settings.routes.js';
 import type { CommerceSettingsService } from './operations/commerce-settings.types.js';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createAdminBundlesController } from './controllers/admin-bundles.controller.js';
+import type { BundlesRepository } from './catalog/bundles.repository.js';
 import { createAuthRouter } from './routes/auth.routes.js';
 import { createAdminTasksRouter } from './routes/admin-tasks.routes.js';
 import type { TasksService } from './tasks/tasks.types.js';
@@ -51,6 +53,7 @@ import type { EventGalleryService } from './event-gallery/event-gallery.types.js
 import { createEventGalleryRouter } from './routes/event-gallery.routes.js';
 
 export interface AppDependencies {
+  bundlesRepository?: BundlesRepository;
   faqService?: FaqService;
   testPaymentService?: TestPaymentService;
   manualPaymentService?: ManualPaymentService;
@@ -110,6 +113,15 @@ export function createApp(dependencies: AppDependencies = {}) {
   }
   if (dependencies.adminCatalogService && dependencies.resolveAdminUserId) {
     app.use(createAdminCatalogRouter(dependencies.adminCatalogService, dependencies.resolveAdminUserId, dependencies.storageService));
+  }
+  if (dependencies.bundlesRepository && dependencies.resolveAdminUserId) {
+    const bundles = createAdminBundlesController(dependencies.bundlesRepository, dependencies.resolveAdminUserId, dependencies.storageService);
+    app.get('/admin/bundles', bundles.list);
+    app.post('/admin/bundles', bundles.save);
+    app.patch('/admin/bundles/:bundleId', bundles.save);
+    app.post('/admin/bundles/:bundleId/images', bundles.addImage);
+    app.patch('/admin/bundle-images/:imageId', bundles.updateImage);
+    app.delete('/admin/bundle-images/:imageId', bundles.deleteImage);
   }
   if (dependencies.dashboardService && dependencies.resolveAdminUserId) {
     app.use(createAdminDashboardRouter(dependencies.dashboardService, dependencies.resolveAdminUserId));

@@ -22,6 +22,7 @@ import { createCatalogService } from './catalog/catalog.service.js';
 import { PRODUCT_MEDIA_BUCKET } from './contracts/media.contracts.js';
 import { createSupabaseStorageService } from './storage/storage.service.js';
 import { createPostgresAdminCatalogRepository } from './catalog/postgres-admin-catalog.repository.js';
+import { createBundlesRepository } from './catalog/bundles.repository.js';
 import { createAdminCatalogService } from './catalog/admin-catalog.service.js';
 import { createPostgresDashboardRepository } from './dashboard/postgres-dashboard.repository.js';
 import { createDashboardService } from './dashboard/dashboard.service.js';
@@ -108,6 +109,7 @@ const app = hasServerDependencies
         ),
         storageService: storage,
         adminCatalogService: createAdminCatalogService(adminCatalogRepository),
+        bundlesRepository: createBundlesRepository(createPostgresClientFactory(pool)),
         dashboardService: createDashboardService(dashboardRepository),
         homeService: createHomeService(createPostgresHomeRepository(createPostgresClientFactory(pool)),
           (path) => storage.createSignedUrl(PRODUCT_MEDIA_BUCKET, path).then((result) => result.url)),

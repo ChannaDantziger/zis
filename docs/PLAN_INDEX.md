@@ -131,6 +131,7 @@
 | [ADMIN_NOTIFICATIONS](ADMIN_NOTIFICATIONS.md) | תיבת התראות אישית, העדפות ו־Audit; בדיקות מקומיות, אימות חי פתוח |
 | [ADMIN_INVENTORY](ADMIN_INVENTORY.md) | מסך מלאי למוצרים פשוטים דרך הקטלוג; נתיבי וריאציות נשארים ב־API בלבד |
 | [ADMIN_CATALOG](ADMIN_CATALOG.md) | ניהול מוצרים פשוטים בלבד, קטגוריות ותמונות; API וריאציות נשמר כאפשרות עתידית; אימות DB/Storage ופריסה פתוחים |
+| [ADMIN_BUNDLES](ADMIN_BUNDLES.md) | הגדרת מארזים בניהול: קוד מקומי, מיגרציה ידנית ובדיקות ומגבלות |
 | [ADMIN_UX_SIMPLIFICATION](ADMIN_UX_SIMPLIFICATION.md) | פישוט קטלוג/ניהול והסרת בחירת שיטת משלוח; קוד ובדיקות מקומיות 21.10, DB חי פתוח |
 | [ADMIN_OPERATION_REPORTS](ADMIN_OPERATION_REPORTS.md) | תוויות אריזה ודוחות אספקה לפי מוצרים פשוטים, כתובות ומספרי הזמנה; הדפסה ובחירה מדויקת; אימות חי פתוח |
 | [ADMIN_QUALITY_AUDIT](ADMIN_QUALITY_AUDIT.md) | הרשאות מנהל, התראות אישיות, בידוד Session ותאריכים; בדיקות ממוקדות מקומיות |
