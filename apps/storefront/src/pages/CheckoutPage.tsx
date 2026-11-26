@@ -3,17 +3,19 @@ import { Alert, Button, Container, Group, Loader, Stack, Stepper, Text, Textarea
 import { observer } from 'mobx-react-lite';
 import { reaction } from 'mobx';
 import { Link } from 'react-router-dom';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { CartItems } from '../features/cart/CartItems';
 import { useMinimumOrderStatus } from '../features/cart/minimum-order';
 import { cartStore } from '../stores/cart.store';
 import { checkoutStore } from '../features/checkout/checkout.store';
 import { CheckoutForm } from '../features/checkout/CheckoutForm';
+import { CheckoutDeliveryDate } from '../features/checkout/CheckoutDeliveryDate';
 import { TestCheckoutAccess } from '../features/checkout/TestCheckoutAccess';
 import { DemoCredit } from '../features/checkout/DemoCredit';
-import { PendingOrderItems } from '../features/checkout/PendingOrderItems';
-import { PendingOrderBundles } from '../features/checkout/PendingOrderBundles';
+import { CheckoutConfirmation } from '../features/checkout/CheckoutConfirmation';
 const QUOTE_DELAY_MS = 400;
 const checkoutSteps = ['מוצרים', 'משלוח', 'הקדשה', 'אשראי', 'סיום'];
+const nextStepLabels = ['להזנת פרטי משלוח', 'להוספת הקדשה', 'לפרטי תשלום', 'לסיכום ההזמנה'];
 
 export const CheckoutPage = observer(function CheckoutPage() {
   const store = checkoutStore;
@@ -36,31 +38,7 @@ export const CheckoutPage = observer(function CheckoutPage() {
     window.addEventListener('beforeunload', warn);
     return () => { clearTimeout(quoteTimer); stopQuote(); stop(); window.removeEventListener('beforeunload', warn); store.leave(); };
   }, [store]);
-  if (store.created) {
-    const result = store.confirmation ?? store.created;
-    return <Container size="sm" py="xl"><Stack>
-      <Title order={1}>הזמנה {result.orderNumber}</Title>
-      <Title order={2} size="h4">פרטי ההזמנה</Title>
-      {store.confirmation?.bundles?.map(bundle => <Stack key={bundle.orderBundleId} gap={2}>
-        <Group justify="space-between"><Text fw={700}>{bundle.bundleName} × {bundle.quantity} מארזים זהים</Text><Text>{bundle.lineTotal} ₪</Text></Group>
-        {bundle.components.map(component => <Text key={component.productId} size="sm">{component.productName}: {component.quantity} למארז (סה״כ {component.quantity * bundle.quantity} יחידות)</Text>)}
-      </Stack>)}
-      {Boolean(store.confirmation?.bundles?.length && store.confirmation.items?.length) && <Text fw={700}>מוצרים בנפרד</Text>}
-      {store.confirmation?.items?.map((item, index) => <Group key={`${item.productId}-${index}`} justify="space-between">
-        <Text>{item.productName ?? 'מוצר בהזמנה'} · כמות: {item.quantitySets}</Text>
-        {item.lineTotal && <Text>{item.lineTotal} ₪</Text>}
-      </Group>)}
-      <Text fw={700}>סך הכול: {result.total} ₪</Text>
-      <Text>מצב תשלום: {result.paymentStatus === 'pending' ? 'ממתין לתשלום' : result.paymentStatus === 'paid' ? 'שולם' : result.paymentStatus}</Text>
-      {(store.confirmation?.deliveryDate || store.deliveryDate) && <Text>תאריך אספקה: {store.confirmation?.deliveryDate || store.deliveryDate}</Text>}
-      {store.confirmationError && <Alert color="orange" role="alert">לא ניתן לטעון את כל פרטי ההזמנה כרגע. <Button variant="subtle" onClick={() => void store.refreshConfirmation()}>נסו שוב</Button></Alert>}
-      <PendingOrderItems />
-      <PendingOrderBundles />
-      <Text>תודה שהזמנתם זיס<br />ושנפגש בשמחות</Text>
-      <Text>צוות זיס</Text>
-      <Button component={Link} to="/" onClick={() => store.dispose()}>להזמנות נוספות</Button>
-    </Stack></Container>;
-  }
+  if (store.created) return <CheckoutConfirmation />;
   return <Container size="sm" py="xl"><Stack gap="lg">
     <Title order={1}>פרטי ההזמנה</Title>
     <TestCheckoutAccess />
@@ -78,7 +56,7 @@ export const CheckoutPage = observer(function CheckoutPage() {
     <Stepper active={step} onStepClick={(value) => { if (!store.locked && value < step) setStep(value); }} size="xs" aria-label="שלבי ההזמנה">
       {checkoutSteps.map((label) => <Stepper.Step key={label} label={label} />)}
     </Stepper>
-    {step === 0 && <CartItems />}
+    {step === 0 && <><CheckoutDeliveryDate /><CartItems /></>}
     {!cartStore.items.length && !cartStore.bundles.length && <Text>העגלה ריקה. בחרו מוצרים מהקטלוג.</Text>}
     {step === 1 && <CheckoutForm store={store} />}
     {step === 2 && <Textarea label="הקדשה (רשות)" maxLength={1000} value={store.customer.dedicationText}
@@ -97,12 +75,12 @@ export const CheckoutPage = observer(function CheckoutPage() {
       הישארו בדף עד קבלת תשובה; רענון או יציאה יבטלו את האפשרות לניסיון חוזר בטוח כאן.</Alert>}
     <Group grow>
       <Button component={Link} to="/catalog" variant="light" disabled={store.locked}>המשך קנייה</Button>
-      <Button disabled={store.retryPending ? store.busy : !minimumOrder.isMet || (step === 0 ? !cartStore.canContinue : step === 1 || step === 4 ? !store.canContinueDelivery(cartStore.items) || !cartStore.canContinue : store.locked)}
+      <Button rightSection={<IconArrowLeft size={18} aria-hidden="true" />} disabled={store.retryPending ? store.busy : !minimumOrder.isMet || (step === 0 ? !cartStore.canContinue || !store.hasValidDeliveryDate : step === 1 || step === 4 ? !store.canContinueDelivery(cartStore.items) || !cartStore.canContinue : store.locked)}
         loading={store.busy && store.retryPending} onClick={() => {
           if (store.retryPending || step === 4) void store.submit(cartStore.items);
           else setStep((value) => value + 1);
         }}>
-        {store.retryPending ? 'הזמן — בדיקה חוזרת' : step === 4 ? (store.testAuthorized ? 'הזמן — ניסוי' : 'הזמן') : 'הבא'}
+        {store.retryPending ? 'בדיקת ההזמנה מחדש' : step === 4 ? (store.testAuthorized ? 'אישור הזמנת ניסוי' : 'אישור ההזמנה') : nextStepLabels[step]}
       </Button>
     </Group>
     <Text size="sm" c="dimmed">פרטי הלקוחה והאישור הפרטי נשמרים בזיכרון הדף בלבד.</Text>

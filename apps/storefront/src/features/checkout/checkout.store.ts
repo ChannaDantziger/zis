@@ -61,7 +61,8 @@ export class CheckoutStore {
     this.deliveryDate = ''; this.shippingZoneId = '';
   }
   get pendingItemsChanged() { return JSON.stringify(this.pendingItems) !== this.savedPendingItems || JSON.stringify(this.pendingBundles) !== this.savedPendingBundles; }
-  get canEditPending() { return Boolean(this.created?.status === 'ordered' && this.created.paymentStatus === 'pending' && this.token && this.created.version) && (!this.confirmation?.bundles?.length || BUNDLE_PURCHASE_ENABLED) && !this.simulatedPaid && !this.busy && !this.pendingUpdate && !this.pendingConflict; }
+  get showPendingEditor() { return Boolean(this.created?.status === 'ordered' && this.created.paymentStatus === 'pending' && (!this.confirmation || this.confirmation.paymentStatus === 'pending') && !this.simulatedPaid); }
+  get canEditPending() { return this.showPendingEditor && Boolean(this.token && this.created?.version) && (!this.confirmation?.bundles?.length || BUNDLE_PURCHASE_ENABLED) && !this.busy && !this.pendingUpdate && !this.pendingConflict; }
   setPendingQuantity(key: string, quantitySets: number) {
     if (!this.canEditPending || !isQuantity(quantitySets)) return;
     const item = this.pendingItems.find(item => cartKey(item) === key);
@@ -212,9 +213,9 @@ export class CheckoutStore {
   }
   get hasPrivateConfirmation() { return Boolean(this.token); }
   get locked() { return this.busy || Boolean(this.attempt) || Boolean(this.created); }
-  get canQuote() { return !this.locked && !this.loading && !this.datesLoading && !this.datesError && this.status?.storeOpen
-    && this.zones.some(zone => zone.shippingZoneId === this.shippingZoneId) && this.deliveryDate
-    && (!this.api.dates || this.availableDates.includes(this.deliveryDate)); }
+  get hasValidDeliveryDate() { return Boolean(!this.datesLoading && !this.datesError && this.deliveryDate && (!this.api.dates || this.availableDates.includes(this.deliveryDate))); }
+  get canQuote() { return !this.locked && !this.loading && this.status?.storeOpen
+    && this.zones.some(zone => zone.shippingZoneId === this.shippingZoneId) && this.hasValidDeliveryDate; }
   get canCreate() { return Boolean(this.canQuote && this.quote && this.validCustomer); }
   canContinueDelivery(items: CheckoutItem[]) { return this.canCreate && JSON.stringify(this.quoteInput(items)) === this.quotedInput; }
   get retryPending() { return Boolean(this.attempt) && !this.created; }

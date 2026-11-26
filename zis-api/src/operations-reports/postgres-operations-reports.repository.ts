@@ -48,6 +48,19 @@ export function createPostgresOperationsReportsRepository(factory: SqlClientFact
             order by o.delivery_address->>'city', o.delivery_address->>'street',
                      o.delivery_address->>'houseNumber', s.transitioned_at, o.order_number, o.order_id
             limit ${limitParameter}`, values);
+        if (kind === 'packing' && rows.rows.length) {
+          const schema = await client.query<{ present: boolean }>(`select to_regclass('public.order_bundles') is not null as present`);
+          if (schema.rows[0]?.present) {
+            const bundles = await client.query<{ order_id: string; bundle: NonNullable<OperationReportOrder['bundles']>[number] }>(`select b.order_id,jsonb_build_object(
+              'orderBundleId',b.order_bundle_id,'bundleName',b.bundle_name_snapshot,'quantity',b.quantity,
+              'components',coalesce((select jsonb_agg(jsonb_build_object('productId',c.product_id,'productName',c.product_name_snapshot,
+                'quantity',c.quantity_per_bundle) order by c.product_name_snapshot,c.product_id)
+                from public.order_bundle_components c where c.order_bundle_id=b.order_bundle_id),'[]'::jsonb)) as bundle
+              from public.order_bundles b where b.order_id=any($1::uuid[]) order by b.order_id,b.created_at,b.order_bundle_id`, [rows.rows.map(order => order.orderId)]);
+            const byOrder = new Map(rows.rows.map(order => [order.orderId, order]));
+            for (const row of bundles.rows) { const order = byOrder.get(row.order_id); if (order) (order.bundles ??= []).push(row.bundle); }
+          }
+        }
         await client.query('commit');
         return { kind, date: query.date, generatedAt: generated.rows[0].generatedAt, orders: rows.rows };
       } catch (error) {

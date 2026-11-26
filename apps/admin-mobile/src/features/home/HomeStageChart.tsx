@@ -11,6 +11,8 @@ import { IconSearch } from '@tabler/icons-react';
 import { displayStage, type DisplayStage } from './order-stage.js';
 import { TestPaymentButton } from './TestPaymentButton.js';
 import { ManualPaymentControl } from './ManualPaymentControl.js';
+import { BundleCount } from './BundleCount.js';
+import { minimumPackageCount, packageCountError } from './package-count.js';
 
 const STAGES: DisplayStage[] = ['payment_pending', 'ordered', 'in_preparation', 'packed', 'in_transit', 'delivered', 'approved'];
 const labels = { ...statusLabels, payment_pending: 'ממתינה לתשלום' };
@@ -53,15 +55,15 @@ export function HomeStageChart({ orders, date, selected, onSelect, onOpen }: {
     })}</div>
     <div className="home-stage-results"><Title order={3}>{labels[selected]} · {visible.length} הזמנות</Title>
       {mutation.isError && <Alert color="red" mt="sm">{mutation.error.message}</Alert>}
-      {failure && <Alert color="red" mt="sm">המעבר לא בוצע: {failure.reason ?? 'יש לרענן ולנסות שוב'}</Alert>}
+      {failure && <Alert color="red" mt="sm">המעבר לא בוצע: {packageCountError(failure.reason) ?? 'יש לרענן ולנסות שוב'}</Alert>}
       {!visible.length ? <Text c="dimmed" py="md">אין הזמנות בשלב זה היום.</Text> :
         <SimpleGrid cols={{ base: 1, sm: 2 }} mt="md">{visible.map(order => <Card key={order.orderId} withBorder radius="md" className="home-order-card" style={{ borderInlineStart: `4px solid ${statusColors[order.status]}` }}>
           <Group justify="space-between"><Text fw={700}>{order.orderNumber}</Text><OrderStatusBadge order={order} /></Group>
-          <Stack gap="xs" mt="sm" className="home-order-products">{order.bundles?.map(bundle => <Stack key={bundle.orderBundleId} gap={2}>
-            <Text fw={700} size="sm">{bundle.bundleName} × {bundle.quantity} מארזים זהים</Text>
-            {bundle.components.map(component => <Text size="xs" key={component.productId}>{component.productName}: {component.quantity} למארז (סה״כ {component.quantity * bundle.quantity} יחידות)</Text>)}
-          </Stack>)}
-          {Boolean(order.items.length && order.bundles?.length) && <Text size="xs" fw={700}>מוצרים בנפרד</Text>}
+          <Stack gap="xs" mt="sm" className="home-order-products">{order.bundles?.map(bundle => <Group key={bundle.orderBundleId} wrap="nowrap" gap="sm">
+            {bundle.imageUrl ? <img className="home-thumb" src={bundle.imageUrl} alt={bundle.bundleName} /> : <div className="home-thumb home-thumb-empty" role="img" aria-label={`אין תמונה ל${bundle.bundleName}`}>אין תמונה</div>}
+            <div><Text fw={700} size="sm">{bundle.bundleName}</Text><BundleCount quantity={bundle.quantity} /></div>
+          </Group>)}
+          {Boolean(order.items.length && order.bundles?.length) && <Text size="xs" fw={700}>מוצרים</Text>}
           {order.items.length ? groupOrderItems(order.items).map(item => <Group key={item.name} wrap="nowrap" gap="sm" className="home-order-product">
             {item.imageUrl ? <img className="home-thumb" src={item.imageUrl} alt={item.name} /> : <div className="home-thumb home-thumb-empty" role="img" aria-label={`אין תמונה ל${item.name}`}>אין תמונה</div>}
             <div><Text size="sm" fw={600}>{item.name}</Text><Text size="xs" c="dimmed">{item.quantitySets} סטים</Text></div>
@@ -76,9 +78,9 @@ export function HomeStageChart({ orders, date, selected, onSelect, onOpen }: {
           <ManualPaymentControl order={order} />
         </Card>)}</SimpleGrid>}
     </div>
-    {packageOrder && <PackageCountDialog key={packageOrder.orderId} initialCount={packageOrder.packageCount}
+    {packageOrder && <PackageCountDialog key={packageOrder.orderId} initialCount={packageOrder.packageCount} minimumCount={minimumPackageCount(packageOrder)}
       targetLabel={NEXT[packageOrder.status]?.[1] ?? 'שמירה'} pending={mutation.isPending}
-      error={mutation.isError ? mutation.error.message : mutation.data?.results.find(result => !result.ok)?.reason}
+      error={mutation.isError ? mutation.error.message : packageCountError(mutation.data?.results.find(result => !result.ok)?.reason)}
       onClose={() => setPackageOrder(null)} onConfirm={packageCount => mutation.mutate({ order: packageOrder, packageCount })} />}
   </Card>;
 }

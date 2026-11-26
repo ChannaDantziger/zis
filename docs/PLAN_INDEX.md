@@ -17,6 +17,7 @@
 | המשימה | נקודת התחלה |
 |---|---|
 | בניית החנות ושליפת מוצרים ותמונות | [דרישות חנות](planning/STOREFRONT_REQUIREMENTS.md), P1–P4 |
+| מארזים — ניהול, חנות, רכישה ותוכניות | [ניהול מארזים](ADMIN_BUNDLES.md), [מצב ובדיקת ענף 3](BUNDLE_PHASE_3_TESTING.md), [תוכניות הענפים](planning/BUNDLES_REMAINING_WORK_PLAN.md) |
 | הנגשת אתר הלקוחות | [תוכנית נגישות](ACCESSIBILITY_PLAN.md), P3/P8 |
 | שיפור HTML ופיצול לקומפוננטות | [תוכנית Frontend](FRONTEND_BUILD_PLAN.md), [מפת רכיבים](FRONTEND_ARCHITECTURE.md) |
 | עגלה, הזמנה, תשלום ומשלוח | [Commerce](BACKEND_COMMERCE.md), P5–P7 והפערים הרלוונטיים |
@@ -134,7 +135,7 @@
 | [ADMIN_BUNDLES](ADMIN_BUNDLES.md) | הגדרת מארזים בניהול: קוד מקומי, מיגרציה ידנית ובדיקות ומגבלות |
 | [BUNDLES_PHASE_2_PLAN](planning/BUNDLES_PHASE_2_PLAN.md) | תוכנית מאושרת: הצגת מארזים והרכבתם בחנות, ללא רכישה בענף זה |
 | [BUNDLES_REMAINING_WORK_PLAN](planning/BUNDLES_REMAINING_WORK_PLAN.md) | תוכניות לאישור לענפים 3–5: עגלה והזמנה, תפעול ומשלוח, בדיקות ומסירה |
-| [BUNDLE_PHASE_3_TESTING](BUNDLE_PHASE_3_TESTING.md) | מצב חלקי של ענף 3, תנאים להחלה ידנית של 022 והפעלת ניסוי מוגבלת וכבויה כברירת מחדל |
+| [BUNDLE_PHASE_3_TESTING](BUNDLE_PHASE_3_TESTING.md) | מצב חלקי של ענף 3, דיווח על החלת 022 וניסוי מקומי שאושר על מסד החנות |
 | [ADMIN_UX_SIMPLIFICATION](ADMIN_UX_SIMPLIFICATION.md) | פישוט קטלוג/ניהול והסרת בחירת שיטת משלוח; קוד ובדיקות מקומיות 21.10, DB חי פתוח |
 | [ADMIN_OPERATION_REPORTS](ADMIN_OPERATION_REPORTS.md) | תוויות אריזה ודוחות אספקה לפי מוצרים פשוטים, כתובות ומספרי הזמנה; הדפסה ובחירה מדויקת; אימות חי פתוח |
 | [ADMIN_QUALITY_AUDIT](ADMIN_QUALITY_AUDIT.md) | הרשאות מנהל, התראות אישיות, בידוד Session ותאריכים; בדיקות ממוקדות מקומיות |
@@ -146,7 +147,7 @@
 | [INVENTORY_AND_STATUS](INVENTORY_AND_STATUS.md) | ההתנהגות הנוכחית של מלאי וסטטוסים |
 | [מצגת מסלול רכישה, מלאי ותפעול](checkout-inventory-flow.html) | 16 שקפים: Client/Server/DB, בדיקות מלאי, SQL, אישור ניסוי, תפעול ופערים |
 | [zis-api README](../zis-api/README.md) | פקודות הרצה וגבולות השרת |
-| [zis-db README](../zis-db/README.md) | שמונה עשרה מיגרציות forward-only; 018 למשימות ומארזים הוכנה ודורשת החלה ידנית; מצב DB וה־ledger טרם אומתו |
+| [zis-db README](../zis-db/README.md) | מיגרציות המאגר ומצב החלתן המדווח; בעלת האתר דיווחה ש־022 עברה במסד החנות, ללא אימות סכמה או ledger |
 | [scripts README](../scripts/README.md) | הכנת קבצים ובדיקת התיעוד |
 | [פקודות הרצה](../פקודות%20הרצה.md) | פקודות הפעלת ה־API, החנות וממשק הניהול המקומי |
 | [.codex README](../.codex/README.md) | תיאור פרופיל הרשאות מקומי |
@@ -194,7 +195,7 @@
 | [018](../zis-db/migrations/018_admin_home_tasks_and_packages.sql) | מצב והיסטוריית משימות, מספר מארזים בהזמנה; בעלת האתר דיווחה שהחילה ידנית ב־10.11, ללא ledger מאומת |
 | [019](../zis-db/migrations/019_sequential_order_numbers.sql) | רצף מספרי הזמנות מ־1000, תוך שמירת מספרים קיימים; הוכנה בלבד, דורשת בדיקת ledger והחלה ידנית |
 | [021](../zis-db/migrations/021_catalog_bundle_publication.sql) | הוספת מצב פרסום למארזים; הוכנה בלבד ודורשת בירור 020/ledger והחלה ידנית |
-| [022](../zis-db/migrations/022_order_bundles.sql) | טיוטת שמירת מארזים ורכיבים בהזמנה; הוכנה בלבד, ללא אימות או החלה |
+| [022](../zis-db/migrations/022_order_bundles.sql) | שמירת מארזים ורכיבים בהזמנה; דווח שעברה במסד החנות, ללא אימות סכמה או ledger |
 | [package.json](../zis-api/package.json) | תלויות וסקריפטים ל־API |
 | [prepare-file-for-llm](../scripts/prepare-file-for-llm.ps1) | הכנת עותק בטוח; קוראים רק PreparedPath |
 | [check-docs](../scripts/check-docs.ps1) | בדיקת אורכים, קישורים וכיסוי כל MD באינדקס |

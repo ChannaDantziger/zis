@@ -11,6 +11,10 @@ import { observer } from 'mobx-react-lite';
 import { adminUiStore } from '../stores/admin-ui.store.js';
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import { getHomeOrders } from '../features/home/home-data.js';
+import type { HomeOrder } from '../features/home/home.types.js';
+import { OrderDateReminder } from '../features/home/OrderDateReminder.js';
+import { minimumPackageCount, packageCountError } from '../features/home/package-count.js';
 
 const FILTER_DEBOUNCE_MS = 300;
 const sortOptions = [
@@ -34,6 +38,7 @@ export const OrdersPage = observer(function OrdersPage() {
   if (location) params.set('location', location);
   const locationPending = location !== adminUiStore.location.trim();
   const query = useQuery({ queryKey: ['orders', date, statusFilter, location, sortBy, sortDirection, page], queryFn: ({ signal }) => request<OrderPageResponse>(`/admin/orders/page?${params}`, { signal }), gcTime: 0 });
+  const images = useQuery({ queryKey: ['home-orders', date, date], queryFn: ({ signal }) => getHomeOrders(date, date, signal) });
   const filterStages = [PAYMENT_PENDING, ...ORDER_STATUSES];
   const statusCountQueries = useQueries({ queries: filterStages.map((status) => {
     const countParams = new URLSearchParams({ deliveryDate: date, status: status === PAYMENT_PENDING ? 'ordered' : status, page: '1', pageSize: '1' });
@@ -50,6 +55,7 @@ export const OrdersPage = observer(function OrdersPage() {
   const selected = (locationPending ? [] : orders).filter((order) => adminUiStore.selectedOrderIds.includes(order.orderId));
   const eligible = orders.filter((order) => order.allowedNextStatuses.length > 0);
   const target = selected[0]?.allowedNextStatuses.find((status) => selected.every((order) => order.allowedNextStatuses.includes(status)));
+  const detailsFor = (id: string) => images.data?.orders.find(order => order.orderId === id);
   const mutation = useMutation({
     mutationFn: ({ targetStatus, counts }: { targetStatus: OrderStatus; counts?: Record<string, number> }) => request<BulkStatusResponse>('/admin/orders/bulk-status', {
       method: 'POST', body: JSON.stringify({ targetStatus, items: selected.map(({ orderId, version }) => ({ orderId, version, ...(counts ? { packageCount: counts[orderId] } : {}) })) }),
@@ -62,8 +68,11 @@ export const OrdersPage = observer(function OrdersPage() {
   });
   const busy = mutation.isPending;
   return <Stack gap="lg" maw={900} mx="auto">
+    <OrderDateReminder />
     <Group justify="space-between"><div><Text c="dimmed" size="sm">{date}</Text><Title order={1}>הזמנות לפי יום</Title></div><Button variant="subtle" disabled={busy} leftSection={<IconRefresh size={16} />} onClick={() => query.refetch()}>רענון</Button></Group>
     <TextInput type="date" maw={360} label="תאריך אספקה" value={date} disabled={busy} onChange={(event) => { if (event.currentTarget.value) adminUiStore.setDeliveryDate(event.currentTarget.value); }} />
+    {images.isError && <Alert color="orange">לא ניתן לטעון את תמונות ההזמנות כרגע. פרטי ההזמנות עדיין זמינים.</Alert>}
+    {date !== currentBusinessDate() && <Alert color="orange" title="שימי לב: מוצגות הזמנות ליום אחר" role="status">התאריך שנבחר הוא {date}. הוא יישאר פעיל עד שתשני אותו.</Alert>}
     <Group gap="xs" className="orders-status-filters" role="group" aria-label="סינון לפי שלב ההזמנה">
       <StatusFilterButton label="הכול" count={allCount} active={!statusFilter} disabled={busy} onClick={() => adminUiStore.setStatusFilter(null)} />
       <StatusFilterButton label="ממתינה לתשלום" count={statusCounts[PAYMENT_PENDING]} icon={<IconSearch size={16} />} color="#b36b1f" active={statusFilter === PAYMENT_PENDING} disabled={busy} onClick={() => adminUiStore.setStatusFilter(PAYMENT_PENDING)} />
@@ -88,21 +97,21 @@ export const OrdersPage = observer(function OrdersPage() {
     <Card withBorder radius="lg" className="orders-sticky-toolbar">
       {query.data && <Group justify="space-between" wrap="wrap">
         <Checkbox label={`בחירת ההזמנות שניתן לקדם בעמוד הנוכחי · ${eligible.length}`} disabled={busy || locationPending || !eligible.length} checked={eligible.length > 0 && eligible.every((order) => adminUiStore.selectedOrderIds.includes(order.orderId))} indeterminate={selected.length > 0 && selected.length < eligible.length} onChange={(event) => adminUiStore.selectOrders(event.currentTarget.checked ? eligible.map((order) => order.orderId) : [])} />
-        {selected.length > 0 && <Group gap="xs"><Text fw={600}>{selected.length} נבחרו</Text><Button size="sm" loading={busy} disabled={!target} rightSection={<IconArrowLeft size={16} />} onClick={() => { if (target === 'in_transit') { setPackageCounts(Object.fromEntries(selected.map((order) => [order.orderId, '']))); setPackageDialogOpen(true); } else if (target && window.confirm(`לאשר העברה של ${selected.length} הזמנות לסטטוס "${statusLabels[target]}"?`)) mutation.mutate({ targetStatus: target }); }}>{target ? statusLabels[target] : 'אין מעבר משותף'}</Button><Button size="sm" variant="subtle" disabled={busy} onClick={() => adminUiStore.clearSelection()}>נקה בחירה</Button></Group>}
+        {selected.length > 0 && <Group gap="xs"><Text fw={600}>{selected.length} נבחרו</Text><Button size="sm" loading={busy} disabled={!target || (target === 'in_transit' && selected.some(order => !detailsFor(order.orderId)))} rightSection={<IconArrowLeft size={16} />} onClick={() => { if (target === 'in_transit') { setPackageCounts(Object.fromEntries(selected.map((order) => { const detail = detailsFor(order.orderId)!; return [order.orderId, Math.max(detail.packageCount ?? 0, minimumPackageCount(detail))]; }))); setPackageDialogOpen(true); } else if (target && window.confirm(`לאשר העברה של ${selected.length} הזמנות לסטטוס "${statusLabels[target]}"?`)) mutation.mutate({ targetStatus: target }); }}>{target ? statusLabels[target] : 'אין מעבר משותף'}</Button><Button size="sm" variant="subtle" disabled={busy} onClick={() => adminUiStore.clearSelection()}>נקה בחירה</Button></Group>}
       </Group>}
       {selected.length > 0 && !target && <Text size="sm" mt="xs">בחרי הזמנות שנמצאות באותו שלב ויכולות להתקדם יחד.</Text>}
       {mutation.isError && <Alert mt="sm" color="red" title="שינוי הסטטוס נכשל">{mutation.error.message}</Alert>}
-      {mutation.data && <Alert mt="sm" color={mutation.data.failed ? 'orange' : 'teal'} title={`הושלמו ${mutation.data.succeeded}, נכשלו ${mutation.data.failed}`}><Stack gap="xs">{mutation.data.results.filter((item) => !item.ok).map((item) => <Text key={item.orderId} size="sm">{orders.find((order) => order.orderId === item.orderId)?.orderNumber ?? item.orderId}: {item.reason ?? 'המעבר לא הושלם'}</Text>)}</Stack></Alert>}
+      {mutation.data && <Alert mt="sm" color={mutation.data.failed ? 'orange' : 'teal'} title={`הושלמו ${mutation.data.succeeded}, נכשלו ${mutation.data.failed}`}><Stack gap="xs">{mutation.data.results.filter((item) => !item.ok).map((item) => <Text key={item.orderId} size="sm">{orders.find((order) => order.orderId === item.orderId)?.orderNumber ?? item.orderId}: {packageCountError(item.reason) ?? 'המעבר לא הושלם'}</Text>)}</Stack></Alert>}
     </Card>
     {query.isPending ? <LoadingState /> : query.isError ? <ErrorState message={query.error.message} /> : <>
       <Text>{query.data?.page.totalItems ?? 0} הזמנות · {orders.length} בעמוד הנוכחי</Text>
-      {!orders.length ? <EmptyState>אין הזמנות לתאריך ולמסננים אלה</EmptyState> : <Stack>{orders.map((order) => <OrderRowCard key={order.orderId} order={order} busy={busy || locationPending} />)}</Stack>}
+      {!orders.length ? <EmptyState>אין הזמנות לתאריך ולמסננים אלה</EmptyState> : <Stack>{orders.map((order) => <OrderRowCard key={order.orderId} order={order} images={images.data?.orders.find(item => item.orderId === order.orderId)} busy={busy || locationPending} />)}</Stack>}
       {(query.data?.page.totalPages ?? 0) > 1 && <Pagination total={query.data!.page.totalPages} value={page} disabled={busy || locationPending} onChange={(value) => adminUiStore.setOrderPage(value)} aria-label="עמודי הזמנות" />}
     </>}
     <Modal opened={packageDialogOpen} onClose={() => setPackageDialogOpen(false)} title="מספר מארזים לפני יציאה למשלוח">
       <Stack><Text size="sm">הזיני את מספר המארזים לכל הזמנה. המספר יישמר בפרטי ההזמנה עם העברתה לסטטוס יצאה.</Text>
-        {selected.map((order) => <NumberInput key={order.orderId} label={`${order.orderNumber} · ${order.location}`} value={packageCounts[order.orderId] ?? ''} min={1} max={9999} allowDecimal={false} allowNegative={false} required onChange={(value) => setPackageCounts((current) => ({ ...current, [order.orderId]: value }))} />)}
-        <Button loading={busy} disabled={!selected.length || selected.some((order) => !Number.isInteger(packageCounts[order.orderId]) || Number(packageCounts[order.orderId]) < 1 || Number(packageCounts[order.orderId]) > 9999)} onClick={() => mutation.mutate({ targetStatus: 'in_transit', counts: Object.fromEntries(selected.map((order) => [order.orderId, Number(packageCounts[order.orderId])])) })}>אישור והעברה ליצאה</Button>
+        {selected.map((order) => { const detail = detailsFor(order.orderId); const minimum = detail ? minimumPackageCount(detail) : 1; return <NumberInput key={order.orderId} label={`${order.orderNumber} · ${order.location}`} description={`נדרשות לפחות ${minimum} אריזות`} value={packageCounts[order.orderId] ?? ''} min={minimum} max={9999} allowDecimal={false} allowNegative={false} required onChange={(value) => setPackageCounts((current) => ({ ...current, [order.orderId]: value }))} />; })}
+        <Button loading={busy} disabled={!selected.length || selected.some((order) => { const detail = detailsFor(order.orderId); return !detail || !Number.isInteger(packageCounts[order.orderId]) || Number(packageCounts[order.orderId]) < minimumPackageCount(detail) || Number(packageCounts[order.orderId]) > 9999; })} onClick={() => mutation.mutate({ targetStatus: 'in_transit', counts: Object.fromEntries(selected.map((order) => [order.orderId, Number(packageCounts[order.orderId])])) })}>אישור והעברה ליצאה</Button>
       </Stack>
     </Modal>
   </Stack>;
@@ -112,9 +121,12 @@ function StatusFilterButton({ label, count, icon, color = '#60412f', active, dis
   return <Button type="button" variant={active ? 'filled' : 'light'} color={color} leftSection={icon} aria-pressed={active} disabled={disabled} onClick={onClick}>{label} <b className="orders-status-count">{count ?? '…'}</b></Button>;
 }
 
-const OrderRowCard = observer(function OrderRowCard({ order, busy }: { order: OrderRow; busy: boolean }) {
+const OrderRowCard = observer(function OrderRowCard({ order, images, busy }: { order: OrderRow; images?: HomeOrder; busy: boolean }) {
   return <Card withBorder radius="lg"><Group align="flex-start" wrap="nowrap">
     {order.allowedNextStatuses.length > 0 && <Checkbox disabled={busy} checked={adminUiStore.selectedOrderIds.includes(order.orderId)} onChange={(event) => adminUiStore.toggleOrder(order.orderId, event.currentTarget.checked)} aria-label={`בחר ${order.orderNumber}`} />}
-    <div className="grow"><Group justify="space-between"><Text fw={700}>{order.orderNumber}</Text><OrderStatusBadge order={order} /></Group>{order.isTest && <Badge color="orange" mt="xs">הזמנת ניסוי · ללא חיוב</Badge>}<Text size="sm" c="dimmed">{order.location}</Text><Text size="sm" truncate title={order.itemSummary}>{order.itemSummary}</Text><Group mt="xs"><Text size="sm">₪ {order.total}</Text>{order.hasOpenTask && <Badge color="orange">שים לב · משימה פתוחה</Badge>}<Button component={Link} to={`/orders/${order.orderId}`} variant="subtle" size="xs" disabled={busy}>פתח פרטים</Button></Group></div>
+    <div className="grow"><Group justify="space-between"><Text fw={700}>{order.orderNumber}</Text><OrderStatusBadge order={order} /></Group>{order.isTest && <Badge color="orange" mt="xs">הזמנת ניסוי · ללא חיוב</Badge>}<Text size="sm" c="dimmed">{order.location}</Text>
+      {images && <Group gap="xs" mt="xs">{images.bundles?.map(bundle => bundle.imageUrl ? <img key={bundle.orderBundleId} className="home-thumb" src={bundle.imageUrl} alt={bundle.bundleName} /> : <div key={bundle.orderBundleId} className="home-thumb home-thumb-empty" role="img" aria-label={`אין תמונה ל${bundle.bundleName}`}>אין תמונה</div>)}
+        {images.items.map(item => item.imageUrl ? <img key={item.orderItemId} className="home-thumb" src={item.imageUrl} alt={item.productName} /> : <div key={item.orderItemId} className="home-thumb home-thumb-empty" role="img" aria-label={`אין תמונה ל${item.productName}`}>אין תמונה</div>)}</Group>}
+      <Text size="sm" truncate title={order.itemSummary}>{order.itemSummary}</Text><Group mt="xs"><Text size="sm">₪ {order.total}</Text>{order.hasOpenTask && <Badge color="orange">שים לב · משימה פתוחה</Badge>}<Button component={Link} to={`/orders/${order.orderId}`} variant="subtle" size="xs" disabled={busy}>פתח פרטים</Button></Group></div>
   </Group></Card>;
 });

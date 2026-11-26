@@ -9,7 +9,9 @@ import { readOrderBundles, saveOrderBundles } from './bundle-order-repository.js
 interface RequestRow extends Record<string,unknown> { request_hash: string; order_id: string | null; }
 interface CreatedRow extends Record<string,unknown> { order_id: string; order_number: string; total: string; is_test?: boolean; version?: string; status?:string;payment_status?:string; }
 interface SnapshotRow extends Record<string,unknown> { product_variant_id:string | null;product_id:string;product_name:string;variant_name:string;product_code:string | null;set_size:number | null;price_per_set:string; }
-interface ConfirmationRow extends CreatedRow { status:string;payment_status:string;delivery_date:string;is_test:boolean;items?:OrderConfirmationResponse['items']; }
+interface ConfirmationRow extends CreatedRow { status:string;payment_status:string;delivery_date:string;is_test:boolean;items?:OrderConfirmationResponse['items'];
+  subtotal?: string; shipping_total?: string; customer?: OrderConfirmationResponse['customer']; delivery_address?: OrderConfirmationResponse['deliveryAddress'];
+  venue_name?: string | null; dedication_text?: string | null; customer_notes?: string | null; }
 export function createPostgresOrderRepository(factory: SqlClientFactory): OrderRepository {
   return {
     async withTransaction(work) {
@@ -22,6 +24,12 @@ export function createPostgresOrderRepository(factory: SqlClientFactory): OrderR
       try {
         await client.query('begin isolation level repeatable read read only');
         const result=await client.query<ConfirmationRow>(`select o.order_id,o.order_number,o.status,o.payment_status,o.is_test,extract(epoch from o.updated_at)::text as version,to_char(o.delivery_date,'YYYY-MM-DD') as delivery_date,o.total,
+            o.subtotal::text as subtotal,o.shipping_total::text as shipping_total,
+            jsonb_build_object('name',o.customer_name,'phone',o.customer_phone,'email',o.customer_email,'deliveryPhone',coalesce(o.delivery_phone,o.customer_phone)) as customer,
+            jsonb_build_object('city',o.delivery_address->>'city','neighborhood',o.delivery_address->>'neighborhood',
+              'street',o.delivery_address->>'street','houseNumber',o.delivery_address->>'houseNumber',
+              'apartment',o.delivery_address->>'apartment','postalCode',o.delivery_address->>'postalCode') as delivery_address,
+            o.delivery_venue_name as venue_name,o.dedication_text,o.customer_notes,
             coalesce((select jsonb_agg(jsonb_build_object('productId',i.product_id,'productVariantId',i.product_variant_id,'quantitySets',i.quantity_sets,'productName',i.product_name_snapshot,'lineTotal',i.line_total::text)
               order by i.product_id,i.product_variant_id nulls first) from public.order_items i where i.order_id=o.order_id),'[]'::jsonb) as items
           from public.order_confirmation_tokens t join public.orders o on o.order_id=t.order_id
@@ -32,7 +40,12 @@ export function createPostgresOrderRepository(factory: SqlClientFactory): OrderR
         const publicBundles = bundles.map(({ imagePath: _imagePath, components, ...bundle }) => ({ ...bundle,
           components: components.map(({ imagePath: _componentImagePath, ...component }) => component) }));
         await client.query('commit');
-        return {isTest:row.is_test,...(row.version ? {version:row.version} : {}),...(row.items ? {items:row.items} : {}),...(publicBundles.length ? {bundles:publicBundles} : {}),orderNumber:row.order_number,status:row.status,paymentStatus:row.payment_status,deliveryDate:row.delivery_date,total:row.total,currency:'ILS'};
+        return {isTest:row.is_test,...(row.version ? {version:row.version} : {}),...(row.items ? {items:row.items} : {}),...(publicBundles.length ? {bundles:publicBundles} : {}),
+          ...(row.subtotal !== undefined ? {subtotal:row.subtotal} : {}),...(row.shipping_total !== undefined ? {shippingTotal:row.shipping_total} : {}),
+          ...(row.customer ? {customer:row.customer} : {}),...(row.delivery_address ? {deliveryAddress:row.delivery_address} : {}),
+          ...(row.venue_name !== undefined ? {venueName:row.venue_name} : {}),...(row.dedication_text !== undefined ? {dedicationText:row.dedication_text} : {}),
+          ...(row.customer_notes !== undefined ? {customerNotes:row.customer_notes} : {}),
+          orderNumber:row.order_number,status:row.status,paymentStatus:row.payment_status,deliveryDate:row.delivery_date,total:row.total,currency:'ILS'};
       } catch (error) { await client.query('rollback'); throw error; } finally { client.release?.(); }
     },
   };

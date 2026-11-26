@@ -19,7 +19,9 @@ export interface OrderInput extends QuoteInput {
 }
 export interface OrderCreated { version?: string; orderId: string; orderNumber: string; status: string; paymentStatus: string;
   total: string; currency: 'ILS'; confirmationToken: string }
-export interface Confirmation { items?: Array<CheckoutItem & { productName?: string; lineTotal?: string }>; bundles?: ConfirmationBundle[]; version?: string; isTest: boolean; orderNumber: string; status: string; paymentStatus: string; deliveryDate: string; total: string; currency: 'ILS' }
+export interface Confirmation { items?: Array<CheckoutItem & { productName?: string; lineTotal?: string }>; bundles?: ConfirmationBundle[]; version?: string; isTest: boolean; orderNumber: string; status: string; paymentStatus: string; deliveryDate: string; total: string; currency: 'ILS';
+  subtotal?: string; shippingTotal?: string; customer?: { name: string; phone: string; email: string; deliveryPhone: string };
+  deliveryAddress?: OrderInput['deliveryAddress']; venueName?: string | null; dedicationText?: string | null; customerNotes?: string | null }
 export interface CheckoutApi {
   updatePending?(token: string, input: { items: CheckoutItem[]; bundles?: CheckoutBundle[]; expectedVersion: string }, key: string): Promise<OrderCreated>;
   dates?(): Promise<{ timezone: string; today: string; maxDate: string; availableDates: string[] }>;

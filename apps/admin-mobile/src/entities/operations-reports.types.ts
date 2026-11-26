@@ -18,6 +18,7 @@ export interface OperationReportOrder {
   customerNotes: string | null;
   transitionedAt: string;
   items: Array<{ categoryName: string; productName: string; quantitySets: number; setSize: number }>;
+  bundles?: Array<{ orderBundleId: string; bundleName: string; quantity: number; components: Array<{ productId: string; productName: string; quantity: number }> }>;
 }
 export interface OperationReport {
   kind: OperationReportKind;

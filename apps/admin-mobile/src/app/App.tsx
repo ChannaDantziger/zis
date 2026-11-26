@@ -1,7 +1,7 @@
-import { AppShell, Badge, Burger, Button, Divider, Group, NavLink, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { Alert, AppShell, Badge, Burger, Button, Divider, Group, NavLink, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { IconBell, IconBox, IconChecklist, IconHome, IconSettings, IconTruck, IconPhoto } from '@tabler/icons-react';
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
@@ -21,6 +21,10 @@ import { FaqPage } from '../pages/FaqPage.js';
 import { LoginPage } from '../pages/LoginPage.js';
 import { adminSessionStore } from '../stores/admin-session.store.js';
 import { observer } from 'mobx-react-lite';
+import { adminUiStore } from '../stores/admin-ui.store.js';
+import { currentBusinessDate, shouldResetOrderDate } from '../shared/api/business-date.js';
+
+const DATE_NOTICE_MS = 6000;
 
 const navigationGroups = [
   { label: 'תפעול שוטף', items: [
@@ -42,6 +46,22 @@ const navigationGroups = [
 export function App() {
   const location = useLocation();
   const [navigationOpened, { toggle, close }] = useDisclosure(false);
+  const previousPath = useRef(location.pathname);
+  const [dateNotice, setDateNotice] = useState(false);
+  useEffect(() => {
+    const today = currentBusinessDate();
+    const leavingOrders = shouldResetOrderDate(previousPath.current, location.pathname, adminUiStore.deliveryDate, today);
+    previousPath.current = location.pathname;
+    if (leavingOrders) {
+      adminUiStore.setDeliveryDate(today);
+      setDateNotice(true);
+    }
+  }, [location.pathname]);
+  useEffect(() => {
+    if (!dateNotice) return;
+    const timer = setTimeout(() => setDateNotice(false), DATE_NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [dateNotice]);
   return (
     <AppShell header={{ height: 72 }} navbar={{ width: 220, breakpoint: 'sm', collapsed: { mobile: !navigationOpened } }} padding="md">
       <AppShell.Header className="app-header">
@@ -51,7 +71,7 @@ export function App() {
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p="sm"><Stack gap="sm">{navigationGroups.map((group, index) => <Stack key={group.label} gap={4}>{index > 0 && <Divider my="xs" />}<Text px="sm" pt="xs" size="xs" fw={700} c="dimmed">{group.label}</Text>{group.items.map(({ label, to, icon: Icon }) => <NavLink key={to} component={Link} to={to} onClick={close} label={label} leftSection={<Icon size={18} />} active={to === '/' ? location.pathname === '/' : location.pathname === to || location.pathname.startsWith(`${to}/`)} variant="light" />)}{index > 0 && <NavLink label="ניהול החנות" leftSection={<IconSettings size={18} />} defaultOpened={["/notifications", "/settings"].includes(location.pathname)}><NavLink component={Link} to="/settings" onClick={close} label="הגדרות חנות ומשלוח" leftSection={<IconSettings size={18} />} active={location.pathname === "/settings"} /><NavLink component={Link} to="/notifications" onClick={close} label="ניהול התראות" leftSection={<IconBell size={18} />} active={location.pathname === "/notifications"} /></NavLink>}</Stack>)}</Stack></AppShell.Navbar>
-      <AppShell.Main><Outlet /></AppShell.Main>
+      <AppShell.Main>{dateNotice && <Alert color="blue" role="status" mb="md" withCloseButton onClose={() => setDateNotice(false)}>יצאת מאזור ההזמנות; תאריך ההזמנות חזר לתאריך הנוכחי.</Alert>}<Outlet /></AppShell.Main>
     </AppShell>
   );
 }

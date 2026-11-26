@@ -28,6 +28,19 @@ async function ready(store: CheckoutStore) {
     customerEmail: 'qa@example.invalid', street: 'רחוב QA', houseNumber: '1' })) store.setCustomer(field as keyof typeof store.customer, value);
   await store.preview(items);
 }
+
+test('delivery date can be validated in the products step before a shipping zone is selected', async () => {
+  const store = setup({ dates: async () => ({ timezone: 'Asia/Jerusalem', today: '2026-10-12', maxDate: '2026-10-12', availableDates: ['2026-10-12'] }) });
+  try {
+    await store.load();
+    assert.equal(store.hasValidDeliveryDate, false);
+    store.setDelivery('deliveryDate', '2026-10-12');
+    assert.equal(store.hasValidDeliveryDate, true);
+    assert.equal(Boolean(store.canQuote), false);
+    store.setDelivery('deliveryDate', '2026-10-13');
+    assert.equal(store.hasValidDeliveryDate, false);
+  } finally { store.dispose(); }
+});
 test('creation clears the matching cart once and later confirmation preserves additions', async () => {
   cartStore.items = items.map(item => ({ ...item }));
   const store = setup();
@@ -40,6 +53,23 @@ test('creation clears the matching cart once and later confirmation preserves ad
   } finally { cartStore.clear(); store.dispose(); }
 });
 
+test('confirmation keeps address and shipping breakdown in memory without copying them to recovery storage', async () => {
+  const originalStorage = globalThis.sessionStorage;
+  const storage = new Map<string, string>();
+  Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, value: {
+    getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value), removeItem: (key: string) => storage.delete(key),
+  } });
+  const customer = { name: 'שם פרטי לבדיקה', phone: '0500000000', deliveryPhone: '0500000001', email: 'private@example.invalid' };
+  const deliveryAddress = { city: 'ירושלים', street: 'כתובת פרטית לבדיקה', houseNumber: '1' };
+  const store = setup({ confirmation: async () => ({ ...created, isTest: false, deliveryDate: '2026-10-12', subtotal: '40.00', shippingTotal: '12.00', customer, deliveryAddress }) });
+  try {
+    await ready(store); await store.submit(items);
+    assert.deepEqual(store.confirmation?.deliveryAddress, deliveryAddress);
+    assert.equal(store.confirmation?.shippingTotal, '12.00');
+    assert.equal([...storage.values()].some(value => value.includes(customer.email) || value.includes(deliveryAddress.street)), false);
+  } finally { store.dispose(); Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, value: originalStorage }); }
+});
+
 test('confirmation restores bundle snapshots without allowing unsupported pending edits', async () => {
   const bundle = { orderBundleId: 'line', bundleId: 'bundle', bundleName: 'מארז', unitCount: 2, quantity: 1, lineTotal: '20.00',
     components: [{ productId: 'a', productName: 'קינוח', quantity: 2, unitPrice: '10.00' }] };
@@ -49,6 +79,26 @@ test('confirmation restores bundle snapshots without allowing unsupported pendin
     assert.deepEqual(store.pendingBundles, [bundle]);
     assert.equal(store.pendingItemsChanged, false);
     assert.equal(store.canEditPending, false);
+  } finally { store.dispose(); }
+});
+
+test('paid confirmation hides editing and rejects all pending item and bundle changes', async () => {
+  let paid = false;
+  const bundle = { orderBundleId: 'line', bundleId: 'bundle', bundleName: 'מארז', unitCount: 2, quantity: 1, lineTotal: '20.00',
+    components: [{ productId: 'a', productName: 'קינוח', quantity: 2, unitPrice: '10.00' }] };
+  const store = setup({ confirmation: async () => ({ ...created, version: '1', paymentStatus: paid ? 'paid' : 'pending',
+    isTest: false, deliveryDate: '2026-10-12', items, bundles: [bundle] }) });
+  try {
+    await ready(store); await store.submit(items);
+    assert.equal(store.showPendingEditor, true);
+    paid = true; await store.refreshConfirmation();
+    assert.equal(store.showPendingEditor, false);
+    assert.equal(store.canEditPending, false);
+    store.setPendingQuantity('product-a', 5);
+    store.setPendingBundle({ ...bundle, quantity: 3 });
+    store.removePendingBundle('line');
+    assert.deepEqual(store.pendingItems, items);
+    assert.deepEqual(store.pendingBundles, [bundle]);
   } finally { store.dispose(); }
 });
 

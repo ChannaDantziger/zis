@@ -62,3 +62,17 @@ test('report failure rolls back and releases connection', async () => {
   assert.equal(fixture.calls.at(-1)?.sql, 'rollback');
   assert.ok(fixture.released());
 });
+
+test('packing attaches bundle components to the correct order within the report transaction', async () => {
+  const client = { async query(sql: string) {
+    if (sql.includes('transaction_timestamp')) return { rows: [{ generatedAt: '2026-10-09T10:00:00Z' }] };
+    if (sql.startsWith('with selected')) return { rows: [{ orderId: ORDER_ID, items: [] }] };
+    if (sql.includes('to_regclass')) return { rows: [{ present: true }] };
+    if (sql.includes('from public.order_bundles b')) return { rows: [{ order_id: ORDER_ID, bundle: { orderBundleId: 'b', bundleName: 'מארז', quantity: 2,
+      components: [{ productId: 'p', productName: 'קינוח', quantity: 3 }] } }] };
+    return { rows: [] };
+  } } as unknown as SqlClient;
+  const report = await createPostgresOperationsReportsRepository(async () => client).read('packing', { date: DATE });
+  assert.equal(report.orders[0].bundles?.[0].quantity, 2);
+  assert.equal(report.orders[0].bundles?.[0].components[0].quantity, 3);
+});

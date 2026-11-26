@@ -62,7 +62,7 @@ async function listHomeOrders(factory: SqlClientFactory, from: string, to: strin
     if (schema.rows[0]?.present && orders.size) {
       const bundles = await client.query<{ order_id: string; bundle: OrderBundleSnapshot }>(`select b.order_id,jsonb_build_object(
           'orderBundleId',b.order_bundle_id,'bundleId',b.bundle_id,'categoryId',b.category_id,
-          'bundleName',b.bundle_name_snapshot,'categoryName',b.category_name_snapshot,'unitCount',b.unit_count_snapshot,
+          'bundleName',b.bundle_name_snapshot,'categoryName',b.category_name_snapshot,'unitCount',b.unit_count_snapshot,'imagePath',b.image_path_snapshot,
           'quantity',b.quantity,'unitPrice',b.unit_price_snapshot::text,'lineTotal',b.line_total::text,
           'components',coalesce((select jsonb_agg(jsonb_build_object('productId',c.product_id,'productName',c.product_name_snapshot,
             'quantity',c.quantity_per_bundle,'unitPrice',c.unit_price_snapshot::text) order by c.product_id)

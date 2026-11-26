@@ -74,7 +74,7 @@
 }
 ```
 
-תגובה מוצלחת מחזירה `orderId`, `orderNumber`, `status`, `paymentStatus`, `total`, `currency` ו־`confirmationToken`. האסימון קצר־תוקף ומאוחסן במסד רק כ־hash; משך התוקף מוגדר ב־Config. `GET /orders/confirmation` מקבל ב־Authorization: Bearer את האסימון ולא מספר הזמנה בלבד, ומחזיר מספר הזמנה, סטטוסים, תאריך, סכום, מטבע ופריטים עם מזהים, כמות, שם וסכום שורה שמורים בהזמנה. כתובת, טלפון ו־Email אינם נחשפים במסלול זה. הרחבת פרטי הפריטים בקוד מקומי 19.11.2026; DB חי טרם אומת.
+תגובה מוצלחת מחזירה `orderId`, `orderNumber`, `status`, `paymentStatus`, `total`, `currency` ו־`confirmationToken`. האסימון קצר־תוקף ומאוחסן במסד רק כ־hash; משך התוקף מוגדר ב־Config. `GET /orders/confirmation` מקבל ב־Authorization: Bearer את האסימון ולא מספר הזמנה בלבד, ומחזיר מספר הזמנה, סטטוסים, תאריך, סכום, מטבע ופריטים שמורים. עדכון 26.11 לסיכום המלא: נוספו `subtotal`, `shippingTotal`, `customer` (שם, טלפונים ודוא״ל), `deliveryAddress`, `venueName`, `dedicationText`, `customerNotes`. אלו נתוני ההזמנה השמורה באותה תמונת מצב; אין שדות פנימיים או פרטי אשראי. התשובה פרטית וללא cache, ופרטי קשר/כתובת אינם נשמרים בהתאוששות בדפדפן. DB חי טרם אומת.
 
 ## קודי שגיאה מחייבים
 

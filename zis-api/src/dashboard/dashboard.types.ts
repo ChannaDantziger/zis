@@ -15,7 +15,7 @@ export interface AdminOrderDetails {
   packageCount?: number | null; courierNotes?: string | null; internalNotes?: string | null;
   isUrgent?: boolean; paymentConfirmedAt?: string | null; createdAt?: string; updatedAt?: string;
   payments?: Array<{ provider: string; providerTransactionId: string | null; amount: string; currency: string; status: string; isSimulated: boolean; createdAt: string; manualMethod?: string | null }>;
-  items: Array<{ orderItemId: string; productName: string; variantName: string; quantitySets: number; unitSetPrice: string; lineTotal: string; productCode?: string | null; setSize?: number | null }>;
+  items: Array<{ orderItemId: string; productName: string; variantName: string; quantitySets: number; unitSetPrice: string; lineTotal: string; productCode?: string | null; setSize?: number | null; imagePath?: string | null; imageUrl?: string | null }>;
   bundles?: OrderBundleSnapshot[];
   history: Array<{ historyId: string; fromStatus: OrderStatus | null; toStatus: OrderStatus; createdAt: string; note: string | null }>;
   tasks: Array<{ taskId: string; title: string; description: string | null; priority: string }>;

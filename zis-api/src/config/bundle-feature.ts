@@ -1,8 +1,8 @@
 import type { ServerConfig } from './server-config.js';
 
-// Temporary development-only opt-in. Keep false until migration and test data are verified.
-export const ENABLE_BUNDLE_ORDERING_FOR_TEST = false;
+// Temporary opt-in for local testing authorized by the store owner.
+export const ENABLE_BUNDLE_ORDERING_FOR_TEST = true;
 
 export function bundleOrderingEnabled(config: ServerConfig, requested = ENABLE_BUNDLE_ORDERING_FOR_TEST): boolean {
-  return requested && config.applicationMode === 'development' && config.databaseSource === 'DATABASE_URL_TRN';
+  return requested && config.applicationMode === 'development' && Boolean(config.databaseSource);
 }

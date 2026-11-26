@@ -31,6 +31,15 @@ async function applyOne(client: SqlClient, orderId: string, version: string, tar
   if (reason) return { orderId, ok: false, orderNumber: order.order_number, fromStatus: order.status, reason };
   if (targetStatus === 'in_transit' && !packageCount && !order.package_count)
     return { orderId, ok: false, orderNumber: order.order_number, fromStatus: order.status, reason: 'PACKAGE_COUNT_REQUIRED' };
+  if ((targetStatus === 'packed' && packageCount !== undefined) || targetStatus === 'in_transit') {
+    const schema = await client.query<{ present: boolean }>(`select to_regclass('public.order_bundles') is not null as present`);
+    const minimum = schema.rows[0]?.present
+      ? await client.query<{ minimum: number }>(`select (coalesce((select sum(quantity) from public.order_bundles where order_id=$1),0)
+          + case when exists(select 1 from public.order_items where order_id=$1) then 1 else 0 end)::bigint as minimum`, [orderId])
+      : await client.query<{ minimum: number }>(`select case when exists(select 1 from public.order_items where order_id=$1) then 1 else 0 end as minimum`, [orderId]);
+    if ((packageCount ?? order.package_count ?? 0) < Math.max(1, Number(minimum.rows[0]?.minimum ?? 0)))
+      return { orderId, ok: false, orderNumber: order.order_number, fromStatus: order.status, reason: 'PACKAGE_COUNT_BELOW_MINIMUM' };
+  }
   await client.query(`update public.orders set status = $1, package_count = coalesce($3, package_count), updated_at = now() where order_id = $2`, [targetStatus, orderId, packageCount ?? null]);
   await client.query(`insert into public.order_status_history (order_id, from_status, to_status, changed_by, note) values ($1, $2, $3, $4, $5)`,
     [orderId, order.status, targetStatus, adminUserId, packageCount ? `${packageCount} מארזים` : null]);

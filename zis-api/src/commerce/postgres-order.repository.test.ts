@@ -46,13 +46,24 @@ test('confirmation SQL checks expiry/revocation and returns a minimal response',
  const result=await f.repository.findConfirmation('hash',new Date());assert.deepEqual(Object.keys(result!).sort(),['currency','deliveryDate','isTest','orderNumber','paymentStatus','status','total']);assert.match(f.calls.find(call=>call.sql.includes('order_confirmation_tokens'))!.sql,/revoked_at is null and t.expires_at>\$2/);assert.ok(f.released);
 });
 
-test('confirmation exposes ordered product snapshots without customer details',async()=>{
+test('confirmation exposes product snapshots without raw database fields',async()=>{
  const items=[{productId:'product',productVariantId:null,quantitySets:2,productName:'Original name',lineTotal:'20.50'}];
  const f=fixture(()=>({rows:[{order_id:'private',order_number:'NUMBER',status:'ordered',payment_status:'pending',is_test:false,delivery_date:'2026-10-11',total:'25.50',items,customer_phone:'private'}],rowCount:1}));
  const result=await f.repository.findConfirmation('hash',new Date());
  assert.deepEqual(result?.items,items);assert.equal('customer_phone' in result!,false);
  const query=f.calls.find(call=>call.sql.includes('order_confirmation_tokens'))!.sql;
  assert.match(query,/product_name_snapshot/);assert.match(query,/line_total/);
+});
+
+test('authenticated confirmation includes saved shipping costs and contact/address details',async()=>{
+ const customer={name:'לקוח בדיקה',phone:'0500000000',email:'qa@example.invalid',deliveryPhone:'0500000001'};
+ const delivery_address={city:'ירושלים',street:'רחוב בדיקה',houseNumber:'1',apartment:'2',postalCode:'1234567'};
+ const f=fixture(sql=>sql.includes('from public.order_confirmation_tokens')?{rows:[{order_id:'private',order_number:'NUMBER',status:'ordered',payment_status:'pending',is_test:false,delivery_date:'2026-10-11',total:'300.00',subtotal:'270.00',shipping_total:'30.00',customer,delivery_address,venue_name:'אולם בדיקה',dedication_text:'מזל טוב',customer_notes:'כניסה ראשית'}],rowCount:1}:empty);
+ const result=await f.repository.findConfirmation('hash',new Date());
+ assert.equal(result?.subtotal,'270.00');assert.equal(result?.shippingTotal,'30.00');
+ assert.deepEqual(result?.customer,customer);assert.deepEqual(result?.deliveryAddress,delivery_address);
+ assert.equal(result?.venueName,'אולם בדיקה');assert.equal(result?.dedicationText,'מזל טוב');
+ assert.equal('orderId' in result!,false);assert.equal('tokenHash' in result!,false);
 });
 
 test('confirmation reads bundle snapshots within the same repeatable-read transaction',async()=>{

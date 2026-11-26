@@ -21,7 +21,10 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     if (response.status === 401 && path.startsWith('/admin/') && token === adminSessionStore.accessToken) {
       adminSessionStore.clearSession();
     }
-    const payload = await response.json().catch(() => null) as { message?: string; error?: { message?: string } | string } | null;
+    const payload = await response.json().catch(() => null) as { message?: string; error?: { code?: string; message?: string } | string } | null;
+    if (payload?.error && typeof payload.error === 'object' && payload.error.code === 'PAYMENT_NOT_CONFIRMED') {
+      throw new Error('יש לאשר את התשלום לפני העברת ההזמנה להכנה.');
+    }
     const serverMessage = typeof payload?.error === 'object' ? payload.error.message : payload?.error;
     throw new Error(payload?.message ?? serverMessage ?? `הבקשה נכשלה (${response.status})`);
   }

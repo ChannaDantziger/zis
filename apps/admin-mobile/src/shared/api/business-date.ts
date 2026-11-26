@@ -9,3 +9,8 @@ export function isBusinessDate(value: string): boolean {
   const date = new Date(`${value}T00:00:00.000Z`);
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
+
+export function shouldResetOrderDate(previousPath: string, nextPath: string, selectedDate: string, today: string): boolean {
+  const inOrders = (path: string) => path === '/orders' || path.startsWith('/orders/');
+  return inOrders(previousPath) && !inOrders(nextPath) && selectedDate !== today;
+}

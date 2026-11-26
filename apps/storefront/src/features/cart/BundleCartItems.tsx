@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Alert, Button, Card, Group, Image, NumberInput, Stack, Text } from '@mantine/core';
 import { observer } from 'mobx-react-lite';
 import { BundleModal } from '../bundles/BundleModal';
+import { BundleCount } from '../bundles/BundleCount';
 import { formatBundlePrice, priceAgorot } from '../bundles/allocation';
 import { bundleKey, cartStore } from '../../stores/cart.store';
 import { MAX_QUANTITY_SETS } from '../../stores/cart.persistence';
@@ -19,7 +20,7 @@ export const BundleCartItems = observer(function BundleCartItems() {
       const image = bundle?.images.find(item => item.isPrimary) ?? bundle?.images[0];
       return <Card key={key} withBorder radius={0} p="md"><Stack gap="sm">
         <Group wrap="nowrap" align="start">{image && <Image src={image.url} alt={image.altText} w={72} h={72} fit="contain" />}
-          <Stack gap={3}><Text fw={700}>{bundle?.name ?? 'מארז שפרטיו ממתינים לבדיקה'}</Text>
+          <Stack gap={3}><div><Text fw={700}>{bundle?.name ?? 'מארז שפרטיו ממתינים לבדיקה'}</Text><BundleCount quantity={line.quantity} /></div>
             {bundle && allAvailable && <Text>{formatBundlePrice(priceAgorot(products, selection))} למארז</Text>}
             {line.components.map(component => <Text size="sm" key={component.productId}>
               {products.find(item => item.productId === component.productId)?.name ?? 'מוצר לא זמין'}: {component.quantity} למארז (סה״כ {component.quantity * line.quantity})

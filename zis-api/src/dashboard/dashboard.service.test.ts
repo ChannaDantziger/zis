@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { ApiError } from '../http/api-error.js';
 import { createDashboardService } from './dashboard.service.js';
-import type { DashboardRepository } from './dashboard.types.js';
+import type { AdminOrderDetails, DashboardRepository } from './dashboard.types.js';
 
 function repository(): DashboardRepository {
   return {
@@ -29,6 +29,19 @@ describe('dashboard service', () => {
     assert.throws(() => service.getProduction('2026-02-30'), (error: unknown) => error instanceof ApiError && error.statusCode === 400);
     assert.throws(() => service.listOrders({ deliveryDate: '2026-09-24', sortBy: 'bad' as never, sortDirection: 'asc' }), (error: unknown) => error instanceof ApiError && error.statusCode === 400);
   });
+});
+
+it('signs order and bundle component images without exposing storage paths', async () => {
+  const repo = repository();
+  repo.getOrder = async () => ({ items: [{ orderItemId: 'item', imagePath: 'product-path' }],
+    bundles: [{ orderBundleId: 'bundle', imagePath: 'bundle-path', components: [{ productId: 'product', imagePath: 'product-path' }] }] } as unknown as AdminOrderDetails);
+  const signed: string[] = [];
+  const order = await createDashboardService(repo, async path => { signed.push(path); return `signed:${path}`; }).getOrder('00000000-0000-4000-8000-000000000001');
+  assert.deepEqual(signed.sort(), ['bundle-path', 'product-path']);
+  assert.equal(order.items[0]?.imageUrl, 'signed:product-path');
+  assert.equal('imagePath' in order.items[0]!, false);
+  assert.equal((order.bundles?.[0]?.components[0] as { imageUrl?: string }).imageUrl, 'signed:product-path');
+  assert.equal('imagePath' in order.bundles![0]!.components[0]!, false);
 });
 
 it('order pagination rejects unsafe pages, oversized pages and malformed variants before repository access', () => {

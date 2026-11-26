@@ -54,7 +54,7 @@ export const PendingOrderItems = observer(function PendingOrderItems() {
       })}
     </Stack>}
     <Button component={Link} to="/catalog" variant="light" disabled={!store.canEditPending}>לבחירת מוצרים נוספים מהקטלוג</Button>
-    <Text size="sm">הוסיפו מוצרים לסל וחזרו לעריכת ההזמנה דרך העגלה. כאן בוחרים אילו פריטים להעביר להזמנה; הסל המקומי אינו משנה אותה אוטומטית.</Text>
+    <Text size="sm">הוסיפו מוצרים לסל וחזרו למסך ההזמנה. כאן בוחרים אילו פריטים להעביר להזמנה; הסל המקומי אינו משנה אותה אוטומטית.</Text>
     {additions.length > 0 && <Stack gap="xs">
       <Title order={3} size="h5">פריטים מהעגלה שאינם בהזמנה</Title>
       {additions.map(item => {

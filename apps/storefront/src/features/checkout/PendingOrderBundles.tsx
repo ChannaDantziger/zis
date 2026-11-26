@@ -6,6 +6,7 @@ import { getProduct } from '../../entities/product/api';
 import { apiRequest } from '../../shared/api/http-client';
 import { MAX_QUANTITY_SETS } from '../../stores/cart.persistence';
 import { BundleModal } from '../bundles/BundleModal';
+import { BundleCount } from '../bundles/BundleCount';
 import type { BundleResponse } from '../bundles/types';
 import type { ConfirmationBundle } from './checkout.types';
 import { checkoutStore } from './checkout.store';
@@ -53,7 +54,7 @@ export const PendingOrderBundles = observer(function PendingOrderBundles() {
       const bundle = current && { ...current, name: line.bundleName, unitCount: line.unitCount };
       const products = catalog.data?.products.filter(product => product.categoryId === current?.categoryId).map(product => ({ ...product,
         pricePerUnit: line.components.find(component => component.productId === product.productId)?.unitPrice ?? product.pricePerUnit })) ?? [];
-      return <Card key={line.orderBundleId} withBorder><Stack gap="xs"><Text fw={700}>{line.bundleName} × {line.quantity} מארזים זהים</Text>
+      return <Card key={line.orderBundleId} withBorder><Stack gap="xs"><div><Text fw={700}>{line.bundleName}</Text><BundleCount quantity={line.quantity} /></div>
         {line.components.map(component => <Text size="sm" key={component.productId}>{component.productName}: {component.quantity} למארז (סה״כ {component.quantity * line.quantity})</Text>)}
         <Group align="end"><NumberInput label="מספר מארזים זהים" value={line.quantity} min={1} max={MAX_QUANTITY_SETS} allowDecimal={false}
           disabled={!store.canEditPending || !catalog.data} onChange={value => { if (typeof value !== 'number') return;

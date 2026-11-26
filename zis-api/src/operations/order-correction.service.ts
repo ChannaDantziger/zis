@@ -2,9 +2,11 @@ import { ApiError } from '../http/api-error.js';
 import type { SqlClientFactory } from '../inventory/postgres-inventory.repository.js';
 import { ORDER_STATUSES, type OrderStatus } from '../domain/order-status.js';
 
-interface OrderRow { status: OrderStatus; payment_status: string; version: string; [key: string]: unknown; }
-interface CorrectionInput { orderId: string; targetStatus: OrderStatus; version: string; note: string | null; adminUserId: string; }
+interface OrderRow { status: OrderStatus; payment_status: string; package_count: number | null; version: string; [key: string]: unknown; }
+interface CorrectionInput { orderId: string; targetStatus: OrderStatus; version: string; note: string | null; adminUserId: string; resetPackageCount?: boolean; }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const FLOW: OrderStatus[] = ['ordered', 'in_preparation', 'packed', 'in_transit', 'delivered', 'approved'];
 
 export function createOrderCorrectionService(factory: SqlClientFactory) {
   return { correct: (input: CorrectionInput) => correct(factory, input) };
@@ -19,7 +21,7 @@ async function correct(factory: SqlClientFactory, input: CorrectionInput) {
   const client = await factory();
   try {
     await client.query('begin');
-    const result = await client.query<OrderRow>(`select status, payment_status, extract(epoch from updated_at)::text as version
+    const result = await client.query<OrderRow>(`select status, payment_status, package_count, extract(epoch from updated_at)::text as version
       from public.orders where order_id = $1 for update`, [input.orderId]);
     const before = result.rows[0];
     if (!before) throw new ApiError(404, 'ORDER_NOT_FOUND', 'Order not found');
@@ -27,15 +29,20 @@ async function correct(factory: SqlClientFactory, input: CorrectionInput) {
     if (before.status === 'cancelled') throw new ApiError(409, 'CANCELLED_ORDER', 'Cancellation has a separate workflow');
     if (before.status === input.targetStatus) throw new ApiError(409, 'NO_STATUS_CHANGE', 'Order is already in this status');
     if (input.targetStatus !== 'ordered' && before.payment_status !== 'paid') throw new ApiError(409, 'PAYMENT_NOT_CONFIRMED', 'Payment must be confirmed before preparation');
-    const updated = await client.query<{ version: string }>(`update public.orders set status = $2, updated_at = clock_timestamp()
-      where order_id = $1 returning extract(epoch from updated_at)::text as version`, [input.orderId, input.targetStatus]);
-    const note = input.note?.trim() || 'תיקון סטטוס שנבחר בטעות';
+    const from = FLOW.indexOf(before.status), to = FLOW.indexOf(input.targetStatus);
+    const requiresChoice = from > to && from >= FLOW.indexOf('packed') && to <= FLOW.indexOf('in_transit');
+    if (requiresChoice && typeof input.resetPackageCount !== 'boolean') throw new ApiError(409, 'PACKAGE_COUNT_CHOICE_REQUIRED', 'יש לבחור אם לאפס או לשמור את מספר האריזות.');
+    const resetPackageCount = requiresChoice && input.resetPackageCount === true;
+    const updated = await client.query<{ version: string }>(`update public.orders set status = $2,
+      package_count = case when $3::boolean then null else package_count end, updated_at = clock_timestamp()
+      where order_id = $1 returning extract(epoch from updated_at)::text as version`, [input.orderId, input.targetStatus, resetPackageCount]);
+    const note = (input.note?.trim() || 'תיקון סטטוס שנבחר בטעות') + (requiresChoice ? resetPackageCount ? ' · מספר האריזות אופס לקביעה מחדש' : ' · מספר האריזות נשמר לפי בחירת המנהלת' : '');
     await client.query(`insert into public.order_status_history(order_id, from_status, to_status, changed_by, note)
       values($1, $2, $3, $4, $5)`, [input.orderId, before.status, input.targetStatus, input.adminUserId, note]);
     await client.query(`insert into public.admin_audit_log(admin_user_id, action, entity_type, entity_id, before_data, after_data)
       values($1, 'correct_order_status', 'order', $2, $3::jsonb, $4::jsonb)`,
-      [input.adminUserId, input.orderId, JSON.stringify({ status: before.status, version: before.version }),
-        JSON.stringify({ status: input.targetStatus, version: updated.rows[0]?.version, note })]);
+      [input.adminUserId, input.orderId, JSON.stringify({ status: before.status, version: before.version, packageCount: before.package_count }),
+        JSON.stringify({ status: input.targetStatus, version: updated.rows[0]?.version, packageCount: resetPackageCount ? null : before.package_count, note })]);
     await client.query('commit');
     return { orderId: input.orderId, status: input.targetStatus, version: updated.rows[0]?.version };
   } catch (error) { await client.query('rollback'); throw error; }

@@ -1,5 +1,5 @@
 // Temporary opt-in for browser tests against a verified development server only.
-export const ENABLE_BUNDLE_ORDERING_FOR_TEST = false;
+export const ENABLE_BUNDLE_ORDERING_FOR_TEST = true;
 export function canEnableBundleTest(requested: boolean, hostname: string): boolean {
   return requested && ['localhost', '127.0.0.1'].includes(hostname);
 }

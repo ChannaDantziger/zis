@@ -25,10 +25,15 @@ export async function readOrderDetails(client: SqlClient, orderId: string): Prom
   if (!order) return null;
   const [items, history, tasks, payments, bundles] = await Promise.all([
     client.query<AdminOrderDetails['items'][number] & Record<string, unknown>>(
-      `select order_item_id as "orderItemId", product_name_snapshot as "productName", variant_name_snapshot as "variantName",
-              quantity_sets as "quantitySets", unit_set_price_snapshot::text as "unitSetPrice", line_total::text as "lineTotal",
-              product_code_snapshot as "productCode", set_size_snapshot as "setSize"
-         from public.order_items where order_id = $1 order by product_name_snapshot, variant_name_snapshot, order_item_id`, [orderId]),
+      `select oi.order_item_id as "orderItemId", oi.product_name_snapshot as "productName", oi.variant_name_snapshot as "variantName",
+              oi.quantity_sets as "quantitySets", oi.unit_set_price_snapshot::text as "unitSetPrice", oi.line_total::text as "lineTotal",
+              oi.product_code_snapshot as "productCode", oi.set_size_snapshot as "setSize", image.storage_path as "imagePath"
+         from public.order_items oi left join lateral (
+           select i.storage_path from public.product_images i where i.product_id=oi.product_id and not i.is_deleted
+             and (i.product_variant_id=oi.product_variant_id or i.product_variant_id is null)
+           order by case when i.product_variant_id=oi.product_variant_id then 0 else 1 end,
+             case when i.image_type='primary' then 0 else 1 end, i.sort_order, i.product_image_id limit 1
+         ) image on true where oi.order_id = $1 order by oi.product_name_snapshot, oi.variant_name_snapshot, oi.order_item_id`, [orderId]),
     client.query<AdminOrderDetails['history'][number] & Record<string, unknown>>(
       `select order_status_history_id as "historyId", from_status as "fromStatus", to_status as "toStatus", created_at as "createdAt", note
          from public.order_status_history where order_id = $1 order by created_at, order_status_history_id`, [orderId]),

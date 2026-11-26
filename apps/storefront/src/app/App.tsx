@@ -3,7 +3,6 @@ import { Button, Stack, Text, Title } from '@mantine/core';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { HomePage } from '../pages/HomePage';
 import { ProductPage } from '../pages/ProductPage';
-import { CartPage } from '../pages/CartPage';
 import { CheckoutPage } from '../pages/CheckoutPage';
 import { CartDrawer } from '../features/cart/CartDrawer';
 import { SiteHeader } from '../shared/components/SiteHeader';
@@ -29,7 +28,7 @@ export function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/catalog" element={<Navigate to={{ pathname: '/', search: location.search, hash: '#catalog' }} replace />} />
         <Route path="/products/:productId" element={<><HomePage /><ProductPage /></>} />
-        <Route path="/cart" element={<CartPage />} />
+        <Route path="/cart" element={<Navigate to="/checkout" replace />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="*" element={<Stack className="content-width" py="xl"><Title>העמוד לא נמצא</Title><Text>אפשר לחזור לקטלוג ולהמשיך משם.</Text><Button component={Link} to="/#catalog">לקטלוג</Button></Stack>} />
       </Routes>

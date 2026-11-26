@@ -88,6 +88,13 @@ export interface OrderCreatedResponse {
 }
 
 export interface OrderConfirmationResponse {
+  subtotal?: string;
+  shippingTotal?: string;
+  customer?: { name: string; phone: string; email: string; deliveryPhone: string };
+  deliveryAddress?: DeliveryAddress;
+  venueName?: string | null;
+  dedicationText?: string | null;
+  customerNotes?: string | null;
   items?: Array<CartItemInput & { productName: string; lineTotal: string }>;
   bundles?: OrderBundleSnapshot[];
   version?: string;

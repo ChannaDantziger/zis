@@ -7,13 +7,18 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const SORT_FIELDS = ['status', 'product', 'location', 'orderNumber', 'total'] as const;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export function createDashboardService(repository: DashboardRepository): DashboardService {
+export function createDashboardService(repository: DashboardRepository, resolveImage?: (path: string) => Promise<string>): DashboardService {
   return {
     getOrder: async (orderId) => {
       if (!UUID_PATTERN.test(orderId)) throw new ApiError(400, 'VALIDATION_ERROR', 'orderId must be a UUID');
       const order = await repository.getOrder(orderId);
       if (!order) throw new ApiError(404, 'ORDER_NOT_FOUND', 'Order not found');
-      return order;
+      const paths = [...new Set([...order.items.map(item => item.imagePath), ...(order.bundles ?? []).flatMap(bundle => [bundle.imagePath, ...bundle.components.map(item => item.imagePath)])].filter((path): path is string => Boolean(path)))];
+      const urls = new Map<string, string>();
+      if (resolveImage) await Promise.all(paths.map(async path => { try { urls.set(path, await resolveImage(path)); } catch { /* image is optional */ } }));
+      return { ...order, items: order.items.map(({ imagePath, ...item }) => ({ ...item, imageUrl: imagePath ? urls.get(imagePath) ?? null : null })),
+        bundles: order.bundles?.map(({ imagePath, components, ...bundle }) => ({ ...bundle, imageUrl: imagePath ? urls.get(imagePath) ?? null : null,
+          components: components.map(({ imagePath: path, ...item }) => ({ ...item, imageUrl: path ? urls.get(path) ?? null : null })) })) };
     },
     getDashboard: (date, adminUserId) => repository.getDashboard(readDate(date), adminUserId),
     listOrderPage: (query) => {

@@ -2,10 +2,16 @@ import { makeAutoObservable } from 'mobx';
 import { currentBusinessDate, isBusinessDate } from '../shared/api/business-date.js';
 import type { TaskStatus } from '../entities/admin.types.js';
 
+const DELIVERY_DATE_KEY = 'zis.admin.deliveryDate';
+function savedDeliveryDate() {
+  try { const value = localStorage.getItem(DELIVERY_DATE_KEY); return value && isBusinessDate(value) ? value : currentBusinessDate(); }
+  catch { return currentBusinessDate(); }
+}
+
 export class AdminUiStore {
   statusFilter: string | null = null;
   selectedOrderIds: string[] = [];
-  deliveryDate = currentBusinessDate();
+  deliveryDate = savedDeliveryDate();
   productionDate = currentBusinessDate();
   location = '';
   sortBy = 'status';
@@ -16,7 +22,7 @@ export class AdminUiStore {
 
   constructor() { makeAutoObservable(this); }
   setStatusFilter(value: string | null) { this.statusFilter = value; this.resetOrderPage(); }
-  setDeliveryDate(value: string) { if (!isBusinessDate(value)) return; this.deliveryDate = value; this.resetOrderPage(); }
+  setDeliveryDate(value: string) { if (!isBusinessDate(value)) return; this.deliveryDate = value; try { localStorage.setItem(DELIVERY_DATE_KEY, value); } catch { /* date remains available in memory */ } this.resetOrderPage(); }
   setProductionDate(value: string) { if (!isBusinessDate(value)) return; this.productionDate = value; }
   setLocation(value: string) { this.location = value; this.resetOrderPage(); }
   setSortBy(value: string) { this.sortBy = value; this.resetOrderPage(); }
@@ -31,8 +37,7 @@ export class AdminUiStore {
   reset() {
     this.statusFilter = null;
     this.selectedOrderIds = [];
-    this.deliveryDate = currentBusinessDate();
-    this.productionDate = this.deliveryDate;
+    this.productionDate = currentBusinessDate();
     this.location = '';
     this.sortBy = 'status';
     this.sortDirection = 'asc';

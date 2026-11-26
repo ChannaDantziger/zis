@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import { Accordion, Alert, Badge, Button, Checkbox, Group, Image, Paper, Stack, Table, Text, TextInput, Title } from '@mantine/core';
+import { Accordion, Alert, Badge, Button, Checkbox, Group, Image, NumberInput, Paper, Stack, Table, Text, TextInput, Title } from '@mantine/core';
 import { IconArrowRight, IconPrinter, IconRefresh } from '@tabler/icons-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { OperationReport, OperationReportKind, OperationReportOrder } from '../entities/operations-reports.types.js';
+import { BundleCount } from '../features/home/BundleCount.js';
+import { MAX_PACKAGE_COUNT, minimumPackageCount, packageCountError, packageCountFor, validPackageCount } from '../features/home/package-count.js';
 import { currentBusinessDate, request } from '../shared/api/http-client.js';
 import { ErrorState, LoadingState } from '../shared/components/StateMessage.js';
 import { statusLabels } from '../shared/components/OrderStatusBadge.js';
@@ -25,10 +27,11 @@ const OperationsReportPage = observer(function OperationsReportPage({ kind }: { 
   const city = params.get('city') ?? '';
   const selectedIds = params.get('orderIds') ?? '';
   const ui = useLocalObservable(() => ({
-    city: '', selected: new Set<string>(),
+    city: '', selected: new Set<string>(), counts: {} as Record<string, number | string>,
     toggle(id: string, checked: boolean) { if (checked) this.selected.add(id); else this.selected.delete(id); },
     clear() { this.selected.clear(); },
     setCity(value: string) { this.city = value; },
+    setCount(id: string, value: number | string) { this.counts[id] = value; },
   }));
   const reportParams = new URLSearchParams({ date });
   if (city) reportParams.set('city', city);
@@ -48,16 +51,14 @@ const OperationsReportPage = observer(function OperationsReportPage({ kind }: { 
   const title = kind === 'packing' ? 'תוויות אריזה' : 'רשימת אספקה';
   const dateLabel = kind === 'packing' ? 'תאריך אספקה' : 'תאריך יציאה בפועל · שעון ישראל';
   const report = query.data;
+  const countFor = (order: OperationReportOrder) => packageCountFor(order, ui.counts[order.orderId]);
+  const validCount = (order: OperationReportOrder) => validPackageCount(order, countFor(order));
   const advanceMutation = useMutation({
     mutationFn: async (orders: OperationReportOrder[]) => {
       const outcomes = [];
       for (const order of orders.filter((candidate) => candidate.status === 'packed')) {
-        let packageCount = order.packageCount ?? undefined;
-        if (!packageCount) {
-          const entered = window.prompt(`כמה מארזים להזמנה ${order.orderNumber}?`, '1');
-          if (!entered || !/^\\d+$/.test(entered) || Number(entered) < 1) continue;
-          packageCount = Number(entered);
-        }
+        if (!validCount(order)) throw new Error(`יש להזין מספר אריזות תקין להזמנה ${order.orderNumber}.`);
+        const packageCount = Number(countFor(order));
         outcomes.push(await request<BulkStatusResponse>('/admin/orders/bulk-status', { method: 'POST', body: JSON.stringify({ targetStatus: 'in_transit', items: [{ orderId: order.orderId, version: order.version, packageCount }] }) }));
       }
       return outcomes;
@@ -81,7 +82,7 @@ const OperationsReportPage = observer(function OperationsReportPage({ kind }: { 
       <Group>
         <Button variant="default" loading={query.isFetching} leftSection={<IconRefresh size={16} />} onClick={() => query.refetch()}>רענון</Button>
         {ui.selected.size > 0 && <Button disabled={ui.selected.size > MAX_SELECTION || query.isFetching} onClick={() => updateFilters(date, city, [...ui.selected].join(','))}>הכנת {ui.selected.size} הזמנות להדפסה</Button>}
-        <Button disabled={!query.isSuccess || query.isFetching || ui.selected.size > 0 || advanceMutation.isPending} loading={advanceMutation.isPending} leftSection={<IconPrinter size={16} />} onClick={printAndAdvance}>הדפסה / שמירה כ־PDF</Button>
+        <Button disabled={!query.isSuccess || query.isFetching || ui.selected.size > 0 || advanceMutation.isPending || (kind === 'packing' && (report?.orders ?? []).some(order => !validCount(order)))} loading={advanceMutation.isPending} leftSection={<IconPrinter size={16} />} onClick={printAndAdvance}>הדפסה / שמירה כ־PDF</Button>
       </Group>
     </Group>
     <Group className="operations-report-controls" align="end">
@@ -103,34 +104,48 @@ const OperationsReportPage = observer(function OperationsReportPage({ kind }: { 
         <Text size="sm">{kind === 'packing' ? 'הזמנות ששולמו ועברו אריזה. לאחר ההדפסה ניתן לאשר מעבר ליצאה.' : 'לפי היסטוריית יציאה למשלוח ביום הנבחר; מוצג גם המצב הנוכחי של כל הזמנה.'}</Text>
       </div>
       {advanceMutation.isError && <Alert color="red" title="העברת ההזמנה נכשלה">{advanceMutation.error.message}</Alert>}
-      {advanceMutation.data && <Alert color={advanceMutation.data.some((result) => result.failed > 0) ? 'orange' : 'teal'} title={`העברה הושלמה · ${advanceMutation.data.reduce((sum, result) => sum + result.succeeded, 0)} הצליחו, ${advanceMutation.data.reduce((sum, result) => sum + result.failed, 0)} נכשלו`} />}
+      {advanceMutation.data && <Alert color={advanceMutation.data.some((result) => result.failed > 0) ? 'orange' : 'teal'} title={`העברה הושלמה · ${advanceMutation.data.reduce((sum, result) => sum + result.succeeded, 0)} הצליחו, ${advanceMutation.data.reduce((sum, result) => sum + result.failed, 0)} נכשלו`}>
+        {advanceMutation.data.flatMap(result => result.results.filter(item => !item.ok)).map(item => <Text key={item.orderId} size="sm">{report.orders.find(order => order.orderId === item.orderId)?.orderNumber ?? item.orderId}: {packageCountError(item.reason) ?? 'המעבר לא הושלם'}</Text>)}
+      </Alert>}
       {!report.orders.length && <Paper withBorder p="lg"><Text>אין הזמנות מתאימות לדוח זה.</Text></Paper>}
       {report.orders.map((order, index) => <div key={order.orderId}>
         {kind === 'delivery' && (index === 0 || report.orders[index - 1].address.city !== order.address.city) && <>
           <Title order={2} className={`delivery-city-heading${index === 0 ? ' delivery-city-first' : ''}`}>{order.address.city || 'עיר לא צוינה'}</Title>
           <Text className="delivery-city-summary" fw={600}>{cityPackageSummary(report.orders, order.address.city)}</Text>
         </>}
-        {Array.from({ length: kind === 'packing' ? Math.max(1, order.packageCount ?? 1) : 1 }, (_, packageIndex) => {
-          const packageTotal = kind === 'packing' ? Math.max(1, order.packageCount ?? 1) : 1;
+        {Array.from({ length: kind === 'packing' && validCount(order) ? Number(countFor(order)) : 1 }, (_, packageIndex) => {
+          const packageTotal = kind === 'packing' && validCount(order) ? Number(countFor(order)) : 1;
           return <Paper key={`${order.orderId}-${packageIndex}`} className={`operations-report-order${index === 0 && packageIndex === 0 ? ' operations-report-first' : ''}`} withBorder p="lg" radius="md">
           <Group justify="space-between" align="start">
-            <Group><Image src={LOGO_PATH} alt="לוגו זיס" w={70} h={45} fit="contain" /><Title order={2}>הזמנה {order.orderNumber}</Title>{kind === 'packing' && order.packageCount && <Text fw={700} className="packing-package-number">מארז {packageIndex + 1}/{packageTotal}</Text>}{order.isTest && <Badge color="orange">הזמנת ניסוי</Badge>}</Group>
+            <Group><Image src={LOGO_PATH} alt="לוגו זיס" w={70} h={45} fit="contain" /><Title order={2}>הזמנה {order.orderNumber}</Title>{kind === 'packing' && packageTotal > 1 && <Text fw={700} className="packing-package-number">אריזה {packageIndex + 1}/{packageTotal}</Text>}{order.isTest && <Badge color="orange">הזמנת ניסוי</Badge>}</Group>
             <Checkbox className="operations-report-controls" aria-label={`בחירת הזמנה ${order.orderNumber}`} checked={ui.selected.has(order.orderId)} onChange={(event) => ui.toggle(order.orderId, event.currentTarget.checked)} />
           </Group>
           <Group mt="sm"><Badge color={order.status === 'cancelled' ? 'red' : 'blue'}>{statusLabels[order.status]}</Badge><Text size="sm">{kind === 'packing' ? 'תאריך אריזה' : 'יצאה'}: {kind === 'packing' ? formatDate(order.transitionedAt) : formatTime(order.transitionedAt)}</Text>
             {kind === 'delivery' && <Text size="sm">אריזות: {order.packageCount ?? 'לא תועד'}</Text>}
-            {kind === 'packing' && order.status === 'packed' && <Button className="operations-report-controls" size="xs" loading={advanceMutation.isPending} onClick={() => { if (window.confirm(`להעביר את הזמנה ${order.orderNumber} לסטטוס יצאה?`)) void advanceMutation.mutateAsync([order]); }}>העברה ידנית ליצאה</Button>}
+            {kind === 'packing' && order.status === 'packed' && <Button className="operations-report-controls" size="xs" disabled={!validCount(order)} loading={advanceMutation.isPending} onClick={() => { if (window.confirm(`להעביר את הזמנה ${order.orderNumber} לסטטוס יצאה?`)) void advanceMutation.mutateAsync([order]); }}>העברה ידנית ליצאה</Button>}
           </Group>
+          {kind === 'packing' && packageIndex === 0 && <NumberInput className="operations-report-controls" mt="sm" label="מספר אריזות למשלוח" description={`המינימום לפי תכולת ההזמנה הוא ${minimumPackageCount(order)}. הכמות תישמר במעבר ליצאה.`}
+            value={countFor(order)} min={minimumPackageCount(order)} max={MAX_PACKAGE_COUNT} allowDecimal={false} allowNegative={false}
+            error={validCount(order) ? undefined : `יש להזין מספר שלם בין ${minimumPackageCount(order)} ל־${MAX_PACKAGE_COUNT}.`}
+            onChange={value => ui.setCount(order.orderId, value)} />}
           {order.status === 'cancelled' && <Alert color="red" mt="sm">ההזמנה בוטלה לאחר היציאה. יש לברר עם מנהל התפעול לפני אספקה.</Alert>}
           {kind === 'packing' && <Stack gap="xs" mt="md" className="packing-items">
-            <Text fw={700}>מוצרים וכמויות</Text>
+            <Text fw={700}>מוצרים וכמויות לכל ההזמנה</Text>
+            {order.bundles?.map(bundle => <Paper key={bundle.orderBundleId} withBorder p="sm" radius="sm" className="packing-bundle">
+              <Text fw={700}>{bundle.bundleName}</Text><BundleCount quantity={bundle.quantity} />
+              <Stack gap={2} ms="lg" ps="sm" style={{ borderInlineStart: '2px solid currentColor' }}>
+                {bundle.components.map(component => <Text size="sm" key={component.productId}>{component.productName}: {component.quantity} למארז (סה״כ {component.quantity * bundle.quantity} יחידות)</Text>)}
+              </Stack>
+            </Paper>)}
+            {Boolean(order.bundles?.length && order.items.length) && <Text fw={700}>מוצרים</Text>}
+            {order.items.length > 0 &&
             <Table withTableBorder withColumnBorders striped>
               <Table.Thead><Table.Tr><Table.Th>קטגוריה</Table.Th><Table.Th>מוצר</Table.Th><Table.Th>כמות</Table.Th></Table.Tr></Table.Thead>
               <Table.Tbody>{order.items.map((item, itemIndex) => <Table.Tr key={itemIndex}>
                 <Table.Td>{item.categoryName || 'ללא קטגוריה'}</Table.Td><Table.Td>{item.productName}</Table.Td>
                 <Table.Td>{item.quantitySets} סטים</Table.Td>
               </Table.Tr>)}</Table.Tbody>
-            </Table>
+            </Table>}
             {order.dedicationText && <Text fw={600} style={{ whiteSpace: 'pre-wrap' }}>הקדשה: {order.dedicationText}</Text>}
           </Stack>}
           <div className={kind === 'packing' ? 'packing-fold-section' : 'delivery-address-section'}>

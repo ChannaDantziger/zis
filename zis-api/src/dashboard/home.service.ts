@@ -8,12 +8,15 @@ export function createHomeService(repository: HomeOrderRepository, resolveImage:
   return { listOrders: async (from, to) => {
     validateRange(from, to);
     const orders = await repository.list(from, to);
-    const paths = [...new Set(orders.flatMap(order => order.items.map(item => item.imagePath).filter((path): path is string => Boolean(path))))];
+    const paths = [...new Set(orders.flatMap(order => [...order.items.map(item => item.imagePath), ...(order.bundles ?? []).map(bundle => bundle.imagePath)].filter((path): path is string => Boolean(path))))];
     const urls = new Map<string, string>();
     await Promise.all(paths.map(async path => {
       try { urls.set(path, await resolveImage(path)); } catch { /* image unavailable: preserve product name */ }
     }));
-    for (const order of orders) for (const item of order.items) item.imageUrl = item.imagePath ? urls.get(item.imagePath) ?? null : null;
+    for (const order of orders) {
+      for (const item of order.items) item.imageUrl = item.imagePath ? urls.get(item.imagePath) ?? null : null;
+      order.bundles = order.bundles?.map(({ imagePath, ...bundle }) => ({ ...bundle, imageUrl: imagePath ? urls.get(imagePath) ?? null : null }));
+    }
     return { from, to, orders };
   } };
 }

@@ -114,7 +114,7 @@ const app = hasServerDependencies
         adminCatalogService: createAdminCatalogService(adminCatalogRepository),
         bundlesRepository: createBundlesRepository(createPostgresClientFactory(pool)),
         bundlePreviewService: createBundlePreviewService(createBundlePreviewRepository(createPostgresClientFactory(pool)), storage),
-        dashboardService: createDashboardService(dashboardRepository),
+        dashboardService: createDashboardService(dashboardRepository, (path) => storage.createSignedUrl(PRODUCT_MEDIA_BUCKET, path).then((result) => result.url)),
         homeService: createHomeService(createPostgresHomeRepository(createPostgresClientFactory(pool)),
           (path) => storage.createSignedUrl(PRODUCT_MEDIA_BUCKET, path).then((result) => result.url)),
         homeTasksService: createHomeTasksService(createPostgresHomeTasksRepository(createPostgresClientFactory(pool))),
