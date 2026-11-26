@@ -21,6 +21,7 @@
 | `GET /categories` | ציבורי | `{ data: CatalogCategory[] }` |
 | `GET /catalog` | ציבורי | `CatalogResponse`, עם `categorySlug`, `search`, `sort`, `direction`, `page`, `pageSize` |
 | `GET /catalog/:productId` | ציבורי | `CatalogProduct` פעיל בלבד |
+| `GET /bundle-preview` | ציבורי | מארזים פעילים עם תמונה וקטגוריה פעילה ומוצרים פשוטים בקטגוריותיהם; `categoryId` אופציונלי; מחירי יחידה ומלאי פיזי; ללא נתיבי אחסון |
 | `GET /faq` | ציבורי | רשומות `active` לפי `sortOrder` |
 | `POST /admin/media/upload` | Admin | גוף בינארי; `X-Media-Bucket`, `X-File-Name`, `Content-Type`; העלאה חדשה וקבלת URL חתום קצר־תוקף |
 | `POST /admin/products/:id/images` | Admin | יצירת metadata לאחר העלאה מאומתת |

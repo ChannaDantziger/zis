@@ -2,7 +2,7 @@ import { ApiError } from '../http/api-error.js';
 import type { SqlClientFactory } from '../inventory/postgres-inventory.repository.js';
 import { insertAudit, withTransaction } from './postgres-admin-catalog.repository.js';
 
-export interface BundleInput { categoryId: string; name: string; description: string | null; unitCount: number; status: 'draft' | 'hidden'; version?: string }
+export interface BundleInput { categoryId: string; name: string; description: string | null; unitCount: number; status: 'draft' | 'hidden' | 'active'; version?: string }
 export type BundlesRepository = ReturnType<typeof createBundlesRepository>;
 export function createBundlesRepository(factory: SqlClientFactory) {
   return {
@@ -12,6 +12,7 @@ export function createBundlesRepository(factory: SqlClientFactory) {
         const result = await client.query<{ bundle: Record<string, unknown> }>(`select jsonb_build_object(
           'bundleId',b.bundle_id,'categoryId',b.category_id,'name',b.name,'description',b.description,
           'unitCount',b.unit_count,'status',b.status,'version',extract(epoch from b.updated_at)::text,
+          'categoryActive', exists(select 1 from public.categories c where c.category_id=b.category_id and c.status='active' and not c.is_deleted),
           'images',coalesce((select jsonb_agg(jsonb_build_object(
             'imageId',i.image_id,'storagePath',i.storage_path,'altText',i.alt_text,
             'sortOrder',i.sort_order,'isPrimary',i.is_primary,'isDeleted',i.is_deleted,'version',extract(epoch from i.updated_at)::text)
@@ -23,9 +24,10 @@ export function createBundlesRepository(factory: SqlClientFactory) {
     },
     async save(id: string | undefined, input: BundleInput, actor: string) {
       return withTransaction(factory, async client => {
-        const category = await client.query('select category_id from public.categories where category_id=$1 and not is_deleted', [input.categoryId]);
+        const category = await client.query<{ status: string }>('select category_id,status from public.categories where category_id=$1 and not is_deleted for share', [input.categoryId]);
         if (!category.rows[0]) throw new ApiError(404, 'CATEGORY_NOT_FOUND', 'הקטגוריה לא נמצאה');
         if (!id) {
+          if (input.status !== 'draft') throw new ApiError(422, 'BUNDLE_DRAFT_REQUIRED', 'יש ליצור מארז כטיוטה ולהוסיף תמונה לפני הפרסום');
           const created = await client.query<{ bundle_id: string }>(`insert into public.catalog_bundles(category_id,name,description,unit_count,status)
             values($1,$2,$3,$4,'draft') returning bundle_id`, [input.categoryId,input.name,input.description,input.unitCount]);
           const bundleId = created.rows[0]!.bundle_id;
@@ -36,6 +38,11 @@ export function createBundlesRepository(factory: SqlClientFactory) {
         if (!before.rows[0]) throw new ApiError(404, 'BUNDLE_NOT_FOUND', 'המארז לא נמצא');
         if (before.rows[0].version !== input.version) throw new ApiError(409, 'CATALOG_VERSION_CONFLICT', 'המארז השתנה. יש לרענן ולנסות שוב');
         if (before.rows[0].category_id !== input.categoryId) throw new ApiError(409, 'CATEGORY_CHANGE_NOT_ALLOWED', 'לא ניתן להעביר מארז לקטגוריה אחרת');
+        if (input.status === 'active') {
+          if (category.rows[0].status !== 'active') throw new ApiError(422, 'BUNDLE_CATEGORY_INACTIVE', 'לא ניתן לפרסם מארז בקטגוריה מוסתרת');
+          const primary = await client.query('select image_id from public.catalog_bundle_images where bundle_id=$1 and is_primary and not is_deleted for share', [id]);
+          if (!primary.rows[0]) throw new ApiError(422, 'BUNDLE_IMAGE_REQUIRED', 'יש להוסיף תמונה ראשית לפני פרסום המארז');
+        }
         await client.query('update public.catalog_bundles set category_id=$2,name=$3,description=$4,unit_count=$5,status=$6 where bundle_id=$1', [id,input.categoryId,input.name,input.description,input.unitCount,input.status]);
         await insertAudit(client, actor, 'bundle.updated', 'catalog_bundles', id, before.rows[0], input);
         return { bundleId: id };

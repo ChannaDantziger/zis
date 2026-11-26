@@ -17,7 +17,9 @@ export const BundleSection = observer(function BundleSection({ categoryId }: { c
     {bundles.loading ? <Text>טוען מארזים...</Text> : !bundles.items.length ? <Text c="dimmed">עדיין אין מארזים בקטגוריה.</Text> :
       (expanded ? bundles.items : bundles.items.slice(0, INITIAL_ITEMS)).map(item => <Card withBorder radius="lg" key={item.bundleId}>
         <Group justify="space-between"><Group>{item.images.find(image => image.isPrimary && !image.isDeleted)?.url && <Image src={item.images.find(image => image.isPrimary && !image.isDeleted)?.url} w={64} h={64} fit="contain" alt={item.name} />}
-          <Stack gap={4}><Text fw={700}>{item.name}</Text><Text size="sm">{item.unitCount} יחידות במארז</Text><Badge color="gray">לא מוצג באתר</Badge></Stack>
+          <Stack gap={4}><Text fw={700}>{item.name}</Text><Text size="sm">{item.unitCount} יחידות במארז</Text>
+            <Badge color={item.status === 'active' && publicationReady(item) ? 'green' : 'gray'}>{item.status === 'active' ? publicationReady(item) ? 'מוצג באתר' : 'לא מוצג באתר' : item.status === 'hidden' ? 'מוסתר' : 'טיוטה'}</Badge>
+          </Stack>
         </Group><Button variant="light" onClick={() => bundles.edit(item)}>עריכת מארז</Button></Group>
       </Card>)}
   </Stack>;
@@ -30,14 +32,18 @@ export const BundleEditor = observer(function BundleEditor() {
   if (!form) return null;
   return <Stack>
     <Group justify="space-between"><Title order={2}>{form.bundleId ? form.name : 'מארז חדש'}</Title><Button variant="subtle" onClick={() => bundles.close()}>חזרה לקטגוריה</Button></Group>
-    <Alert color="blue">המארז נשמר בניהול בלבד ואינו מוצג בחנות בשלב זה.</Alert>
+    <Alert color="blue">אפשר לפרסם מארז באתר. הוספת מארז לסל תהיה זמינה בשלב הבא.</Alert>
     {bundles.error && <Alert color="red">{bundles.error}</Alert>}
     <Card withBorder radius="lg" component="form" onSubmit={e => { e.preventDefault(); void bundles.save(); }}><Stack>
       <Title order={3}>פרטי המארז</Title>
       <TextInput label="שם המארז" required maxLength={200} value={form.name} onChange={e => bundles.set('name', e.currentTarget.value)} />
       <Textarea label="תיאור המארז" value={form.description ?? ''} onChange={e => bundles.set('description', e.currentTarget.value || null)} />
       <NumberInput label="מספר יחידות במארז" required min={1} allowDecimal={false} value={form.unitCount} onChange={value => bundles.set('unitCount', Number(value))} />
-      {form.bundleId && <Select label="מצב" allowDeselect={false} value={form.status} data={[{value:'draft',label:'טיוטה'},{value:'hidden',label:'מוסתר'}]} onChange={value => value && bundles.set('status', value as BundleStatus)} />}
+      {form.bundleId && <><Select label="מצב פרסום" allowDeselect={false} value={form.status} data={[
+        {value:'draft',label:'טיוטה'}, {value:'hidden',label:'מוסתר'},
+        {value:'active',label:'פורסם באתר', disabled: !publicationReady(form) && form.status !== 'active'},
+      ]} onChange={value => value && bundles.set('status', value as BundleStatus)} />
+      {!publicationReady(form) && <Text size="sm" c="dimmed">כדי לפרסם יש לוודא שהקטגוריה פעילה ושקיימת תמונה ראשית שמורה.</Text>}</>}
       <Button type="submit" loading={bundles.saving} disabled={!form.name.trim() || !form.categoryId || !Number.isSafeInteger(form.unitCount) || form.unitCount < 1}>{form.bundleId ? 'שמירת שינויים' : 'שמירה והוספת תמונה'}</Button>
     </Stack></Card>
     {form.bundleId && <Card withBorder><Stack><Title order={3}>תמונות מארז</Title>
@@ -51,7 +57,10 @@ export const BundleEditor = observer(function BundleEditor() {
     </Stack></Card>}
   </Stack>;
 });
-type BundleStatus = 'draft' | 'hidden';
+type BundleStatus = 'draft' | 'hidden' | 'active';
+function publicationReady(bundle: { categoryActive?: boolean; images: BundleImage[] }) {
+  return bundle.categoryActive === true && bundle.images.some(image => image.isPrimary && !image.isDeleted);
+}
 
 const BundleImageRow = observer(function BundleImageRow({ image }: { image: BundleImage }) {
   const [editing, setEditing] = useState(false), [altText, setAltText] = useState(image.altText), [order, setOrder] = useState(image.sortOrder);

@@ -44,6 +44,8 @@ import type { OrderStatusService } from './operations/order-status.types.js';
 import { createAdminCommerceSettingsRouter } from './routes/admin-commerce-settings.routes.js';
 import type { CommerceSettingsService } from './operations/commerce-settings.types.js';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createBundlePreviewController } from './controllers/bundle-preview.controller.js';
+import type { BundlePreviewService } from './catalog/bundle-preview.service.js';
 import { createAdminBundlesController } from './controllers/admin-bundles.controller.js';
 import type { BundlesRepository } from './catalog/bundles.repository.js';
 import { createAuthRouter } from './routes/auth.routes.js';
@@ -53,6 +55,7 @@ import type { EventGalleryService } from './event-gallery/event-gallery.types.js
 import { createEventGalleryRouter } from './routes/event-gallery.routes.js';
 
 export interface AppDependencies {
+  bundlePreviewService?: BundlePreviewService;
   bundlesRepository?: BundlesRepository;
   faqService?: FaqService;
   testPaymentService?: TestPaymentService;
@@ -102,6 +105,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   if (dependencies.catalogService) {
     app.use(createCatalogRouter(dependencies.catalogService));
   }
+  if (dependencies.bundlePreviewService) app.get('/bundle-preview', createBundlePreviewController(dependencies.bundlePreviewService));
   if (dependencies.eventGalleryService) {
     app.use(createEventGalleryRouter(dependencies.eventGalleryService));
   }

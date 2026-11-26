@@ -3,6 +3,9 @@ import test from 'node:test';
 import { readCatalogQuery, updateCatalogQuery } from '../src/features/catalog/query';
 import { getProductImages } from '../src/features/product-gallery/images';
 import type { CatalogProduct } from '../src/entities/product/types';
+import type { BundleProduct } from '../src/features/bundles/types';
+import { adjustSelection, initialSelection, priceAgorot, selectionTotal } from '../src/features/bundles/allocation';
+import { productWindow } from '../src/features/bundles/pagination';
 
 const primary = { imageId: 'primary', url: 'https://media.invalid/p', altText: 'Primary', imageType: 'primary' as const, sortOrder: 0 };
 const second = { ...primary, imageId: 'second', imageType: 'gallery' as const, sortOrder: 1 };
@@ -34,4 +37,34 @@ test('filter changes reset page and preserve unrelated URL state; paging preserv
 test('product gallery contains only product-level media', () => {
   assert.deepEqual(getProductImages({ ...product, primaryImage: null, gallery: [] }), []);
   assert.deepEqual(getProductImages(product).map((image) => image.imageId), ['primary', 'second']);
+});
+
+const bundleProducts: BundleProduct[] = Array.from({ length: 5 }, (_, index) => ({
+  productId: String(index), categoryId: 'category', name: String(index), pricePerUnit: index ? '15.15' : '10.10',
+  availableItems: 20, image: null,
+}));
+test('bundle initial amounts are balanced, within stock, and add extra products when needed', () => {
+  const result = initialSelection(bundleProducts, 11, () => 0.999)!;
+  assert.deepEqual(Object.values(result), [3, 3, 3, 2]);
+  const scarce = bundleProducts.map((item, i) => ({ ...item, availableItems: i < 4 ? 1 : 7 }));
+  const more = initialSelection(scarce, 9, () => 0.999)!;
+  assert.equal(selectionTotal(more), 9); assert.equal(more['4'], 5);
+  assert.equal(initialSelection(scarce, 12, () => 0.999), null);
+});
+test('bundle adjust removes from largest and last on tie, and fills selected products only', () => {
+  assert.deepEqual(adjustSelection(bundleProducts, { '0': 4, '1': 4, '2': 2 }, 9, 1), { '0': 4, '1': 3, '2': 2 });
+  assert.deepEqual(adjustSelection(bundleProducts, { '0': 1, '1': 2 }, 6, 1), { '0': 3, '1': 3 });
+  const small = bundleProducts.slice(0, 2).map(item => ({ ...item, availableItems: 2 }));
+  assert.equal(adjustSelection(small, { '0': 1, '1': 1 }, 5, 1), null);
+});
+test('bundle quantities count physical inventory across identical boxes and price in agorot', () => {
+  const products = [{ ...bundleProducts[0], availableItems: 4 }, { ...bundleProducts[1], availableItems: 8 }];
+  assert.deepEqual(adjustSelection(products, { '0': 4, '1': 2 }, 6, 2), { '0': 2, '1': 4 });
+  assert.equal(priceAgorot(products, { '0': 2, '1': 4 }), 8080n);
+});
+test('combined paging places bundles first without skipping or duplicating products', () => {
+  assert.deepEqual(productWindow(1, 24, 30).pageNumbers, []);
+  assert.deepEqual(productWindow(2, 24, 30), { start: 24, productStart: 0, productEnd: 18, pageNumbers: [1] });
+  assert.deepEqual(productWindow(3, 24, 30), { start: 48, productStart: 18, productEnd: 42, pageNumbers: [1, 2] });
+  assert.deepEqual(productWindow(2, 24, 0), { start: 24, productStart: 24, productEnd: 48, pageNumbers: [2] });
 });

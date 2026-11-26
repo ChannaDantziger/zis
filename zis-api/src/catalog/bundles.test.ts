@@ -30,12 +30,40 @@ test('bundle creation validates size, category, name and status before saving', 
   const f = setup();
   const input = { categoryId: id, name: 'מארז', description: null, unitCount: 12, status: 'draft' };
   for (const body of [{ ...input, unitCount: 0 }, { ...input, unitCount: 1.5 }, { ...input, categoryId: 'wrong' },
-    { ...input, name: ' ' }, { ...input, status: 'active' }]) {
+    { ...input, name: ' ' }, { ...input, status: 'invalid' }, { ...input, status: 'active' }]) {
     await assert.rejects(() => f.controller.save({ params: {}, body } as never, f.response));
   }
   assert.equal(f.calls.length, 0);
   await f.controller.save({ params: {}, body: input } as never, f.response);
   assert.equal(f.calls.length, 1);
+});
+
+test('publishing requires active category and saved primary image', async () => {
+  for (const scenario of [
+    { status: 'hidden', image: true, expected: 'BUNDLE_CATEGORY_INACTIVE' },
+    { status: 'active', image: false, expected: 'BUNDLE_IMAGE_REQUIRED' },
+    { status: 'active', image: true, expected: null },
+  ]) {
+    const statements: string[] = [];
+    const client = { query: async (sql: string) => {
+      statements.push(sql);
+      if (sql.includes('from public.categories')) return { rows: [{ category_id: id, status: scenario.status }] };
+      if (sql.includes('from public.catalog_bundles') && sql.includes('for update')) return { rows: [{ category_id: id, version: 'v1' }] };
+      if (sql.includes('from public.catalog_bundle_images') && sql.includes('for share')) return { rows: scenario.image ? [{ image_id: id }] : [] };
+      return { rows: [] };
+    }, release() {} } as unknown as SqlClient;
+    const promise = createBundlesRepository(async () => client).save(id,
+      { categoryId: id, name: 'מארז', description: null, unitCount: 9, status: 'active', version: 'v1' }, id);
+    if (scenario.expected) {
+      await assert.rejects(promise, (e: unknown) => (e as { code?: string }).code === scenario.expected);
+      assert.equal(statements.at(-1), 'rollback');
+      assert.equal(statements.some(sql => sql.startsWith('update public.catalog_bundles')), false);
+    } else {
+      assert.deepEqual(await promise, { bundleId: id });
+      assert.equal(statements.at(-1), 'commit');
+      assert.equal(statements.some(sql => sql.includes('admin_audit_log')), true);
+    }
+  }
 });
 
 test('existing bundle and product cannot be moved to another category', async () => {

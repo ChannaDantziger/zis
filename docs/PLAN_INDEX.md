@@ -132,6 +132,8 @@
 | [ADMIN_INVENTORY](ADMIN_INVENTORY.md) | מסך מלאי למוצרים פשוטים דרך הקטלוג; נתיבי וריאציות נשארים ב־API בלבד |
 | [ADMIN_CATALOG](ADMIN_CATALOG.md) | ניהול מוצרים פשוטים בלבד, קטגוריות ותמונות; API וריאציות נשמר כאפשרות עתידית; אימות DB/Storage ופריסה פתוחים |
 | [ADMIN_BUNDLES](ADMIN_BUNDLES.md) | הגדרת מארזים בניהול: קוד מקומי, מיגרציה ידנית ובדיקות ומגבלות |
+| [BUNDLES_PHASE_2_PLAN](planning/BUNDLES_PHASE_2_PLAN.md) | תוכנית מאושרת: הצגת מארזים והרכבתם בחנות, ללא רכישה בענף זה |
+| [BUNDLES_REMAINING_WORK_PLAN](planning/BUNDLES_REMAINING_WORK_PLAN.md) | תוכניות לאישור לענפים 3–5: עגלה והזמנה, תפעול ומשלוח, בדיקות ומסירה |
 | [ADMIN_UX_SIMPLIFICATION](ADMIN_UX_SIMPLIFICATION.md) | פישוט קטלוג/ניהול והסרת בחירת שיטת משלוח; קוד ובדיקות מקומיות 21.10, DB חי פתוח |
 | [ADMIN_OPERATION_REPORTS](ADMIN_OPERATION_REPORTS.md) | תוויות אריזה ודוחות אספקה לפי מוצרים פשוטים, כתובות ומספרי הזמנה; הדפסה ובחירה מדויקת; אימות חי פתוח |
 | [ADMIN_QUALITY_AUDIT](ADMIN_QUALITY_AUDIT.md) | הרשאות מנהל, התראות אישיות, בידוד Session ותאריכים; בדיקות ממוקדות מקומיות |
@@ -190,6 +192,7 @@
 | [017](../zis-db/migrations/017_variant_price_per_item.sql) | המרת מחיר וריאציה ממחיר Set למחיר ליחידה, רק ללא שינוי סכום; הוכנה ודורשת בדיקת ledger והחלה ידנית |
 | [018](../zis-db/migrations/018_admin_home_tasks_and_packages.sql) | מצב והיסטוריית משימות, מספר מארזים בהזמנה; בעלת האתר דיווחה שהחילה ידנית ב־10.11, ללא ledger מאומת |
 | [019](../zis-db/migrations/019_sequential_order_numbers.sql) | רצף מספרי הזמנות מ־1000, תוך שמירת מספרים קיימים; הוכנה בלבד, דורשת בדיקת ledger והחלה ידנית |
+| [021](../zis-db/migrations/021_catalog_bundle_publication.sql) | הוספת מצב פרסום למארזים; הוכנה בלבד ודורשת בירור 020/ledger והחלה ידנית |
 | [package.json](../zis-api/package.json) | תלויות וסקריפטים ל־API |
 | [prepare-file-for-llm](../scripts/prepare-file-for-llm.ps1) | הכנת עותק בטוח; קוראים רק PreparedPath |
 | [check-docs](../scripts/check-docs.ps1) | בדיקת אורכים, קישורים וכיסוי כל MD באינדקס |

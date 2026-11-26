@@ -3,7 +3,7 @@ import { request } from '../../shared/api/http-client.js';
 import { catalogStore } from './catalog.store.js';
 
 export interface BundleImage { imageId: string; storagePath: string; url?: string; altText: string; sortOrder: number; isPrimary: boolean; isDeleted: boolean; version: string }
-export interface Bundle { bundleId: string; categoryId: string; name: string; description: string | null; unitCount: number; status: 'draft' | 'hidden'; version: string; images: BundleImage[] }
+export interface Bundle { bundleId: string; categoryId: string; categoryActive?: boolean; name: string; description: string | null; unitCount: number; status: 'draft' | 'hidden' | 'active'; version: string; images: BundleImage[] }
 export class BundlesStore {
   items: Bundle[] = [];
   form: Bundle | null = null;

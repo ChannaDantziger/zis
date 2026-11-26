@@ -28,8 +28,9 @@ export function createAdminBundlesController(repo: BundlesRepository, resolve: A
       if (name.length > 200) throw new ApiError(400, 'VALIDATION_ERROR', 'Name too long');
       if (!Number.isSafeInteger(body.unitCount) || Number(body.unitCount) < 1 || Number(body.unitCount) > 2147483647) throw new ApiError(400, 'VALIDATION_ERROR', 'Invalid unit count');
       const id = req.params.bundleId ? uuid(req.params.bundleId) : undefined;
-      const status = body.status === 'hidden' ? 'hidden' : body.status === 'draft' ? 'draft' : null;
+      const status = body.status === 'hidden' ? 'hidden' : body.status === 'draft' ? 'draft' : body.status === 'active' ? 'active' : null;
       if (!status) throw new ApiError(400, 'VALIDATION_ERROR', 'Invalid status');
+      if (!id && status !== 'draft') throw new ApiError(422, 'BUNDLE_DRAFT_REQUIRED', 'יש ליצור מארז כטיוטה ולהוסיף תמונה לפני הפרסום');
       const result = await repo.save(id, { categoryId: uuid(body.categoryId), name, description: body.description ? text(body.description) : null,
         unitCount: Number(body.unitCount), status, version: id ? text(body.version) : undefined }, actor);
       res.status(id ? 200 : 201).json(result);
