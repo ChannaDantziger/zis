@@ -1,5 +1,6 @@
 import type { SqlClientFactory } from '../inventory/postgres-inventory.repository.js';
 import type { HomeOrder, HomeOrderRepository } from './home.types.js';
+import type { OrderBundleSnapshot } from '../contracts/commerce.contracts.js';
 
 interface HomeRow {
   orderId: string; orderNumber: string; status: HomeOrder['status']; paymentStatus: string; isTest: boolean;
@@ -56,6 +57,21 @@ async function listHomeOrders(factory: SqlClientFactory, from: string, to: strin
         variantName: row.variantName ?? '', quantitySets: Number(row.quantitySets ?? 0),
         categoryName: row.categoryName ?? 'ללא קטגוריה', productId: row.productId,
         productVariantId: row.productVariantId, imagePath: row.imagePath, imageUrl: null });
+    }
+    const schema = await client.query<{ present: boolean }>(`select to_regclass('public.order_bundles') is not null as present`);
+    if (schema.rows[0]?.present && orders.size) {
+      const bundles = await client.query<{ order_id: string; bundle: OrderBundleSnapshot }>(`select b.order_id,jsonb_build_object(
+          'orderBundleId',b.order_bundle_id,'bundleId',b.bundle_id,'categoryId',b.category_id,
+          'bundleName',b.bundle_name_snapshot,'categoryName',b.category_name_snapshot,'unitCount',b.unit_count_snapshot,
+          'quantity',b.quantity,'unitPrice',b.unit_price_snapshot::text,'lineTotal',b.line_total::text,
+          'components',coalesce((select jsonb_agg(jsonb_build_object('productId',c.product_id,'productName',c.product_name_snapshot,
+            'quantity',c.quantity_per_bundle,'unitPrice',c.unit_price_snapshot::text) order by c.product_id)
+            from public.order_bundle_components c where c.order_bundle_id=b.order_bundle_id),'[]'::jsonb)) as bundle
+        from public.order_bundles b where b.order_id=any($1::uuid[]) order by b.order_id,b.created_at,b.order_bundle_id`, [[...orders.keys()]]);
+      for (const row of bundles.rows) {
+        const order = orders.get(row.order_id);
+        if (order) (order.bundles ??= []).push(row.bundle);
+      }
     }
     return [...orders.values()];
   } finally { client.release?.(); }

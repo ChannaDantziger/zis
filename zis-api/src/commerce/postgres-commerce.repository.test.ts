@@ -38,3 +38,14 @@ test('sellable lookup returns product-level price and stock for simple product l
  const simple=f.calls.find(call=>call.sql.includes('null::uuid as product_variant_id'))!;
  assert.match(simple.sql,/\(p\.price_per_item \* p\.set_size\)::text as price_per_set/);assert.match(simple.sql,/\(p\.available_items \/ p\.set_size\) as available_sets/);assert.match(simple.sql,/not exists \(select 1 from public\.product_variants/);
 });
+test('availability reports a component shortage caused by a mixture of bundles and loose sets', async () => {
+ const client: SqlClient = { async query(sql) {
+  if (sql.includes('union all')) return { rows: [{product_id:'p',product_variant_id:null,price_per_set:'20.00',available_sets:5,set_size:2}], rowCount:1 } as never;
+  if (sql.includes('from public.catalog_bundles b')) return { rows: [{bundle_id:'b',category_id:'c',name:'מארז',category_name:'קינוחים',unit_count:2,image_path:null}],rowCount:1 } as never;
+  if (sql.includes('p.price_per_item::text,p.available_items')) return { rows: [{product_id:'p',category_id:'c',name:'עוגייה',price_per_item:'10.00',available_items:10,image_path:null}],rowCount:1 } as never;
+  return {rows:[],rowCount:0} as never;
+ } };
+ const repository=createPostgresCommerceRepository(async()=>client);
+ const result=await repository.getAvailability({deliveryDate:'2026-10-11',items:[{productId:'p',quantitySets:4}],bundles:[{bundleId:'b',quantity:2,components:[{productId:'p',quantity:2}]}]});
+ assert.equal(result.available,false);assert.match(result.shortages?.[0] ?? '',/עוגייה/);assert.match(result.shortages?.[0] ?? '',/12/);
+});

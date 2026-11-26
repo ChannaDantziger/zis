@@ -40,6 +40,32 @@ test('creation clears the matching cart once and later confirmation preserves ad
   } finally { cartStore.clear(); store.dispose(); }
 });
 
+test('confirmation restores bundle snapshots without allowing unsupported pending edits', async () => {
+  const bundle = { orderBundleId: 'line', bundleId: 'bundle', bundleName: 'מארז', unitCount: 2, quantity: 1, lineTotal: '20.00',
+    components: [{ productId: 'a', productName: 'קינוח', quantity: 2, unitPrice: '10.00' }] };
+  const store = setup({ confirmation: async () => ({ ...created, version: '1', isTest: false, deliveryDate: '2026-10-12', bundles: [bundle] }) });
+  try {
+    await ready(store); await store.submit(items);
+    assert.deepEqual(store.pendingBundles, [bundle]);
+    assert.equal(store.pendingItemsChanged, false);
+    assert.equal(store.canEditPending, false);
+  } finally { store.dispose(); }
+});
+
+test('successful order does not clear a bundle added while creation is in flight', async () => {
+  let finish!: (value: typeof created) => void;
+  const store = setup({ create: () => new Promise(resolve => { finish = resolve; }) });
+  cartStore.items = items.map(item => ({ ...item }));
+  try {
+    await ready(store);
+    const request = store.submit(items);
+    cartStore.bundles = [{ bundleId: 'bundle', quantity: 1, components: [{ productId: 'a', quantity: 2 }] }];
+    finish(created); await request;
+    assert.equal(cartStore.bundles.length, 1);
+    assert.deepEqual(cartStore.items, items);
+  } finally { cartStore.clear(); store.dispose(); }
+});
+
 test('starting a new checkout from the cart discards old recovery even after a browser reload', async () => {
   const originalStorage = globalThis.sessionStorage;
   const storage = new Map<string, string>();

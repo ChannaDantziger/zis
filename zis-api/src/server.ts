@@ -3,6 +3,7 @@ import { createTestPaymentService } from './commerce/test-payment.service.js';
 import { createManualPaymentService } from './commerce/manual-payment.service.js';
 import { createApp } from './app.js';
 import { createOrderService } from './commerce/order.service.js';
+import { bundleOrderingEnabled } from './config/bundle-feature.js';
 import { createPostgresOrderRepository } from './commerce/postgres-order.repository.js';
 import { createNotificationsService } from './notifications/notifications.service.js';
 import { createPostgresNotificationsRepository } from './notifications/postgres-notifications.repository.js';
@@ -95,7 +96,7 @@ const app = hasServerDependencies
           serverConfig.orderConfirmationTokenTtlSeconds && serverConfig.orderConfirmationTokenSecret ? {
             confirmationTokenTtlSeconds: serverConfig.orderConfirmationTokenTtlSeconds,
             confirmationTokenSecret: serverConfig.orderConfirmationTokenSecret,
-          } : undefined),
+          } : undefined, { bundlesEnabled: bundleOrderingEnabled(serverConfig) }),
         notificationsService: createNotificationsService(createPostgresNotificationsRepository(createPostgresClientFactory(pool))),
         inventoryAdminService: createInventoryAdminService(createPostgresInventoryAdminRepository(createPostgresClientFactory(pool))),
         operationsReportsService: createOperationsReportsService(createPostgresOperationsReportsRepository(createPostgresClientFactory(pool))),
@@ -120,7 +121,8 @@ const app = hasServerDependencies
         orderCorrectionService: createOrderCorrectionService(createPostgresClientFactory(pool)),
         orderStatusService: createOrderStatusService(orderStatusRepository),
         commerceSettingsService: createCommerceSettingsService(commerceSettingsRepository),
-        commerceService: createCommerceService(commerceRepository),
+        commerceService: createCommerceService(commerceRepository, { bundlesEnabled: bundleOrderingEnabled(serverConfig) }),
+        bundleOrderingEnabled: bundleOrderingEnabled(serverConfig),
         allowedOrigins: serverConfig.allowedOrigins,
         readinessChecks: {
           postgres: async () => {

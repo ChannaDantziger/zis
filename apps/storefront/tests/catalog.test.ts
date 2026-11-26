@@ -6,12 +6,21 @@ import type { CatalogProduct } from '../src/entities/product/types';
 import type { BundleProduct } from '../src/features/bundles/types';
 import { adjustSelection, initialSelection, priceAgorot, selectionTotal } from '../src/features/bundles/allocation';
 import { productWindow } from '../src/features/bundles/pagination';
+import { BUNDLE_PURCHASE_ENABLED, canEnableBundleTest } from '../src/features/bundles/feature';
 
 const primary = { imageId: 'primary', url: 'https://media.invalid/p', altText: 'Primary', imageType: 'primary' as const, sortOrder: 0 };
 const second = { ...primary, imageId: 'second', imageType: 'gallery' as const, sortOrder: 1 };
 const product: CatalogProduct = { productId: 'product', name: 'Test product', description: null,
   category: { categoryId: 'category', name: 'Test category', slug: 'test' }, setSize: 6, pricePerUnit: '12.50', availableSets: 5, displayOrder: 10,
   primaryImage: primary, gallery: [primary, second], variants: [] };
+
+test('bundle purchase test mode is off by default and cannot be enabled on a remote host', () => {
+  assert.equal(BUNDLE_PURCHASE_ENABLED, false);
+  assert.equal(canEnableBundleTest(true, 'localhost'), true);
+  assert.equal(canEnableBundleTest(true, '127.0.0.1'), true);
+  assert.equal(canEnableBundleTest(true, 'shop.example.test'), false);
+  assert.equal(canEnableBundleTest(false, 'localhost'), false);
+});
 
 test('catalog URL parser normalizes malformed pages, sorting and excessive search', () => {
   const query = readCatalogQuery(new URLSearchParams({ page: '-3', sort: 'unsafe', direction: 'unsafe', search: ' x'.repeat(100) }));
@@ -61,6 +70,14 @@ test('bundle quantities count physical inventory across identical boxes and pric
   const products = [{ ...bundleProducts[0], availableItems: 4 }, { ...bundleProducts[1], availableItems: 8 }];
   assert.deepEqual(adjustSelection(products, { '0': 4, '1': 2 }, 6, 2), { '0': 2, '1': 4 });
   assert.equal(priceAgorot(products, { '0': 2, '1': 4 }), 8080n);
+});
+test('automatic adjustment uses default allocation when nothing is selected and checks the number of identical boxes', () => {
+  const products = bundleProducts.map((item, index) => ({ ...item, availableItems: index === 4 ? 8 : 2 }));
+  const result = adjustSelection(products, {}, 5, 2)!;
+  assert.equal(selectionTotal(result), 5);
+  for (const item of products) assert.ok((result[item.productId] ?? 0) * 2 <= item.availableItems);
+  assert.equal(adjustSelection(products, {}, 9, 2), null);
+  assert.equal(adjustSelection(products, {}, 5, 0), null);
 });
 test('combined paging places bundles first without skipping or duplicating products', () => {
   assert.deepEqual(productWindow(1, 24, 30).pageNumbers, []);

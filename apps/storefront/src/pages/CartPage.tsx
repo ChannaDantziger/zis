@@ -15,7 +15,7 @@ export const CartPage = observer(function CartPage() {
       <Stack gap="lg">
         <Title order={1}>העגלה שלך</Title>
         <CartItems />
-        {cartStore.items.length > 0 && <Button component={Link} to="/checkout" disabled={!cartStore.canContinue || !minimumOrder.isMet}
+        {cartStore.totalSets > 0 && <Button component={Link} to="/checkout" disabled={!cartStore.canContinue || !minimumOrder.isMet}
           onClick={() => checkoutStore.startNewCheckout()}>להמשך</Button>}
       </Stack>
     </Container>

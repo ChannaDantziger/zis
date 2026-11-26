@@ -7,8 +7,13 @@ export async function readOrderPage(factory: SqlClientFactory, query: AdminOrder
   try {
     await client.query('begin isolation level repeatable read read only');
     const { values, filters } = orderFilters(query);
+    const schema = await client.query<{ present: boolean }>(`select to_regclass('public.order_bundles') is not null as present`);
+    const hasBundles = Boolean(schema.rows[0]?.present);
+    const hasItems = hasBundles ? `(exists (select 1 from public.order_items item where item.order_id = o.order_id)
+      or exists (select 1 from public.order_bundles b where b.order_id = o.order_id))`
+      : `exists (select 1 from public.order_items item where item.order_id = o.order_id)`;
     const count = await client.query<{ count: number }>(`select count(*)::int as count from public.orders o
-      where ${filters.join(' and ')} and exists (select 1 from public.order_items item where item.order_id = o.order_id)`, values);
+      where ${filters.join(' and ')} and ${hasItems}`, values);
     const data = await listOrdersWithClient(client, query, query.pageSize, (query.page - 1) * query.pageSize);
     const variants = await client.query<{ value: string; label: string }>(`select oi.product_variant_id::text as value,
       min(oi.product_name_snapshot || ' · ' || oi.variant_name_snapshot) as label

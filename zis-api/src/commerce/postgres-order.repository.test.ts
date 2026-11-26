@@ -43,7 +43,7 @@ test('failed token insertion rolls the entire transaction back',async()=>{
 });
 test('confirmation SQL checks expiry/revocation and returns a minimal response',async()=>{
  const f=fixture(sql=>sql.includes('from public.order_confirmation_tokens')?{rows:[{order_id:'private',order_number:'NUMBER',status:'ordered',payment_status:'paid',delivery_date:'2026-10-11',total:'25.50',customer_phone:'private'}],rowCount:1}:empty);
- const result=await f.repository.findConfirmation('hash',new Date());assert.deepEqual(Object.keys(result!).sort(),['currency','deliveryDate','isTest','orderNumber','paymentStatus','status','total']);assert.match(f.calls[0]!.sql,/revoked_at is null and t.expires_at>\$2/);assert.ok(f.released);
+ const result=await f.repository.findConfirmation('hash',new Date());assert.deepEqual(Object.keys(result!).sort(),['currency','deliveryDate','isTest','orderNumber','paymentStatus','status','total']);assert.match(f.calls.find(call=>call.sql.includes('order_confirmation_tokens'))!.sql,/revoked_at is null and t.expires_at>\$2/);assert.ok(f.released);
 });
 
 test('confirmation exposes ordered product snapshots without customer details',async()=>{
@@ -51,7 +51,16 @@ test('confirmation exposes ordered product snapshots without customer details',a
  const f=fixture(()=>({rows:[{order_id:'private',order_number:'NUMBER',status:'ordered',payment_status:'pending',is_test:false,delivery_date:'2026-10-11',total:'25.50',items,customer_phone:'private'}],rowCount:1}));
  const result=await f.repository.findConfirmation('hash',new Date());
  assert.deepEqual(result?.items,items);assert.equal('customer_phone' in result!,false);
- assert.match(f.calls[0]!.sql,/product_name_snapshot/);assert.match(f.calls[0]!.sql,/line_total/);
+ const query=f.calls.find(call=>call.sql.includes('order_confirmation_tokens'))!.sql;
+ assert.match(query,/product_name_snapshot/);assert.match(query,/line_total/);
+});
+
+test('confirmation reads bundle snapshots within the same repeatable-read transaction',async()=>{
+ const bundles=[{orderBundleId:'line',bundleId:'bundle',categoryId:'category',bundleName:'מארז',categoryName:'קינוחים',imagePath:'private/bundle',unitCount:2,quantity:3,unitPrice:'20.00',lineTotal:'60.00',components:[{productId:'product',productName:'קינוח',imagePath:'private/product',quantity:2,unitPrice:'10.00'}]}];
+ const f=fixture(sql=>sql.startsWith('begin')||sql==='commit'?empty:sql.includes('to_regclass')?{rows:[{present:true}],rowCount:1}:sql.includes('from public.order_bundles')?{rows:bundles.map(bundle=>({bundle})),rowCount:1}:sql.includes('from public.order_confirmation_tokens')?{rows:[{order_id:'private',order_number:'NUMBER',status:'ordered',payment_status:'pending',is_test:false,delivery_date:'2026-10-11',total:'60.00',items:[]}],rowCount:1}:empty);
+ const result=await f.repository.findConfirmation('hash',new Date());
+ assert.equal(result?.bundles?.[0].bundleName,'מארז');assert.equal(JSON.stringify(result).includes('private/'),false);
+ assert.match(f.calls[0]!.sql,/repeatable read read only/);assert.equal(f.calls.at(-1)?.sql,'commit');
 });
 
 test('test creation replay returns explicit marker and current paid status/version',async()=>{

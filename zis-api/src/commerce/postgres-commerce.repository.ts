@@ -12,10 +12,12 @@ import type { SqlClient, SqlClientFactory } from '../inventory/postgres-inventor
 import type { CommerceRepository } from './commerce.types.js';
 import type { DeliveryPolicy } from './delivery-policy.js';
 import type { QuoteContext, QuoteVariantContext, ShippingRuleContext } from './quote.service.js';
+import { readBundleOrderContext } from './bundle-order-context.js';
+import { calculateBundleOrder } from './bundle-calculation.js';
 
 interface DefaultRow { [key: string]: unknown; default_key: string; default_value: unknown; }
 interface ZoneRow { [key: string]: unknown; shipping_zone_id: string; name: string; city: string; neighborhood: string | null; }
-interface VariantRow { [key: string]: unknown; product_variant_id: string | null; product_id: string; price_per_set: string; available_sets: number; }
+interface VariantRow { [key: string]: unknown; product_variant_id: string | null; product_id: string; price_per_set: string; available_sets: number; set_size: number; }
 interface RuleRow { [key: string]: unknown; base_price: string; size_from_sets: number; size_to_sets: number | null; size_surcharge: string; time_surcharge: string; urgency_surcharge: string; }
 
 export function createPostgresCommerceRepository(factory: SqlClientFactory): CommerceRepository {
@@ -71,7 +73,21 @@ async function getAvailability(factory: SqlClientFactory, input: AvailabilityReq
       const availableSets = row?.available_sets ?? 0;
       return { ...item, availableSets, requestedSets: item.quantitySets, shortageSets: Math.max(item.quantitySets - availableSets, 0) };
     });
-    return { deliveryDate: input.deliveryDate, available: items.every((item) => item.shortageSets === 0), items };
+    if (items.some(item => item.shortageSets > 0)) return { deliveryDate: input.deliveryDate, available: false, items };
+    if (input.bundles?.length) {
+      const context = await readBundleOrderContext(client, input.bundles, input.items);
+      try {
+        calculateBundleOrder(input.bundles, context.bundles, context.products, input.items.filter(item => !item.productVariantId).map(item => ({
+          productId: item.productId, quantitySets: item.quantitySets, setSize: byId.get(itemKey(item.productId, null))?.set_size ?? 0,
+        })));
+      } catch (error) {
+        if (error instanceof ApiError && error.code === 'STOCK_UNAVAILABLE') {
+          return { deliveryDate: input.deliveryDate, available: false, items, shortages: Object.values(error.fields ?? {}) };
+        }
+        throw error;
+      }
+    }
+    return { deliveryDate: input.deliveryDate, available: true, items };
   } finally {
     client.release?.();
   }
@@ -106,6 +122,7 @@ export async function readQuoteContext(client: SqlClient, input: ShippingQuoteIn
     );
     if (!zoneResult.rows[0]?.is_active) throw new ApiError(422, 'BUSINESS_RULE_VIOLATION', 'Shipping zone is unavailable');
     const variantResult = { rows: await loadSellableItems(client, input.items) };
+    const bundleContext = await readBundleOrderContext(client, input.bundles ?? [], input.items);
     const ruleResult = await client.query<RuleRow>(
       `select r.base_price, r.size_from_sets, r.size_to_sets, r.size_surcharge,
               r.time_surcharge, r.urgency_surcharge
@@ -118,6 +135,8 @@ export async function readQuoteContext(client: SqlClient, input: ShippingQuoteIn
       minimumProductSubtotal: settings.minimumProductSubtotal,
       currency: 'ILS',
       variants: variantResult.rows.map(mapVariant),
+      bundles: bundleContext.bundles,
+      bundleProducts: bundleContext.products,
       shippingRules: ruleResult.rows.map(mapRule),
     };
 }
@@ -149,21 +168,21 @@ export async function readSettings(client: SqlClient) {
 }
 
 function mapVariant(row: VariantRow): QuoteVariantContext {
-  return { productId: row.product_id, productVariantId: row.product_variant_id, pricePerSet: row.price_per_set, availableSets: row.available_sets, active: true };
+  return { productId: row.product_id, productVariantId: row.product_variant_id, pricePerSet: row.price_per_set, availableSets: row.available_sets, setSize: row.set_size, active: true };
 }
 
 async function loadSellableItems(client: SqlClient, items: Array<{ productId: string; productVariantId?: string | null }>) {
   const productIds = items.map((item) => item.productId);
   const variantIds = items.flatMap((item) => item.productVariantId ? [item.productVariantId] : []);
   const result = await client.query<VariantRow>(`select p.product_id, null::uuid as product_variant_id,
-      (p.price_per_item * p.set_size)::text as price_per_set, (p.available_items / p.set_size) as available_sets
+      (p.price_per_item * p.set_size)::text as price_per_set, (p.available_items / p.set_size) as available_sets, p.set_size
     from public.products p join public.categories c on c.category_id=p.category_id
     where p.product_id=any($1::uuid[]) and p.status='active' and not p.is_deleted and c.status='active' and not c.is_deleted
       and not exists (select 1 from public.product_variants any_variant where any_variant.product_id=p.product_id and not any_variant.is_deleted)
       and p.price_per_item is not null
       and exists(select 1 from public.product_images i where i.product_id=p.product_id and i.product_variant_id is null and i.image_type='primary' and not i.is_deleted)
     union all
-    select p.product_id, v.product_variant_id, (v.price_per_item * p.set_size)::text, v.available_sets
+    select p.product_id, v.product_variant_id, (v.price_per_item * p.set_size)::text, v.available_sets, p.set_size
     from public.product_variants v join public.products p on p.product_id=v.product_id join public.categories c on c.category_id=p.category_id
     where v.product_variant_id=any($2::uuid[]) and v.status='active' and not v.is_deleted
       and p.status='active' and not p.is_deleted and c.status='active' and not c.is_deleted

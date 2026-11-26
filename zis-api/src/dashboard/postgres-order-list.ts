@@ -4,15 +4,23 @@ import { allowedNextStatuses } from './order-transitions.js';
 
 export async function listOrdersWithClient(client: SqlClient, query: AdminOrdersQuery, limit?: number, offset = 0): Promise<AdminOrderRow[]> {
   const { values, filters } = orderFilters(query);
+  const schema = await client.query<{ present: boolean }>(`select to_regclass('public.order_bundles') is not null as present`);
+  const hasBundles = Boolean(schema.rows[0]?.present);
+  const summary = hasBundles
+    ? `concat_ws(', ', string_agg(distinct oi.product_name_snapshot, ', ' order by oi.product_name_snapshot),
+      (select string_agg(b.bundle_name_snapshot || ' × ' || b.quantity::text, ', ' order by b.created_at,b.order_bundle_id) from public.order_bundles b where b.order_id=o.order_id))`
+    : `string_agg(distinct oi.product_name_snapshot, ', ' order by oi.product_name_snapshot)`;
+  const join = hasBundles ? 'left join' : 'join';
+  if (hasBundles) filters.push(`(oi.order_item_id is not null or exists(select 1 from public.order_bundles b where b.order_id=o.order_id))`);
   const limitSql = limit ? ` limit $${values.push(limit)} offset $${values.push(offset)}` : '';
   const result = await client.query<AdminOrderRow & { [key: string]: unknown }>(
     `select o.order_id as "orderId", o.order_number as "orderNumber", o.status, o.payment_status as "paymentStatus", o.is_test as "isTest", o.total::text,
             coalesce(o.delivery_address->>'city', '') as location, coalesce(o.delivery_address->>'city', '') as city,
             to_char(o.delivery_date, 'YYYY-MM-DD') as "deliveryDate", min(oi.product_variant_id::text) as "productVariantId",
-            string_agg(distinct oi.product_name_snapshot, ', ' order by oi.product_name_snapshot) as "itemSummary",
+            ${summary} as "itemSummary",
             exists (select 1 from public.admin_tasks task where task.order_id = o.order_id and task.status = 'open') as "hasOpenTask",
             extract(epoch from o.updated_at)::text as version
-       from public.orders o join public.order_items oi on oi.order_id = o.order_id
+       from public.orders o ${join} public.order_items oi on oi.order_id = o.order_id
       where ${filters.join(' and ')}
       group by o.order_id
       order by ${sortSql(query)}${limitSql}`,

@@ -3,19 +3,20 @@ import { ApiError } from '../http/api-error.js';
 import type { OrderConfig, OrderRepository, OrderService } from './order.types.js';
 import { readIdempotencyKey, readOrderInput, readPendingOrderUpdate } from './order-validation.js';
 import { createQuoteService } from './quote.service.js';
-export function createOrderService(repository: OrderRepository, config?: OrderConfig): OrderService {
+export function createOrderService(repository: OrderRepository, config?: OrderConfig, options: { bundlesEnabled?: boolean } = {}): OrderService {
   const configured = config && Number.isSafeInteger(config.confirmationTokenTtlSeconds) && config.confirmationTokenTtlSeconds >= 1 && config.confirmationTokenTtlSeconds <= 2147483647 && typeof config.confirmationTokenSecret === 'string' && config.confirmationTokenSecret.length >= 32;
   const assertConfigured = () => { if (!configured) throw new ApiError(503,'ORDER_CREATION_NOT_CONFIGURED','Order creation is not configured'); };
   const tokenFor = (orderId: string) => createHmac('sha256',config!.confirmationTokenSecret).update('order-confirmation:'+orderId).digest('base64url');
   async function create(value: unknown, keyValue: unknown, now: Date, actor?: string) {
-      assertConfigured(); const input=readOrderInput(value); const key=readIdempotencyKey(keyValue);
+      assertConfigured(); const input=readOrderInput(value, options.bundlesEnabled === true); const key=readIdempotencyKey(keyValue);
+      if (input.bundles?.some(bundle => bundle.orderBundleId)) throw new ApiError(400,'VALIDATION_ERROR','New bundles cannot reference an existing order');
       if (actor) { input.customerName='ניסוי '+input.customerName; input.deliveryAddress.street='ניסוי '+input.deliveryAddress.street; }
       const hash=sha256(JSON.stringify({input, testActor: actor ?? null}));
       return repository.withTransaction(async (transaction) => {
         const prior=await transaction.claimRequest(key,hash);
         if (prior) return {...prior,confirmationToken:tokenFor(prior.orderId)};
         const snapshots=await transaction.readSnapshots(input);
-        const quote=await createQuoteService(transaction).calculate(input,now);
+        const quote=await createQuoteService(transaction, { shippingByPackages: options.bundlesEnabled === true }).calculate(input,now);
         const orderId=randomUUID(); const confirmationToken=tokenFor(orderId);
         const orderNumber=await transaction.nextOrderNumber();
         const response={orderId,orderNumber,status:'ordered' as const,paymentStatus:'pending' as const,total:quote.total,currency:'ILS' as const,confirmationToken};
@@ -30,10 +31,12 @@ export function createOrderService(repository: OrderRepository, config?: OrderCo
       assertConfigured();
       if (typeof token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(token)) throw new ApiError(404,'NOT_FOUND','Pending order is unavailable');
       const update = readPendingOrderUpdate(value); const key = readIdempotencyKey(keyValue);
+      if (update.bundles !== undefined && !options.bundlesEnabled) throw new ApiError(503,'BUNDLE_ORDER_NOT_AVAILABLE','Bundle ordering is not available yet');
       return repository.withTransaction(async transaction => {
         if (!transaction.readPending || !transaction.updatePending || !transaction.claimPendingEdit || !transaction.completePendingEdit) throw new ApiError(503,'PENDING_ORDER_EDIT_NOT_CONFIGURED','Pending order editing is unavailable');
         const pending = await transaction.readPending(sha256(token), now);
-        const input = readOrderInput({ ...pending.input, items: update.items });
+        const input = readOrderInput({ ...pending.input, items: update.items,
+          ...(update.bundles === undefined ? {} : { bundles: update.bundles }) }, options.bundlesEnabled === true);
         const prior = await transaction.claimPendingEdit(key, sha256(JSON.stringify({ operation: 'pending-items-update', orderId: pending.response.orderId, ...update })), pending.response.orderId);
         if (prior) return { ...prior, confirmationToken: token };
         if (pending.version !== update.expectedVersion) throw new ApiError(409,'ORDER_CHANGED','Order changed before the update');
@@ -42,9 +45,9 @@ export function createOrderService(repository: OrderRepository, config?: OrderCo
           && snapshot.productVariantId === current.productVariantId) ?? current);
         const quote = await createQuoteService({ getContext: async request => {
           const context = await transaction.getContext(request);
-          return { ...context, variants: context.variants.map(variant => ({ ...variant,
+          return { ...context, bundleSnapshots: pending.bundleSnapshots, variants: context.variants.map(variant => ({ ...variant,
             pricePerSet: snapshots.find(snapshot => snapshot.productId === variant.productId && snapshot.productVariantId === variant.productVariantId)?.pricePerSet ?? variant.pricePerSet })) };
-        } }).calculate(input, now);
+        } }, { shippingByPackages: options.bundlesEnabled === true }).calculate(input, now);
         const version = await transaction.updatePending(pending, input, quote, snapshots);
         const response = { ...pending.response, total: quote.total, version, confirmationToken: token };
         await transaction.completePendingEdit(key, pending.response.orderId, response);

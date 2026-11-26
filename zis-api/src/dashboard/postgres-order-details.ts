@@ -1,6 +1,7 @@
 import type { SqlClient } from '../inventory/postgres-inventory.repository.js';
 import type { AdminOrderDetails } from './dashboard.types.js';
 import { allowedNextStatuses } from './order-transitions.js';
+import { readOrderBundles } from '../commerce/bundle-order-repository.js';
 
 export async function readOrderDetails(client: SqlClient, orderId: string): Promise<AdminOrderDetails | null> {
   const orderResult = await client.query<AdminOrderDetails & Record<string, unknown>>(
@@ -22,7 +23,7 @@ export async function readOrderDetails(client: SqlClient, orderId: string): Prom
       where o.order_id = $1`, [orderId]);
   const order = orderResult.rows[0];
   if (!order) return null;
-  const [items, history, tasks, payments] = await Promise.all([
+  const [items, history, tasks, payments, bundles] = await Promise.all([
     client.query<AdminOrderDetails['items'][number] & Record<string, unknown>>(
       `select order_item_id as "orderItemId", product_name_snapshot as "productName", variant_name_snapshot as "variantName",
               quantity_sets as "quantitySets", unit_set_price_snapshot::text as "unitSetPrice", line_total::text as "lineTotal",
@@ -39,7 +40,8 @@ export async function readOrderDetails(client: SqlClient, orderId: string): Prom
               status, is_simulated as "isSimulated", created_at as "createdAt",
               case when provider='manual_external' then provider_payload->>'method' end as "manualMethod"
          from public.payments where order_id = $1 order by created_at, payment_id`, [orderId]),
+    readOrderBundles(client, orderId),
   ]);
-  return { ...order, items: items.rows, history: history.rows, tasks: tasks.rows, payments: payments.rows,
+  return { ...order, items: items.rows, bundles, history: history.rows, tasks: tasks.rows, payments: payments.rows,
     allowedNextStatuses: allowedNextStatuses(order.status, order.paymentStatus) };
 }

@@ -1,6 +1,6 @@
 import type { ApiListResponse, PaginationQuery } from '../contracts/common.contracts.js';
 import type { OrderStatus } from '../domain/order-status.js';
-import type { DeliveryAddress } from '../contracts/commerce.contracts.js';
+import type { DeliveryAddress, OrderBundleSnapshot } from '../contracts/commerce.contracts.js';
 
 export interface AdminOrderDetails {
   orderId: string; orderNumber: string; status: OrderStatus; paymentStatus: string;
@@ -16,6 +16,7 @@ export interface AdminOrderDetails {
   isUrgent?: boolean; paymentConfirmedAt?: string | null; createdAt?: string; updatedAt?: string;
   payments?: Array<{ provider: string; providerTransactionId: string | null; amount: string; currency: string; status: string; isSimulated: boolean; createdAt: string; manualMethod?: string | null }>;
   items: Array<{ orderItemId: string; productName: string; variantName: string; quantitySets: number; unitSetPrice: string; lineTotal: string; productCode?: string | null; setSize?: number | null }>;
+  bundles?: OrderBundleSnapshot[];
   history: Array<{ historyId: string; fromStatus: OrderStatus | null; toStatus: OrderStatus; createdAt: string; note: string | null }>;
   tasks: Array<{ taskId: string; title: string; description: string | null; priority: string }>;
   allowedNextStatuses: OrderStatus[];

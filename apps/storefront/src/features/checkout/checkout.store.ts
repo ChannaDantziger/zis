@@ -3,13 +3,14 @@ import { apiRequest } from '../../shared/api/http-client';
 import { ApiError } from '../../shared/api/http-client';
 import { checkoutApi } from './checkout.api';
 import { customerErrors } from './customer-validation';
-import { emptyCustomer, type CheckoutApi, type CheckoutItem, type Confirmation, type CustomerForm,
+import { emptyCustomer, type CheckoutApi, type CheckoutBundle, type CheckoutItem, type Confirmation, type ConfirmationBundle, type CustomerForm,
   type OrderCreated, type OrderInput, type Quote, type QuoteInput, type ShippingZone } from './checkout.types';
 import type { StoreStatus } from '../../shared/store-status';
 import { cartKey, cartStore, OUT_OF_STOCK_MESSAGE } from '../../stores/cart.store';
 import { isQuantity, MAX_CART_LINES } from '../../stores/cart.persistence';
 import { checkoutErrorMessage, testPaymentError } from './checkout.errors';
 import { clearCheckoutRecovery, readCheckoutRecovery, writeCheckoutRecovery } from './checkout.recovery';
+import { BUNDLE_PURCHASE_ENABLED } from '../bundles/feature';
 
 const TEST_AUTHORIZATION_TTL_MS = 60_000;
 const TEST_AUTHORIZATION_EXPIRED_MESSAGE = 'הרשאת המנהלת כבר אינה פעילה כי עברו יותר מדי זמן. יש להתחבר שוב כדי לאשר את התשלום המדומה.';
@@ -45,19 +46,22 @@ export class CheckoutStore {
   private testOrderVersion = '';
   simulatedPaid = false;
   pendingItems: CheckoutItem[] = [];
+  pendingBundles: ConfirmationBundle[] = [];
   pendingCartKeys = new Set<string>();
   removedPendingItems: CheckoutItem[] = [];
   pendingConflict = false;
   private savedPendingItems = '';
-  private pendingUpdate: { input: { items: CheckoutItem[]; expectedVersion: string }; key: string } | null = null;
+  private savedPendingBundles = '[]';
+  private pendingBundlesLoaded = false;
+  private pendingUpdate: { input: { items: CheckoutItem[]; bundles?: CheckoutBundle[]; expectedVersion: string }; key: string } | null = null;
   get pendingUpdatePending() { return Boolean(this.pendingUpdate); }
   startNewCheckout() {
     if (this.retryPending || this.pendingUpdatePending) return;
     this.dispose();
     this.deliveryDate = ''; this.shippingZoneId = '';
   }
-  get pendingItemsChanged() { return JSON.stringify(this.pendingItems) !== this.savedPendingItems; }
-  get canEditPending() { return Boolean(this.created?.status === 'ordered' && this.created.paymentStatus === 'pending' && this.token && this.created.version) && !this.simulatedPaid && !this.busy && !this.pendingUpdate && !this.pendingConflict; }
+  get pendingItemsChanged() { return JSON.stringify(this.pendingItems) !== this.savedPendingItems || JSON.stringify(this.pendingBundles) !== this.savedPendingBundles; }
+  get canEditPending() { return Boolean(this.created?.status === 'ordered' && this.created.paymentStatus === 'pending' && this.token && this.created.version) && (!this.confirmation?.bundles?.length || BUNDLE_PURCHASE_ENABLED) && !this.simulatedPaid && !this.busy && !this.pendingUpdate && !this.pendingConflict; }
   setPendingQuantity(key: string, quantitySets: number) {
     if (!this.canEditPending || !isQuantity(quantitySets)) return;
     const item = this.pendingItems.find(item => cartKey(item) === key);
@@ -71,17 +75,29 @@ export class CheckoutStore {
     this.removedPendingItems = this.removedPendingItems.filter(removed => cartKey(removed) !== cartKey(item));
   }
   removePendingItem(key: string) {
-    if (!this.canEditPending || this.pendingItems.length <= 1) return;
+    if (!this.canEditPending || this.pendingItems.length + this.pendingBundles.length <= 1) return;
     const removed = this.pendingItems.find(item => cartKey(item) === key);
     if (removed && !this.removedPendingItems.some(item => cartKey(item) === key)) this.removedPendingItems.push({ ...removed });
     this.pendingItems = this.pendingItems.filter(item => cartKey(item) !== key);
   }
+  setPendingBundle(bundle: ConfirmationBundle) {
+    if (!this.canEditPending || !isQuantity(bundle.quantity)) return;
+    const index = this.pendingBundles.findIndex(item => item.orderBundleId === bundle.orderBundleId);
+    if (index >= 0) this.pendingBundles[index] = bundle;
+  }
+  removePendingBundle(id: string) {
+    if (!this.canEditPending || this.pendingItems.length + this.pendingBundles.length <= 1) return;
+    this.pendingBundles = this.pendingBundles.filter(item => item.orderBundleId !== id);
+  }
   async savePendingItems() {
     if (!this.api.updatePending || !this.token || !this.created?.version || this.created.status !== 'ordered'
-      || this.created.paymentStatus !== 'pending' || !this.pendingItems.length || this.busy || this.simulatedPaid || this.pendingConflict) return;
+      || this.created.paymentStatus !== 'pending' || (!this.pendingItems.length && !this.pendingBundles.length) || this.busy || this.simulatedPaid || this.pendingConflict) return;
     if (!this.pendingUpdate) {
       if (!this.pendingItemsChanged) return;
-      this.pendingUpdate = { key: this.makeKey(), input: { expectedVersion: this.created.version, items: this.pendingItems.map(item => ({ ...item })) } };
+      const bundles = this.pendingBundles.map(bundle => ({ orderBundleId: bundle.orderBundleId, bundleId: bundle.bundleId, quantity: bundle.quantity,
+        components: bundle.components.map(({ productId, quantity }) => ({ productId, quantity })) }));
+      this.pendingUpdate = { key: this.makeKey(), input: { expectedVersion: this.created.version, items: this.pendingItems.map(item => ({ ...item })),
+        ...(bundles.length || this.savedPendingBundles !== '[]' ? { bundles } : {}) } };
     }
     this.busy = true; this.confirmationError = '';
     const version = ++this.version;
@@ -92,7 +108,8 @@ export class CheckoutStore {
         if (version !== this.version) return;
         const { confirmationToken, ...created } = response;
         this.created = created; this.token = confirmationToken; this.testOrderVersion = response.version ?? '';
-        this.savedPendingItems = JSON.stringify(this.pendingUpdate!.input.items); this.pendingUpdate = null;
+        this.savedPendingItems = JSON.stringify(this.pendingUpdate!.input.items);
+        this.savedPendingBundles = JSON.stringify(this.pendingBundles); this.pendingUpdate = null;
         this.confirmation = null;
       });
       if (version === this.version) await this.refreshConfirmation();
@@ -100,7 +117,7 @@ export class CheckoutStore {
       runInAction(() => {
         if (version !== this.version) return;
         const definitive = error instanceof ApiError && ([400, 401, 403, 404, 409, 422].includes(error.status)
-          || (error.status === 503 && error.code === 'PENDING_ORDER_EDIT_NOT_CONFIGURED'));
+          || (error.status === 503 && ['PENDING_ORDER_EDIT_NOT_CONFIGURED', 'BUNDLE_ORDER_NOT_AVAILABLE'].includes(error.code)));
         if (definitive) this.pendingUpdate = null;
         if (error instanceof ApiError && error.code === 'ORDER_CHANGED') this.pendingConflict = true;
         this.confirmationError = error instanceof ApiError && error.code === 'MINIMUM_ORDER_NOT_MET'
@@ -115,10 +132,13 @@ export class CheckoutStore {
     this.busy = true;
     try {
       const confirmation = await this.api.confirmation(this.token);
-      if (!confirmation.version || !confirmation.items?.length) throw new Error('Pending items are unavailable');
+      if (!confirmation.version || (!confirmation.items?.length && !confirmation.bundles?.length)) throw new Error('Pending items are unavailable');
       runInAction(() => {
         if (version !== this.version || request !== this.confirmationVersion || !this.created) return;
-        this.pendingItems = confirmation.items!.map(item => ({ productId: item.productId, quantitySets: item.quantitySets }));
+        this.pendingItems = (confirmation.items ?? []).map(item => ({ productId: item.productId, quantitySets: item.quantitySets }));
+        this.pendingBundles = confirmation.bundles ?? [];
+        this.savedPendingBundles = JSON.stringify(this.pendingBundles);
+        this.pendingBundlesLoaded = true;
         this.savedPendingItems = JSON.stringify(this.pendingItems);
         this.pendingItems.forEach(item => this.pendingCartKeys.add(cartKey(item))); this.removedPendingItems = [];
         this.created = { ...this.created, version: confirmation.version, total: confirmation.total, status: confirmation.status, paymentStatus: confirmation.paymentStatus };
@@ -227,6 +247,7 @@ export class CheckoutStore {
         this.token = recovery.token;
         this.created = recovery.order;
         this.pendingItems = [];
+        this.pendingBundles = []; this.savedPendingBundles = '[]'; this.pendingBundlesLoaded = false;
         this.pendingCartKeys.clear();
       }
     }
@@ -242,13 +263,16 @@ export class CheckoutStore {
     if (version === this.loadVersion && this.token) await this.refreshConfirmation();
   }
   async preview(items: CheckoutItem[]) {
-    if (!this.canQuote || !items.length) return;
+    if (!this.canQuote || (!items.length && !cartStore.bundles.length)) return;
     const version = ++this.version;
     const input = this.quoteInput(items);
     this.busy = true; this.quote = null; this.error = '';
     try {
-      const availability = await this.api.availability({ deliveryDate: input.deliveryDate, items: input.items });
-      if (!availability.available) throw new ApiError(OUT_OF_STOCK_MESSAGE, 422, 'STOCK_UNAVAILABLE');
+      const availability = await this.api.availability({ deliveryDate: input.deliveryDate, items: input.items, ...(input.bundles?.length ? { bundles: input.bundles } : {}) });
+      if (!availability.available) {
+        runInAction(() => { if (version === this.version) this.error = availability.shortages?.length ? `אין מספיק מלאי: ${availability.shortages.join('; ')}` : OUT_OF_STOCK_MESSAGE; });
+        return;
+      }
       const quote = await this.api.quote(input);
       runInAction(() => {
         if (version !== this.version) return;
@@ -289,11 +313,13 @@ export class CheckoutStore {
         if (version !== this.version) return;
         const { confirmationToken, ...created } = response;
         this.pendingItems = this.attempt!.input.items.map(item => ({ ...item }));
+        this.pendingBundles = []; this.savedPendingBundles = '[]'; this.pendingBundlesLoaded = false;
         this.pendingCartKeys = new Set(this.pendingItems.map(cartKey)); this.removedPendingItems = [];
         this.savedPendingItems = JSON.stringify(this.pendingItems);
         this.created = created; this.token = confirmationToken;
         writeCheckoutRecovery(confirmationToken, created);
-        if (JSON.stringify(cartStore.items) === JSON.stringify(this.attempt!.input.items)) cartStore.clear();
+        if (JSON.stringify(cartStore.items) === JSON.stringify(this.attempt!.input.items)
+          && JSON.stringify(cartStore.bundles) === JSON.stringify(this.attempt!.input.bundles ?? [])) cartStore.clear();
         if ('version' in response) { this.testOrderVersion = String(response.version); this.simulatedPaid = response.paymentStatus === 'paid'; } this.customer = emptyCustomer();
         this.attempt = null; this.quote = null;
       });
@@ -319,6 +345,10 @@ export class CheckoutStore {
       runInAction(() => {
         if (version !== this.version || request !== this.confirmationVersion) return;
         this.confirmation = confirmation;
+        if (this.created?.paymentStatus === 'pending' && !this.pendingBundlesLoaded) {
+          this.pendingBundles = confirmation.bundles ?? []; this.savedPendingBundles = JSON.stringify(this.pendingBundles); this.pendingBundlesLoaded = true;
+          if (!this.pendingItems.length && !confirmation.items?.length) this.savedPendingItems = '[]';
+        }
         if (this.created?.paymentStatus === 'pending' && !this.pendingItems.length && confirmation.items?.length) {
           this.pendingItems = confirmation.items.map(item => ({ productId: item.productId, quantitySets: item.quantitySets }));
           this.savedPendingItems = JSON.stringify(this.pendingItems);
@@ -348,13 +378,15 @@ export class CheckoutStore {
     this.clearTestAuthorizationTimer();
     this.version++; this.loadVersion++; this.confirmationVersion++; this.datesVersion++; this.availableDates = []; this.datesLoading = false; this.customer = emptyCustomer(); this.attempt = null; this.token = '';
     this.adminToken = ''; this.adminTokenExpiresAt = 0; this.testAuthorizationExpired = false; this.testOrderRequested = false; this.testOrderVersion = ''; this.simulatedPaid = false; this.created = null; this.confirmation = null; this.quote = null; this.busy = false; this.loading = false;
-    this.pendingItems = []; this.savedPendingItems = ''; this.pendingUpdate = null;
+    this.pendingItems = []; this.savedPendingItems = ''; this.pendingBundles = []; this.savedPendingBundles = '[]'; this.pendingBundlesLoaded = false; this.pendingUpdate = null;
     this.pendingCartKeys.clear(); this.removedPendingItems = [];
     this.pendingConflict = false;
   }
   private quoteInput(items: CheckoutItem[]): QuoteInput {
     return { deliveryDate: this.deliveryDate, shippingZoneId: this.shippingZoneId,
-      items: items.map(({ productId, quantitySets }) => ({ productId, quantitySets })) };
+      items: items.map(({ productId, quantitySets }) => ({ productId, quantitySets })),
+      ...(cartStore.bundles.length ? { bundles: cartStore.bundles.map(bundle => ({ bundleId: bundle.bundleId, quantity: bundle.quantity,
+        components: bundle.components.map(component => ({ ...component })) })) } : {}) };
   }
 }
 export const checkoutStore = new CheckoutStore();

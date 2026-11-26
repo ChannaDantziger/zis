@@ -13,6 +13,9 @@ import { initialSelection, priceAgorot } from '../bundles/allocation';
 import { productWindow } from '../bundles/pagination';
 import type { BundleResponse } from '../bundles/types';
 import { ProductCard } from './ProductCard';
+import { BUNDLE_PURCHASE_ENABLED } from '../bundles/feature';
+import { useStoreStatus } from '../../shared/store-status';
+import { cartStore } from '../../stores/cart.store';
 import { readCatalogQuery, updateCatalogQuery } from './query';
 
 export function CatalogSection() {
@@ -22,6 +25,7 @@ export function CatalogSection() {
   const [filtersOpen, setFiltersOpen] = useState(Boolean(query.search || query.categorySlug));
   const products = useProductsQuery({ ...query, page: 1 });
   const categories = useCategoriesQuery();
+  const storeStatus = useStoreStatus();
   const bundles = useQuery({ queryKey: ['bundle-preview'], queryFn: ({ signal }) => apiRequest<BundleResponse>('/bundle-preview', { signal }) });
   const compositions = useMemo(() => (bundles.data?.bundles ?? []).map(bundle => {
     const items = (bundles.data?.products ?? []).filter(item => item.categoryId === bundle.categoryId);
@@ -109,7 +113,13 @@ export function CatalogSection() {
         {totalPages > 1 && <Pagination total={totalPages} value={query.page}
           onChange={(page) => update({ page: String(page) })} aria-label="עמודי קטלוג" />}
       </>}
-      {selected && <BundleModal key={selected.bundle.bundleId} bundle={selected.bundle} products={selected.items} initial={selected.initial} onClose={() => setSelected(null)} />}
+      {selected && <BundleModal key={selected.bundle.bundleId} bundle={selected.bundle} products={selected.items} initial={selected.initial} onClose={() => setSelected(null)}
+        {...(BUNDLE_PURCHASE_ENABLED ? { saveLabel: 'הוספה לסל', onSave: (selection: Record<string, number>, quantity: number) => {
+          if (storeStatus.data?.storeOpen !== true || !bundles.data) return 'החנות סגורה להזמנות או שפרטי המארז אינם זמינים.';
+          const components = Object.entries(selection).filter(([, amount]) => amount > 0).map(([productId, amount]) => ({ productId, quantity: amount }));
+          if (!cartStore.addBundle({ bundleId: selected.bundle.bundleId, quantity, components }, bundles.data)) return cartStore.bundleError || 'לא ניתן להוסיף את המארז לסל.';
+          cartStore.open(); return null;
+        } } : {})} />}
     </Stack>
   );
 }

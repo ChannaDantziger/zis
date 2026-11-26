@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ActionIcon, Alert, Badge, Checkbox, Group, Image, Modal, NumberInput, ScrollArea, Stack, Text, Title, Tooltip } from '@mantine/core';
+import { ActionIcon, Alert, Badge, Button, Checkbox, Group, Image, Modal, NumberInput, ScrollArea, Stack, Text, Title, Tooltip } from '@mantine/core';
 import { IconRefresh } from '@tabler/icons-react';
 import { useMediaQuery } from '@mantine/hooks';
 import { formatPrice } from '../../entities/product/format';
@@ -8,16 +8,20 @@ import { adjustSelection, capacity, formatBundlePrice, priceAgorot, selectionTot
 import type { Bundle, BundleProduct, Selection } from './types';
 
 const ADJUST_HELP = 'מתאים אוטומטית את כמויות המוצרים למספר היחידות במארז';
-export function BundleModal({ bundle, products, initial, onClose }: { bundle: Bundle; products: BundleProduct[]; initial: Selection | null; onClose: () => void }) {
+export function BundleModal({ bundle, products, initial, onClose, onSave, initialCount = 1, saveLabel = 'שמירת המארז' }: {
+  bundle: Bundle; products: BundleProduct[]; initial: Selection | null; onClose: () => void;
+  onSave?: (selection: Selection, count: number) => string | null; initialCount?: number; saveLabel?: string;
+}) {
   const mobile = useMediaQuery('(max-width: 48em)', false);
   const [selection, setSelection] = useState<Selection>(initial ?? {});
-  const [count, setCount] = useState(1);
+  const [count, setCount] = useState(initialCount);
   const [single, setSingle] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
+  const [correctionOpen, setCorrectionOpen] = useState(false);
   const images = useMemo(() => bundle.images.map(image => ({ imageId: image.imageId, url: image.url, altText: image.altText })), [bundle.images]);
   const total = selectionTotal(selection), delta = bundle.unitCount - total;
-  const validStock = products.every(item => (selection[item.productId] ?? 0) <= capacity(item, count));
   const canAdjust = count >= 1 && Number.isSafeInteger(count);
+  const shortages = canAdjust ? products.filter(item => (selection[item.productId] ?? 0) > capacity(item, count)) : [];
   function chooseSingle(item: BundleProduct, checked: boolean) {
     setNotice('');
     if (checked) { setSingle(item.productId); setSelection({ [item.productId]: bundle.unitCount }); }
@@ -29,9 +33,17 @@ export function BundleModal({ bundle, products, initial, onClose }: { bundle: Bu
     if (result) { setSelection(result); setNotice(''); }
     else setNotice('אין מספיק מלאי במוצרים שנבחרו. בחרו מוצרים נוספים.');
   }
+  function save() {
+    if (!onSave || !canAdjust) return;
+    if (delta !== 0) { setCorrectionOpen(true); return; }
+    if (shortages.length) { setNotice('יש לתקן את הכמות או את מספר המארזים לפני השמירה.'); return; }
+    const error = onSave(selection, count);
+    if (error) setNotice(error);
+    else onClose();
+  }
   return <Modal opened onClose={onClose} closeOnClickOutside={false} fullScreen={mobile} centered size="70rem" className="product-detail-modal" closeButtonProps={{ 'aria-label': 'סגירת פרטי המארז' }}>
     <Stack className="product-modal-content" p="md" gap="lg">
-      <Alert color="blue">הרכבת המארז זמינה לצפייה. האפשרות להוסיף אותו לסל תתווסף בהמשך.</Alert>
+      {!onSave && <Alert color="blue">הרכבת המארז זמינה לצפייה. האפשרות להוסיף אותו לסל תתווסף בהמשך.</Alert>}
       <div className="product-detail-grid bundle-detail-grid">
         <div className="product-detail-gallery"><ImageGallery images={images} title={bundle.name} productLayout /></div>
         <Stack className="product-detail-information" gap="sm"><Text c="var(--zis-accent)" size="sm">{bundle.categoryName}</Text><Title order={1}>{bundle.name}</Title>
@@ -39,7 +51,7 @@ export function BundleModal({ bundle, products, initial, onClose }: { bundle: Bu
           <Text size="sm">{bundle.unitCount} יחידות בכל מארז</Text>
       {!initial && <Alert color="orange">אין כרגע מספיק יחידות זמינות להרכבת מארז שלם.</Alert>}
       {!canAdjust && <Alert color="orange">יש לבחור מספר מארזים תקין.</Alert>}
-      {!validStock && <Alert color="orange">הכמות המבוקשת עולה על המלאי הזמין. שנו את ההרכב או את מספר המארזים.</Alert>}
+      {shortages.length > 0 && <Alert color="orange" role="alert">אין מספיק מלאי למספר המארזים שנבחר: {shortages.map(item => `${item.name} — נדרשות ${(selection[item.productId] ?? 0) * count} יחידות, זמינות ${item.availableItems}`).join(' ; ')}. שנו את ההרכב או את מספר המארזים.</Alert>}
       {notice && <Alert color="orange" role="alert">{notice}</Alert>}
       <div className="bundle-products-header">
         <Tooltip label="ממלאים את כל המארז במוצר אחד" withArrow events={{ hover: true, focus: true, touch: true }}>
@@ -70,9 +82,17 @@ export function BundleModal({ bundle, products, initial, onClose }: { bundle: Bu
           <ActionIcon variant="light" size="lg" onClick={adjust} disabled={!canAdjust} aria-label={ADJUST_HELP}><IconRefresh size={20} /></ActionIcon>
         </Tooltip>
       </Group>
-      <Text size="sm" c="dimmed">הוספה לסל תתאפשר בהמשך הפיתוח.</Text>
+      {onSave ? <Button onClick={save} disabled={!canAdjust}>{saveLabel}</Button>
+        : <Text size="sm" c="dimmed">הוספה לסל תתאפשר בהמשך הפיתוח.</Text>}
         </Stack>
       </div>
     </Stack>
+    <Modal opened={correctionOpen} onClose={() => setCorrectionOpen(false)} title="יש לתקן את תכולת המארז" centered>
+      <Stack><Text>{delta > 0 ? `חסרות ${delta} יחידות במארז.` : `יש ${-delta} יחידות עודפות במארז.`}</Text>
+        <Text>אפשר להתאים את הכמויות אוטומטית או לחזור ולתקן אותן בעצמך לפני שמירה מחדש.</Text>
+        <Group><Button onClick={() => { adjust(); setCorrectionOpen(false); }}>התאמה אוטומטית</Button>
+          <Button variant="outline" onClick={() => { setCorrectionOpen(false); setNotice('יש לתקן את הכמויות ולשמור מחדש.'); }}>תיקון ידני</Button></Group>
+      </Stack>
+    </Modal>
   </Modal>;
 }

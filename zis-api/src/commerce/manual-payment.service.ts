@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { ApiError } from '../http/api-error.js';
 import type { SqlClient, SqlClientFactory } from '../inventory/postgres-inventory.repository.js';
 import { insertAudit } from '../catalog/postgres-admin-catalog.repository.js';
+import { aggregateOrderStock, readBundleStockLines } from './order-stock.js';
 
 interface OrderRow { status: string; payment_status: string; total: string; version: string; [key: string]: unknown }
 interface Item { product_id: string | null; product_variant_id: string | null; quantity_sets: number; set_size_snapshot: number; [key: string]: unknown }
@@ -44,12 +45,11 @@ async function confirm(client: SqlClient, orderId: string, order: OrderRow, note
   const paid = await client.query(`select payment_id from public.payments where order_id=$1 and status='paid' limit 1`, [orderId]);
   if (paid.rows.length) throw new ApiError(409, 'PAYMENT_REVIEW_REQUIRED', 'An existing payment needs review');
   const items = await client.query<Item>(`select product_id,product_variant_id,quantity_sets,set_size_snapshot from public.order_items where order_id=$1 order by product_id,product_variant_id nulls first`, [orderId]);
-  if (!items.rows.length) throw new ApiError(409, 'ORDER_ITEMS_MISSING', 'Order has no items');
+  const bundleItems = await readBundleStockLines(client, orderId);
+  if (!items.rows.length && !bundleItems.length) throw new ApiError(409, 'ORDER_ITEMS_MISSING', 'Order has no items');
   const paymentId = randomUUID();
-  for (const item of items.rows) {
-    const quantity = item.product_variant_id ? item.quantity_sets : item.quantity_sets * item.set_size_snapshot;
-    if (!item.product_id || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > MAX_STOCK) throw new ApiError(409, 'ORDER_ITEM_UNITS_MISSING', 'Order item cannot be applied to stock');
-    await adjustStock(client, item.product_id, item.product_variant_id, quantity, false, orderId, paymentId, actor);
+  for (const item of aggregateOrderStock([...items.rows, ...bundleItems])) {
+    await adjustStock(client, item.product_id, item.product_variant_id, item.quantity, false, orderId, paymentId, actor);
   }
   await client.query(`insert into public.payments(payment_id,order_id,provider,amount,status,is_simulated,provider_payload) values($1,$2,'manual_external',$3,'paid',false,$4::jsonb)`, [paymentId, orderId, order.total, JSON.stringify({ method: note, confirmedBy: actor })]);
   await history(client, orderId, actor, `אישור תשלום שהתקבל מחוץ לאתר: ${note}`);
@@ -65,10 +65,11 @@ async function revert(client: SqlClient, orderId: string, order: OrderRow, note:
   const movements = await client.query<Movement>(`select product_id,product_variant_id,(stock_before-stock_after) as quantity from public.inventory_movements where order_id=$1 and movement_type='sale' and reason=$2 order by product_id,product_variant_id nulls first`, [orderId, `manual_payment:${paymentId}`]);
   if (!movements.rows.length) throw new ApiError(409, 'STOCK_HISTORY_MISSING', 'Stock movements require manual review');
   const items = await client.query<Item>(`select product_id,product_variant_id,quantity_sets,set_size_snapshot from public.order_items where order_id=$1 order by product_id,product_variant_id nulls first`, [orderId]);
-  if (items.rows.length !== movements.rows.length || items.rows.some((item, index) => {
+  const totals = aggregateOrderStock([...items.rows, ...await readBundleStockLines(client, orderId)]);
+  if (totals.length !== movements.rows.length || totals.some((item, index) => {
     const movement = movements.rows[index];
     return !movement || item.product_id !== movement.product_id || item.product_variant_id !== movement.product_variant_id
-      || movement.quantity !== (item.product_variant_id ? item.quantity_sets : item.quantity_sets * item.set_size_snapshot);
+      || movement.quantity !== item.quantity;
   })) throw new ApiError(409, 'STOCK_HISTORY_INVALID', 'Stock movements require manual review');
   for (const movement of movements.rows) {
     if (!movement.product_id || !Number.isSafeInteger(movement.quantity) || movement.quantity < 1) throw new ApiError(409, 'STOCK_HISTORY_INVALID', 'Stock movements require manual review');

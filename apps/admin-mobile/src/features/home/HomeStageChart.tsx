@@ -57,10 +57,15 @@ export function HomeStageChart({ orders, date, selected, onSelect, onOpen }: {
       {!visible.length ? <Text c="dimmed" py="md">אין הזמנות בשלב זה היום.</Text> :
         <SimpleGrid cols={{ base: 1, sm: 2 }} mt="md">{visible.map(order => <Card key={order.orderId} withBorder radius="md" className="home-order-card" style={{ borderInlineStart: `4px solid ${statusColors[order.status]}` }}>
           <Group justify="space-between"><Text fw={700}>{order.orderNumber}</Text><OrderStatusBadge order={order} /></Group>
-          <Stack gap="xs" mt="sm" className="home-order-products">{order.items.length ? groupOrderItems(order.items).map(item => <Group key={item.name} wrap="nowrap" gap="sm" className="home-order-product">
+          <Stack gap="xs" mt="sm" className="home-order-products">{order.bundles?.map(bundle => <Stack key={bundle.orderBundleId} gap={2}>
+            <Text fw={700} size="sm">{bundle.bundleName} × {bundle.quantity} מארזים זהים</Text>
+            {bundle.components.map(component => <Text size="xs" key={component.productId}>{component.productName}: {component.quantity} למארז (סה״כ {component.quantity * bundle.quantity} יחידות)</Text>)}
+          </Stack>)}
+          {Boolean(order.items.length && order.bundles?.length) && <Text size="xs" fw={700}>מוצרים בנפרד</Text>}
+          {order.items.length ? groupOrderItems(order.items).map(item => <Group key={item.name} wrap="nowrap" gap="sm" className="home-order-product">
             {item.imageUrl ? <img className="home-thumb" src={item.imageUrl} alt={item.name} /> : <div className="home-thumb home-thumb-empty" role="img" aria-label={`אין תמונה ל${item.name}`}>אין תמונה</div>}
             <div><Text size="sm" fw={600}>{item.name}</Text><Text size="xs" c="dimmed">{item.quantitySets} סטים</Text></div>
-          </Group>) : <Text size="sm" c="dimmed">אין פריטי מוצר בהזמנה</Text>}
+          </Group>) : !order.bundles?.length && <Text size="sm" c="dimmed">אין פריטי מוצר בהזמנה</Text>}
             <Text size="xs" c="dimmed">{summary(order)}</Text><Text size="xs" c="dimmed">{order.city} · {order.address}</Text></Stack>
           <Group justify="space-between" mt="sm"><Button variant="subtle" size="sm" onClick={() => onOpen(order.orderId)}>פרטים</Button>
             {NEXT[order.status] && (order.status !== 'ordered' || order.paymentStatus === 'paid') &&

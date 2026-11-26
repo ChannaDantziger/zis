@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { CartStore } from '../src/stores/cart.store';
+import { bundleKey, CartStore } from '../src/stores/cart.store';
 import { ApiError } from '../src/shared/api/http-client';
-import { CART_STORAGE_KEY, MAX_QUANTITY_SETS, priceInAgorot, readCart, writeCart } from '../src/stores/cart.persistence';
+import { CART_STORAGE_KEY, MAX_QUANTITY_SETS, priceInAgorot, readBundleCart, readCart, writeCart } from '../src/stores/cart.persistence';
 import type { CatalogProduct } from '../src/entities/product/types';
 
 const productId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -29,6 +29,47 @@ test('storage rejects corrupt, obsolete, excessive and non-reference data', () =
 
 test('storage merges duplicates with a quantity limit', () => {
   assert.equal(readCart(JSON.stringify({ version: 1, items: [{ ...reference, quantitySets: MAX_QUANTITY_SETS }, reference] }))[0].quantitySets, MAX_QUANTITY_SETS);
+});
+
+test('bundle references survive cart storage without prices or personal details and old carts remain readable', () => {
+  const bundle = { bundleId: productId, quantity: 2, components: [{ productId, quantity: 3 }] };
+  const contaminated = { ...bundle, price: '0' };
+  const saved = writeCart([reference], [contaminated]);
+  assert.deepEqual(readCart(saved), [reference]);
+  assert.deepEqual(readBundleCart(saved), [bundle]);
+  assert.deepEqual(readBundleCart(writeCart([reference])), []);
+  assert.deepEqual(readBundleCart(JSON.stringify({ version: 2, bundles: [{ ...bundle, components: [...bundle.components, ...bundle.components] }] })), []);
+});
+
+test('bundle cart merges identical compositions and refuses stock shared with loose sets', () => {
+  const store = new CartStore();
+  const bundle = { bundleId: productId, categoryId: productId, categoryName: 'מתוקים', categorySlug: 'sweets',
+    name: 'מארז', description: null, unitCount: 3, images: [] };
+  const catalog = { bundles: [bundle], products: [{ productId, categoryId: productId, name: 'עוגיות',
+    pricePerUnit: '12.35', availableItems: 12, image: null }] };
+  const line = { bundleId: productId, quantity: 1, components: [{ productId, quantity: 3 }] };
+  assert.equal(store.addBundle(line, catalog), true);
+  assert.equal(store.addBundle(line, catalog), true);
+  assert.equal(store.bundles[0].quantity, 2);
+  assert.equal(store.subtotalAgorot, 7410);
+  assert.equal(store.addItem(product, 2), false);
+  assert.match(store.bundleError, /עוגיות/);
+  assert.equal(store.setBundleQuantity(bundleKey(line), 5), false);
+  assert.equal(store.bundles[0].quantity, 2);
+  assert.equal(store.canContinue, false);
+});
+
+test('restored bundles reload live details and stay blocked from checkout while integration is incomplete', async () => {
+  const bundle = { bundleId: productId, categoryId: productId, categoryName: 'מתוקים', categorySlug: 'sweets',
+    name: 'מארז', description: null, unitCount: 3, images: [] };
+  const catalog = { bundles: [bundle], products: [{ productId, categoryId: productId, name: 'עוגיות',
+    pricePerUnit: '12.35', availableItems: 12, image: null }] };
+  const line = { bundleId: productId, quantity: 1, components: [{ productId, quantity: 3 }] };
+  const store = new CartStore({ getItem: () => writeCart([], [line]), setItem: () => {} }, async () => product, async () => catalog);
+  assert.equal(store.subtotalAgorot, null);
+  await store.refresh();
+  assert.equal(store.subtotalAgorot, 3705);
+  assert.equal(store.canContinue, false);
 });
 
 test('prices use integer agorot and reject invalid values', () => {

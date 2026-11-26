@@ -10,6 +10,12 @@ export interface CartReference {
   quantitySets: number;
 }
 
+export interface BundleCartReference {
+  bundleId: string;
+  quantity: number;
+  components: Array<{ productId: string; quantity: number }>;
+}
+
 export function readCart(value: string | null): CartReference[] {
   if (!value || value.length > MAX_STORED_BYTES) return [];
   try {
@@ -34,8 +40,35 @@ export function readCart(value: string | null): CartReference[] {
   }
 }
 
-export function writeCart(items: CartReference[]): string {
-  return JSON.stringify({ version: CART_VERSION, items: items.map(({ productId, quantitySets }) => ({ productId, quantitySets })) });
+export function readBundleCart(value: string | null): BundleCartReference[] {
+  if (!value || value.length > MAX_STORED_BYTES) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!isRecord(parsed) || (parsed.version !== 1 && parsed.version !== CART_VERSION) || !Array.isArray(parsed.bundles)
+      || parsed.bundles.length > MAX_CART_LINES) return [];
+    const result: BundleCartReference[] = [];
+    for (const value of parsed.bundles) {
+      if (!isRecord(value) || !isIdentifier(value.bundleId) || !isQuantity(value.quantity)
+        || !Array.isArray(value.components) || value.components.length < 1 || value.components.length > MAX_CART_LINES) continue;
+      const components: BundleCartReference['components'] = [];
+      const seen = new Set<string>();
+      for (const component of value.components) {
+        if (!isRecord(component) || !isIdentifier(component.productId) || !isQuantity(component.quantity) || seen.has(component.productId)) break;
+        seen.add(component.productId);
+        components.push({ productId: component.productId, quantity: component.quantity });
+      }
+      if (components.length !== value.components.length) continue;
+      components.sort((a, b) => a.productId.localeCompare(b.productId));
+      result.push({ bundleId: value.bundleId, quantity: value.quantity, components });
+    }
+    return result;
+  } catch { return []; }
+}
+
+export function writeCart(items: CartReference[], bundles: BundleCartReference[] = []): string {
+  return JSON.stringify({ version: CART_VERSION, items: items.map(({ productId, quantitySets }) => ({ productId, quantitySets })),
+    ...(bundles.length ? { bundles: bundles.map(({ bundleId, quantity, components }) => ({ bundleId, quantity,
+      components: components.map(({ productId, quantity }) => ({ productId, quantity })) })) } : {}) });
 }
 
 export function isQuantity(value: unknown): value is number {

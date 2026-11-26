@@ -49,3 +49,40 @@ test('test creation prefixes stored identity and binds request hash to manager b
  assert.equal(result.isTest,true);assert.equal(result.version,'123.45');assert.match(savedInput!.customerName,/^ניסוי /);assert.match(savedInput!.deliveryAddress.street,/^ניסוי /);assert.ok(f.calls.indexOf('test')<f.calls.indexOf('commit'));
  let publicHash='';f.tx.claimRequest=async(_key,hash)=>{publicHash=hash;return null;};await createOrderService(f.repository,config).create(input,'abcdefghijklmnop',now);assert.notEqual(publicHash,claimedHash);
 });
+
+test('feature-gated pending bundle edit retains saved component prices and rejects stale versions', async () => {
+ const f = fixture();
+ const bundleId='00000000-0000-4000-8000-000000000011', productId='00000000-0000-4000-8000-000000000012', lineId='00000000-0000-4000-8000-000000000013';
+ const snapshot={orderBundleId:lineId,bundleId,categoryId:'category',bundleName:'מארז',categoryName:'קינוחים',unitCount:2,quantity:1,unitPrice:'16.00',lineTotal:'16.00',components:[{productId,productName:'קינוח',quantity:2,unitPrice:'8.00'}]};
+ const pendingInput={...input,items:[],bundles:[{orderBundleId:lineId,bundleId,quantity:1,components:[{productId,quantity:2}]}]};
+ f.tx.readPending=async()=>({input:pendingInput,snapshots:[],bundleSnapshots:[snapshot],version:'1',response:{orderId:'order',orderNumber:'1000',status:'ordered',paymentStatus:'pending',total:'21.00',currency:'ILS',confirmationToken:''}});
+ f.tx.claimPendingEdit=async()=>null;f.tx.completePendingEdit=async()=>{};f.tx.readSnapshots=async()=>[];
+ const base=await f.tx.getContext(input);
+ f.tx.getContext=async()=>({...base,variants:[],bundles:[{bundleId,categoryId:'category',name:'מארז שונה',unitCount:2,active:true}],bundleProducts:[{productId,categoryId:'category',name:'קינוח',pricePerUnit:'12.00',availableItems:20,active:true}]});
+ let subtotal='';f.tx.updatePending=async(_order,_value,quote)=>{subtotal=quote.subtotal;return '2';};
+ const update={expectedVersion:'1',items:[],bundles:[{orderBundleId:lineId,bundleId,quantity:2,components:[{productId,quantity:2}]}]};
+ await assert.rejects(createOrderService(f.repository,config).updatePending!('a'.repeat(43),update,'abcdefghijklmnop',now),{code:'BUNDLE_ORDER_NOT_AVAILABLE'});
+ const service=createOrderService(f.repository,config,{bundlesEnabled:true});
+ await service.updatePending!('a'.repeat(43),update,'abcdefghijklmnop',now);
+ assert.equal(subtotal,'32.00');
+ await assert.rejects(service.updatePending!('a'.repeat(43),{...update,expectedVersion:'2'},'abcdefghijklmnop',now),{code:'ORDER_CHANGED'});
+});
+
+test('bundle-only creation and pending edits both use shipping based on package count', async () => {
+ const f=fixture();const bundleId='00000000-0000-4000-8000-000000000011', productId='00000000-0000-4000-8000-000000000012', lineId='00000000-0000-4000-8000-000000000013';
+ const base=await f.tx.getContext(input);
+ f.tx.readSnapshots=async()=>[];
+ f.tx.getContext=async()=>({...base,variants:[],bundles:[{bundleId,categoryId:'category',name:'מארז',unitCount:2,active:true}],
+  bundleProducts:[{productId,categoryId:'category',name:'קינוח',pricePerUnit:'10.00',availableItems:30,active:true}],
+  shippingRules:[1,2].map(count=>({basePrice:`${count*5}.00`,sizeFromSets:count,sizeToSets:count,sizeSurcharge:'0',timeSurcharge:'0',urgencySurcharge:'0',active:true}))});
+ const service=createOrderService(f.repository,config,{bundlesEnabled:true});
+ const line={bundleId,quantity:1,components:[{productId,quantity:2}]};
+ const created=await service.create({...input,items:[],bundles:[line]},'abcdefghijklmnop',now);
+ assert.equal(created.total,'25.00');
+ const snapshot={orderBundleId:lineId,bundleId,categoryId:'category',bundleName:'מארז',categoryName:'קינוחים',unitCount:2,quantity:1,unitPrice:'20.00',lineTotal:'20.00',components:[{productId,productName:'קינוח',quantity:2,unitPrice:'10.00'}]};
+ f.tx.readPending=async()=>({input:{...input,items:[],bundles:[{...line,orderBundleId:lineId}]},snapshots:[],bundleSnapshots:[snapshot],version:'1',response:{...created,confirmationToken:''}});
+ f.tx.claimPendingEdit=async()=>null;f.tx.completePendingEdit=async()=>{};
+ let shipping='';f.tx.updatePending=async(_order,_input,quote)=>{shipping=quote.shippingTotal;return '2';};
+ const updated=await service.updatePending!('a'.repeat(43),{expectedVersion:'1',items:[],bundles:[{...line,orderBundleId:lineId,quantity:2}]},'abcdefghijklmnop',now);
+ assert.equal(shipping,'10.00');assert.equal(updated.total,'50.00');
+});

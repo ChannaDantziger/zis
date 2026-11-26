@@ -1,6 +1,7 @@
-import type { CartItemInput, QuotePreview, ShippingQuoteInput } from '../contracts/commerce.contracts.js';
+import type { CartItemInput, OrderBundleSnapshot, QuotePreview, ShippingQuoteInput } from '../contracts/commerce.contracts.js';
 import { ApiError } from '../http/api-error.js';
 import { assertDeliveryDateAllowed, type DeliveryPolicy } from './delivery-policy.js';
+import { calculateBundleOrder, type BundleForSale, type BundleProductForSale } from './bundle-calculation.js';
 
 export interface QuoteVariantContext {
   productId: string;
@@ -8,6 +9,7 @@ export interface QuoteVariantContext {
   pricePerSet: string;
   availableSets: number;
   active: boolean;
+  setSize?: number;
 }
 
 export interface ShippingRuleContext {
@@ -26,6 +28,9 @@ export interface QuoteContext {
   currency: 'ILS';
   shippingRules: ShippingRuleContext[];
   variants: QuoteVariantContext[];
+  bundles?: BundleForSale[];
+  bundleProducts?: BundleProductForSale[];
+  bundleSnapshots?: OrderBundleSnapshot[];
 }
 
 export interface QuoteRepository {
@@ -36,15 +41,22 @@ export interface QuoteService {
   calculate(input: ShippingQuoteInput, now?: Date): Promise<QuotePreview>;
 }
 
-export function createQuoteService(repository: QuoteRepository): QuoteService {
+export function createQuoteService(repository: QuoteRepository, options: { shippingByPackages?: boolean } = {}): QuoteService {
   return {
     async calculate(input, now = new Date()) {
       const context = await repository.getContext(input);
       assertDeliveryDateAllowed(input.deliveryDate, now, context.deliveryPolicy);
-      const lines = validateItems(input.items, context.variants);
-      const totalSets = lines.reduce((sum, line) => sum + line.quantitySets, 0);
-      const subtotalCents = lines.reduce((sum, line) => sum + moneyToCents(line.variant.pricePerSet) * line.quantitySets, 0);
-      const shippingTotalCents = calculateShipping(input, context.shippingRules, totalSets);
+      const bundleInputs = input.bundles ?? [];
+      const lines = validateItems(input.items, context.variants, bundleInputs.length > 0);
+      const bundleResult = bundleInputs.length ? calculateBundleOrder(bundleInputs, context.bundles ?? [], context.bundleProducts ?? [],
+        lines.filter(line => !line.variant.productVariantId).map(line => ({ productId: line.item.productId,
+          quantitySets: line.quantitySets, setSize: line.variant.setSize ?? 0 })), context.bundleSnapshots) : null;
+      const bundleCount = bundleInputs.reduce((sum, bundle) => sum + bundle.quantity, 0);
+      // The new interpretation is limited to the explicitly enabled development flow.
+      const shippingSize = options.shippingByPackages ? (lines.length ? 1 : 0) + bundleCount
+        : lines.reduce((sum, line) => sum + line.quantitySets, 0) + bundleCount;
+      const subtotalCents = lines.reduce((sum, line) => sum + moneyToCents(line.variant.pricePerSet) * line.quantitySets, 0) + (bundleResult?.subtotalAgorot ?? 0);
+      const shippingTotalCents = calculateShipping(input, context.shippingRules, shippingSize);
       const totalCents = subtotalCents + shippingTotalCents;
       if (!Number.isSafeInteger(totalCents) || totalCents > 999999999999) throw new ApiError(422,'BUSINESS_RULE_VIOLATION','Order amount exceeds the supported range');
       const minimumCents = moneyToCents(context.minimumProductSubtotal);
@@ -68,8 +80,8 @@ export function createQuoteService(repository: QuoteRepository): QuoteService {
   };
 }
 
-function validateItems(items: CartItemInput[], variants: QuoteVariantContext[]) {
-  if (!Array.isArray(items) || items.length === 0) {
+function validateItems(items: CartItemInput[], variants: QuoteVariantContext[], hasBundles = false) {
+  if (!Array.isArray(items) || (items.length === 0 && !hasBundles)) {
     throw new ApiError(400, 'VALIDATION_ERROR', 'At least one item is required');
   }
   const seen=new Set<string>();
@@ -91,8 +103,8 @@ function validateItems(items: CartItemInput[], variants: QuoteVariantContext[]) 
   });
 }
 
-function calculateShipping(input: ShippingQuoteInput, rules: ShippingRuleContext[], totalSets: number): number {
-  const matchingRules = rules.filter((rule) => rule.active && totalSets >= rule.sizeFromSets && (rule.sizeToSets === null || totalSets <= rule.sizeToSets));
+function calculateShipping(input: ShippingQuoteInput, rules: ShippingRuleContext[], totalPackages: number): number {
+  const matchingRules = rules.filter((rule) => rule.active && totalPackages >= rule.sizeFromSets && (rule.sizeToSets === null || totalPackages <= rule.sizeToSets));
   if (matchingRules.length === 0) {
     throw new ApiError(422, 'BUSINESS_RULE_VIOLATION', 'No shipping rule is available for this order');
   }

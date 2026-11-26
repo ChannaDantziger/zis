@@ -11,7 +11,7 @@ export const CartDrawer = observer(function CartDrawer() {
     <Drawer opened={cartStore.isOpen} onClose={cartStore.close} title="העגלה שלך" position="left" size="md" className="cart-drawer">
       <Stack>
         <CartItems />
-        {cartStore.items.length > 0 && <Button component={Link} to="/cart" onClick={cartStore.close}>לצפייה בעגלה</Button>}
+        {cartStore.totalSets > 0 && <Button component={Link} to="/cart" onClick={cartStore.close}>לצפייה בעגלה</Button>}
       </Stack>
     </Drawer>
   );

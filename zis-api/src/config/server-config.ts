@@ -13,6 +13,7 @@ export interface ServerEnvironment {
 }
 
 export interface ServerConfig {
+  applicationMode?: 'development' | 'production';
   databaseUrl?: string;
   supabaseUrl?: string;
   supabaseServiceRoleKey?: string;
@@ -41,6 +42,7 @@ export function readServerConfig(environment: ServerEnvironment = process.env): 
   );
   if (environment.DATABASE_TARGET === 'production' && environment.DATABASE_URL) {
     return {
+      applicationMode: environment.APP_ENV,
       databaseUrl: environment.DATABASE_URL,
       databaseSource: 'DATABASE_URL',
       supabaseUrl: environment.SUPABASE_URL,
@@ -52,6 +54,7 @@ export function readServerConfig(environment: ServerEnvironment = process.env): 
 
   if (environment.DATABASE_TARGET === 'development' && environment.DATABASE_URL_TRN) {
     return {
+      applicationMode: environment.APP_ENV,
       databaseUrl: environment.DATABASE_URL_TRN,
       databaseSource: 'DATABASE_URL_TRN',
       supabaseUrl: environment.SUPABASE_URL,
@@ -62,6 +65,7 @@ export function readServerConfig(environment: ServerEnvironment = process.env): 
   }
 
   return {
+    applicationMode: environment.APP_ENV,
     supabaseUrl: environment.SUPABASE_URL,
     supabaseServiceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY ?? environment.SUPABASE_SECRET_KEY,
     allowedOrigins,

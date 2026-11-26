@@ -2,8 +2,8 @@ import type { AvailabilityRequest, ShippingQuoteInput } from '../contracts/comme
 import { createQuoteService } from './quote.service.js';
 import type { CommerceRepository, CommerceService } from './commerce.types.js';
 
-export function createCommerceService(repository: CommerceRepository): CommerceService {
-  const quoteService = createQuoteService(repository);
+export function createCommerceService(repository: CommerceRepository, options: { bundlesEnabled?: boolean } = {}): CommerceService {
+  const quoteService = createQuoteService(repository, { shippingByPackages: options.bundlesEnabled === true });
   return {
     getDeliveryDates: (now) => repository.getDeliveryDates!(now),
     getStoreStatus: () => repository.getStoreStatus(),

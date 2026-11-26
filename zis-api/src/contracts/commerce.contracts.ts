@@ -14,10 +14,32 @@ export interface CartItemInput {
   quantitySets: number;
 }
 
+export interface BundleOrderInput {
+  orderBundleId?: string;
+  bundleId: string;
+  quantity: number;
+  components: Array<{ productId: string; quantity: number }>;
+}
+
+export interface OrderBundleSnapshot {
+  orderBundleId: string;
+  bundleId: string;
+  categoryId: string;
+  bundleName: string;
+  categoryName: string;
+  imagePath?: string | null;
+  unitCount: number;
+  quantity: number;
+  unitPrice: string;
+  lineTotal: string;
+  components: Array<{ productId: string; productName: string; imagePath?: string | null; quantity: number; unitPrice: string }>;
+}
+
 export interface ShippingQuoteInput {
   deliveryDate: string;
   shippingZoneId: string;
   items: CartItemInput[];
+  bundles?: BundleOrderInput[];
   isUrgent?: boolean;
 }
 
@@ -44,6 +66,7 @@ export interface CreateOrderInput {
   shippingZoneId: string;
   deliveryDate: string;
   items: CartItemInput[];
+  bundles?: BundleOrderInput[];
   dedicationText?: string | null;
   customerNotes?: string | null;
 }
@@ -66,6 +89,7 @@ export interface OrderCreatedResponse {
 
 export interface OrderConfirmationResponse {
   items?: Array<CartItemInput & { productName: string; lineTotal: string }>;
+  bundles?: OrderBundleSnapshot[];
   version?: string;
   isTest?: boolean;
   orderNumber: string;
@@ -79,11 +103,13 @@ export interface OrderConfirmationResponse {
 export interface AvailabilityRequest {
   deliveryDate: string;
   items: CartItemInput[];
+  bundles?: BundleOrderInput[];
 }
 
 export interface AvailabilityResponse {
   deliveryDate: string;
   available: boolean;
+  shortages?: string[];
   items: Array<CartItemInput & {
     availableSets: number;
     requestedSets: number;

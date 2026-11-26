@@ -2,9 +2,9 @@ import { Router } from 'express';
 import type { CommerceService } from '../commerce/commerce.types.js';
 import { createCommerceController } from '../controllers/commerce.controller.js';
 
-export function createCommerceRouter(service: CommerceService): Router {
+export function createCommerceRouter(service: CommerceService, options: { bundlesEnabled?: boolean } = {}): Router {
   const router = Router();
-  const controller = createCommerceController(service);
+  const controller = createCommerceController(service, options);
   router.get('/delivery-dates', controller.getDeliveryDates);
   router.get('/store-status', controller.getStoreStatus);
   router.get('/shipping/zones', controller.listShippingZones);

@@ -1,13 +1,20 @@
 import type { CreateOrderInput, DeliveryAddress } from '../contracts/commerce.contracts.js';
 import { ApiError } from '../http/api-error.js';
+import { readBundleInputs } from './bundle-validation.js';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_ITEMS = 100;
 const MAX_QUANTITY = 1_000_000;
-export function readOrderInput(value: unknown): CreateOrderInput {
+export function readOrderInput(value: unknown, allowBundles = false): CreateOrderInput {
   const body = record(value); const address = record(body.deliveryAddress);
+  // Until bundle snapshots, inventory and fulfillment are wired together, never
+  // silently accept a request while dropping its bundle lines.
+  if (!allowBundles && 'bundles' in body && (!Array.isArray(body.bundles) || body.bundles.length > 0)) {
+    throw new ApiError(503, 'BUNDLE_ORDER_NOT_AVAILABLE', 'Bundle ordering is not available yet');
+  }
+  const bundles = allowBundles ? readBundleInputs(body.bundles) : [];
   for (const field of ['status','paymentStatus','total','subtotal','isUrgent','taxRate','isTest','is_test']) if (field in body) invalid(field);
   const items = body.items;
-  if (!Array.isArray(items) || !items.length || items.length > MAX_ITEMS) invalid('items');
+  if (!Array.isArray(items) || (!items.length && !bundles.length) || items.length + bundles.length > MAX_ITEMS) invalid('items');
   const seen = new Set<string>();
   const lines = items.map((value) => {
     const item = record(value); const productId = uuid(item.productId, 'productId');
@@ -27,7 +34,7 @@ export function readOrderInput(value: unknown): CreateOrderInput {
   const deliveryAddress: DeliveryAddress = {city:text(address.city,'city',100),street:text(address.street,'street',200),houseNumber:text(address.houseNumber,'houseNumber',30)};
   for (const field of ['neighborhood','apartment','postalCode','venueName'] as const) deliveryAddress[field] = optional(address[field],field,200);
   return { customerName:text(body.customerName,'customerName',150), customerEmail, customerPhone, deliveryPhone, deliveryAddress, deliveryDate,
-    shippingZoneId:uuid(body.shippingZoneId,'shippingZoneId'), items:lines,
+    shippingZoneId:uuid(body.shippingZoneId,'shippingZoneId'), items:lines, ...(bundles.length ? {bundles} : {}),
     dedicationText:optional(body.dedicationText,'dedicationText',2000), customerNotes:optional(body.customerNotes,'customerNotes',2000) };
 }
 export function readIdempotencyKey(value: unknown): string {
@@ -35,10 +42,10 @@ export function readIdempotencyKey(value: unknown): string {
 }
 export function readPendingOrderUpdate(value: unknown) {
   const body = record(value);
-  for (const field of Object.keys(body)) if (!['items', 'expectedVersion'].includes(field)) invalid(field);
+  for (const field of Object.keys(body)) if (!['items', 'bundles', 'expectedVersion'].includes(field)) invalid(field);
   const expectedVersion = text(body.expectedVersion, 'expectedVersion', 30);
   if (!/^\d{1,20}(?:\.\d{1,6})?$/.test(expectedVersion)) invalid('expectedVersion');
-  return { items: body.items, expectedVersion };
+  return { items: body.items, expectedVersion, ...(body.bundles === undefined ? {} : { bundles: body.bundles }) };
 }
 function record(value: unknown): Record<string, unknown> { if (!value || typeof value !== 'object' || Array.isArray(value)) invalid('body'); return value as Record<string,unknown>; }
 function text(value: unknown, field: string, max: number): string { if (typeof value !== 'string' || !value.trim() || value.trim().length > max) invalid(field); return value.trim(); }

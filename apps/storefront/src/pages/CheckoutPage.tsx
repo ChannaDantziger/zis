@@ -10,6 +10,8 @@ import { checkoutStore } from '../features/checkout/checkout.store';
 import { CheckoutForm } from '../features/checkout/CheckoutForm';
 import { TestCheckoutAccess } from '../features/checkout/TestCheckoutAccess';
 import { DemoCredit } from '../features/checkout/DemoCredit';
+import { PendingOrderItems } from '../features/checkout/PendingOrderItems';
+import { PendingOrderBundles } from '../features/checkout/PendingOrderBundles';
 const QUOTE_DELAY_MS = 400;
 const checkoutSteps = ['מוצרים', 'משלוח', 'הקדשה', 'אשראי', 'סיום'];
 
@@ -20,14 +22,14 @@ export const CheckoutPage = observer(function CheckoutPage() {
   useEffect(() => {
     void cartStore.refresh(); if (!store.retryPending && !store.created) void store.load();
     let quoteTimer: ReturnType<typeof setTimeout>;
-    const stopQuote = reaction(() => JSON.stringify([store.shippingZoneId, store.deliveryDate, store.status?.storeOpen, cartStore.items, cartStore.canContinue]), () => {
+    const stopQuote = reaction(() => JSON.stringify([store.shippingZoneId, store.deliveryDate, store.status?.storeOpen, cartStore.items, cartStore.bundles, cartStore.canContinue]), () => {
       clearTimeout(quoteTimer);
       if (!store.retryPending && !store.created) {
         store.invalidateQuote();
         quoteTimer = setTimeout(() => { if (cartStore.canContinue) void store.preview(cartStore.items); }, QUOTE_DELAY_MS);
       }
     }, { fireImmediately: true });
-    const stop = reaction(() => JSON.stringify(cartStore.items), () => {
+    const stop = reaction(() => JSON.stringify([cartStore.items, cartStore.bundles]), () => {
       if (!store.retryPending && !store.created) store.invalidateQuote();
     });
     const warn = (event: BeforeUnloadEvent) => { if (store.retryPending || store.pendingUpdatePending) { event.preventDefault(); event.returnValue = ''; } };
@@ -39,6 +41,11 @@ export const CheckoutPage = observer(function CheckoutPage() {
     return <Container size="sm" py="xl"><Stack>
       <Title order={1}>הזמנה {result.orderNumber}</Title>
       <Title order={2} size="h4">פרטי ההזמנה</Title>
+      {store.confirmation?.bundles?.map(bundle => <Stack key={bundle.orderBundleId} gap={2}>
+        <Group justify="space-between"><Text fw={700}>{bundle.bundleName} × {bundle.quantity} מארזים זהים</Text><Text>{bundle.lineTotal} ₪</Text></Group>
+        {bundle.components.map(component => <Text key={component.productId} size="sm">{component.productName}: {component.quantity} למארז (סה״כ {component.quantity * bundle.quantity} יחידות)</Text>)}
+      </Stack>)}
+      {Boolean(store.confirmation?.bundles?.length && store.confirmation.items?.length) && <Text fw={700}>מוצרים בנפרד</Text>}
       {store.confirmation?.items?.map((item, index) => <Group key={`${item.productId}-${index}`} justify="space-between">
         <Text>{item.productName ?? 'מוצר בהזמנה'} · כמות: {item.quantitySets}</Text>
         {item.lineTotal && <Text>{item.lineTotal} ₪</Text>}
@@ -47,6 +54,8 @@ export const CheckoutPage = observer(function CheckoutPage() {
       <Text>מצב תשלום: {result.paymentStatus === 'pending' ? 'ממתין לתשלום' : result.paymentStatus === 'paid' ? 'שולם' : result.paymentStatus}</Text>
       {(store.confirmation?.deliveryDate || store.deliveryDate) && <Text>תאריך אספקה: {store.confirmation?.deliveryDate || store.deliveryDate}</Text>}
       {store.confirmationError && <Alert color="orange" role="alert">לא ניתן לטעון את כל פרטי ההזמנה כרגע. <Button variant="subtle" onClick={() => void store.refreshConfirmation()}>נסו שוב</Button></Alert>}
+      <PendingOrderItems />
+      <PendingOrderBundles />
       <Text>תודה שהזמנתם זיס<br />ושנפגש בשמחות</Text>
       <Text>צוות זיס</Text>
       <Button component={Link} to="/" onClick={() => store.dispose()}>להזמנות נוספות</Button>
@@ -70,7 +79,7 @@ export const CheckoutPage = observer(function CheckoutPage() {
       {checkoutSteps.map((label) => <Stepper.Step key={label} label={label} />)}
     </Stepper>
     {step === 0 && <CartItems />}
-    {!cartStore.items.length && <Text>העגלה ריקה. בחרו מוצרים מהקטלוג.</Text>}
+    {!cartStore.items.length && !cartStore.bundles.length && <Text>העגלה ריקה. בחרו מוצרים מהקטלוג.</Text>}
     {step === 1 && <CheckoutForm store={store} />}
     {step === 2 && <Textarea label="הקדשה (רשות)" maxLength={1000} value={store.customer.dedicationText}
       onChange={(event) => store.setCustomer('dedicationText', event.currentTarget.value)} />}

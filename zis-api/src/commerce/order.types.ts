@@ -1,4 +1,4 @@
-import type { CreateOrderInput, OrderCreatedResponse, OrderConfirmationResponse, QuotePreview } from '../contracts/commerce.contracts.js';
+import type { CreateOrderInput, OrderBundleSnapshot, OrderCreatedResponse, OrderConfirmationResponse, QuotePreview } from '../contracts/commerce.contracts.js';
 import type { QuoteRepository } from './quote.service.js';
 export interface OrderSnapshot { productVariantId: string | null; productId: string; productName: string; variantName: string; productCode: string; setSize: number; pricePerSet: string; }
 export interface OrderTransaction extends QuoteRepository {
@@ -25,4 +25,4 @@ export interface OrderService {
   confirmation(token: unknown, now?: Date): Promise<OrderConfirmationResponse>;
 }
 export interface OrderConfig { confirmationTokenTtlSeconds: number; confirmationTokenSecret: string; }
-export interface PendingOrder { input: CreateOrderInput; snapshots: OrderSnapshot[]; response: OrderCreatedResponse; version: string; }
+export interface PendingOrder { input: CreateOrderInput; snapshots: OrderSnapshot[]; bundleSnapshots?: OrderBundleSnapshot[]; response: OrderCreatedResponse; version: string; }

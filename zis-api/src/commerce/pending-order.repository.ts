@@ -2,6 +2,7 @@ import type { CreateOrderInput, DeliveryAddress, QuotePreview } from '../contrac
 import { ApiError } from '../http/api-error.js';
 import type { SqlClient } from '../inventory/postgres-inventory.repository.js';
 import type { OrderSnapshot, PendingOrder } from './order.types.js';
+import { readOrderBundles, saveOrderBundles } from './bundle-order-repository.js';
 
 interface PendingRow extends Record<string, unknown> {
   order_id: string; order_number: string; status: string; payment_status: string; is_test: boolean;
@@ -30,16 +31,24 @@ export async function readPendingOrder(client: SqlClient, tokenHash: string, now
     from public.order_items where order_id=$1 order by product_id,product_variant_id nulls first for update`, [row.order_id]);
   const snapshots: OrderSnapshot[] = items.rows.map(item => ({ productId: item.product_id, productVariantId: item.product_variant_id,
     productName: item.product_name, variantName: item.variant_name, productCode: item.product_code, setSize: item.set_size, pricePerSet: item.price_per_set }));
-  return { version: row.version, snapshots,
+  const bundleSnapshots = await readOrderBundles(client, row.order_id);
+  return { version: row.version, snapshots, bundleSnapshots,
     response: { orderId: row.order_id, orderNumber: row.order_number, status: row.status, paymentStatus: row.payment_status,
       isTest: row.is_test, version: row.version, total: row.total, currency: 'ILS', confirmationToken: '' },
     input: { customerName: row.customer_name, customerPhone: row.customer_phone, deliveryPhone: row.delivery_phone,
       customerEmail: row.customer_email, deliveryAddress: row.delivery_address, shippingZoneId: row.shipping_zone_id,
       deliveryDate: row.delivery_date, dedicationText: row.dedication_text, customerNotes: row.customer_notes,
-      items: items.rows.map(item => ({ productId: item.product_id, productVariantId: item.product_variant_id, quantitySets: item.quantity_sets })) } };
+      items: items.rows.map(item => ({ productId: item.product_id, productVariantId: item.product_variant_id, quantitySets: item.quantity_sets })),
+      ...(bundleSnapshots.length ? { bundles: bundleSnapshots.map(bundle => ({ orderBundleId: bundle.orderBundleId, bundleId: bundle.bundleId, quantity: bundle.quantity,
+        components: bundle.components.map(component => ({ productId: component.productId, quantity: component.quantity })) })) } : {}) } };
 }
 
 export async function updatePendingOrder(client: SqlClient, order: PendingOrder, input: CreateOrderInput, quote: QuotePreview, snapshots: OrderSnapshot[]): Promise<string> {
+  if (input.bundles?.length || order.bundleSnapshots?.length) {
+    // The caller has already validated stock, identity, price and version in this transaction.
+    await client.query('delete from public.order_bundles where order_id=$1', [order.response.orderId]);
+    await saveOrderBundles(client, order.response.orderId, input.bundles ?? [], input.items, order.bundleSnapshots ?? []);
+  }
   for (const original of order.input.items) {
     if (input.items.some(item => item.productId === original.productId && (item.productVariantId ?? null) === (original.productVariantId ?? null))) continue;
     const removed = await client.query(`delete from public.order_items where order_id=$1 and product_id=$2 and product_variant_id is not distinct from $3::uuid`,

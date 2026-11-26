@@ -5,6 +5,7 @@ import { readQuoteContext } from './postgres-commerce.repository.js';
 import type { OrderRepository, OrderSnapshot, OrderTransaction } from './order.types.js';
 import { readPendingOrder, updatePendingOrder } from './pending-order.repository.js';
 import { claimPendingEdit, completePendingEdit } from './pending-edit-requests.repository.js';
+import { readOrderBundles, saveOrderBundles } from './bundle-order-repository.js';
 interface RequestRow extends Record<string,unknown> { request_hash: string; order_id: string | null; }
 interface CreatedRow extends Record<string,unknown> { order_id: string; order_number: string; total: string; is_test?: boolean; version?: string; status?:string;payment_status?:string; }
 interface SnapshotRow extends Record<string,unknown> { product_variant_id:string | null;product_id:string;product_name:string;variant_name:string;product_code:string | null;set_size:number | null;price_per_set:string; }
@@ -19,13 +20,20 @@ export function createPostgresOrderRepository(factory: SqlClientFactory): OrderR
     async findConfirmation(hash,now) {
       const client=await factory();
       try {
+        await client.query('begin isolation level repeatable read read only');
         const result=await client.query<ConfirmationRow>(`select o.order_id,o.order_number,o.status,o.payment_status,o.is_test,extract(epoch from o.updated_at)::text as version,to_char(o.delivery_date,'YYYY-MM-DD') as delivery_date,o.total,
             coalesce((select jsonb_agg(jsonb_build_object('productId',i.product_id,'productVariantId',i.product_variant_id,'quantitySets',i.quantity_sets,'productName',i.product_name_snapshot,'lineTotal',i.line_total::text)
               order by i.product_id,i.product_variant_id nulls first) from public.order_items i where i.order_id=o.order_id),'[]'::jsonb) as items
           from public.order_confirmation_tokens t join public.orders o on o.order_id=t.order_id
           where t.token_hash=$1 and t.revoked_at is null and t.expires_at>$2`,[hash,now]);
-        const row=result.rows[0]; return row ? {isTest:row.is_test,...(row.version ? {version:row.version} : {}),...(row.items ? {items:row.items} : {}),orderNumber:row.order_number,status:row.status,paymentStatus:row.payment_status,deliveryDate:row.delivery_date,total:row.total,currency:'ILS'} : null;
-      } finally { client.release?.(); }
+        const row=result.rows[0];
+        if (!row) { await client.query('commit'); return null; }
+        const bundles = await readOrderBundles(client, row.order_id);
+        const publicBundles = bundles.map(({ imagePath: _imagePath, components, ...bundle }) => ({ ...bundle,
+          components: components.map(({ imagePath: _componentImagePath, ...component }) => component) }));
+        await client.query('commit');
+        return {isTest:row.is_test,...(row.version ? {version:row.version} : {}),...(row.items ? {items:row.items} : {}),...(publicBundles.length ? {bundles:publicBundles} : {}),orderNumber:row.order_number,status:row.status,paymentStatus:row.payment_status,deliveryDate:row.delivery_date,total:row.total,currency:'ILS'};
+      } catch (error) { await client.query('rollback'); throw error; } finally { client.release?.(); }
     },
   };
 }
@@ -105,6 +113,7 @@ async function save(client:SqlClient,input:CreateOrderInput,quote:QuotePreview,s
     await client.query(`insert into public.order_items(order_id,product_id,product_variant_id,product_name_snapshot,variant_name_snapshot,product_code_snapshot,set_size_snapshot,unit_set_price_snapshot,quantity_sets,line_total)
       values($1,$2,$3,$4,$5,$6,$7,$8,$9,($8::numeric*$9::integer))`,[response.orderId,snapshot.productId,snapshot.productVariantId,snapshot.productName,snapshot.variantName,snapshot.productCode,snapshot.setSize,snapshot.pricePerSet,item.quantitySets]);
   }
+  await saveOrderBundles(client, response.orderId, input.bundles ?? [], input.items);
   await client.query("insert into public.order_status_history(order_id,from_status,to_status,note) values($1,null,'ordered','Guest order created; payment pending')",[response.orderId]);
   await client.query('insert into public.order_confirmation_tokens(order_id,token_hash,expires_at) values($1,$2,$3)',[response.orderId,hash,expiresAt]);
 }

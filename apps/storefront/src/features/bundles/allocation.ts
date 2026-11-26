@@ -22,17 +22,20 @@ function addBalanced(items: BundleProduct[], quantities: Selection, needed: numb
   return result;
 }
 
-export function initialSelection(products: BundleProduct[], unitCount: number, random: () => number = Math.random): Selection | null {
-  const shuffled = products.filter(product => product.availableItems > 0);
+export function initialSelection(products: BundleProduct[], unitCount: number, random: () => number = Math.random, count = 1): Selection | null {
+  if (!Number.isSafeInteger(count) || count < 1) return null;
+  const shuffled = products.filter(product => capacity(product, count) > 0);
   for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
-  if (shuffled.reduce((sum, item) => sum + item.availableItems, 0) < unitCount) return null;
+  if (shuffled.reduce((sum, item) => sum + capacity(item, count), 0) < unitCount) return null;
   let number = Math.min(4, shuffled.length);
-  while (number < shuffled.length && shuffled.slice(0, number).reduce((sum, item) => sum + item.availableItems, 0) < unitCount) number++;
-  return addBalanced(shuffled.slice(0, number), {}, unitCount, 1);
+  while (number < shuffled.length && shuffled.slice(0, number).reduce((sum, item) => sum + capacity(item, count), 0) < unitCount) number++;
+  return addBalanced(shuffled.slice(0, number), {}, unitCount, count);
 }
 
 export function adjustSelection(products: BundleProduct[], selection: Selection, unitCount: number, count: number): Selection | null {
+  if (!Number.isSafeInteger(count) || count < 1) return null;
   const selected = products.filter(item => (selection[item.productId] ?? 0) > 0);
+  if (!selected.length) return initialSelection(products, unitCount, Math.random, count);
   const result = { ...selection };
   for (const item of selected) result[item.productId] = Math.min(result[item.productId], capacity(item, count));
   const total = Object.values(result).reduce((sum, amount) => sum + amount, 0);

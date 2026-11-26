@@ -55,6 +55,7 @@ import type { EventGalleryService } from './event-gallery/event-gallery.types.js
 import { createEventGalleryRouter } from './routes/event-gallery.routes.js';
 
 export interface AppDependencies {
+  bundleOrderingEnabled?: boolean;
   bundlePreviewService?: BundlePreviewService;
   bundlesRepository?: BundlesRepository;
   faqService?: FaqService;
@@ -147,7 +148,7 @@ export function createApp(dependencies: AppDependencies = {}) {
     app.use(createAdminCommerceSettingsRouter(dependencies.commerceSettingsService, dependencies.resolveAdminUserId));
   }
   if (dependencies.commerceService) {
-    app.use(createCommerceRouter(dependencies.commerceService));
+    app.use(createCommerceRouter(dependencies.commerceService, { bundlesEnabled: dependencies.bundleOrderingEnabled === true }));
   }
   if (dependencies.operationsReportsService && dependencies.resolveAdminUserId) {
     app.use(createAdminOperationsReportsRouter(dependencies.operationsReportsService, dependencies.resolveAdminUserId));

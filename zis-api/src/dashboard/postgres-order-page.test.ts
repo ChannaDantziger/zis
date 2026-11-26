@@ -20,11 +20,27 @@ test('order page retains total and daily variant choices even when requested pag
   assert.equal(result.variants.length, 1);
   assert.equal(calls[0].sql, 'begin isolation level repeatable read read only');
   assert.equal(calls.at(-1)?.sql, 'commit');
-  assert.deepEqual(calls[1].values, [query.deliveryDate, query.status, query.productVariantId, `%${query.location}%`]);
-  assert.deepEqual(calls[2].values, [...calls[1].values!, 24, 48]);
-  assert.equal(calls[2].sql.includes(query.location), false);
-  assert.deepEqual(calls[3].values, [query.deliveryDate]);
+  const countCall = calls.find(call => call.sql.startsWith('select count'))!;
+  const listCall = calls.find(call => call.sql.includes('as "itemSummary"'))!;
+  const variantsCall = calls.find(call => call.sql.includes('as label'))!;
+  assert.deepEqual(countCall.values, [query.deliveryDate, query.status, query.productVariantId, `%${query.location}%`]);
+  assert.deepEqual(listCall.values, [...countCall.values!, 24, 48]);
+  assert.equal(listCall.sql.includes(query.location), false);
+  assert.deepEqual(variantsCall.values, [query.deliveryDate]);
   assert.equal(released, true);
+});
+
+test('order page includes bundle-only orders when bundle tables exist', async () => {
+  const calls: string[] = [];
+  const client = { query: async (sql: string) => {
+    calls.push(sql);
+    if (sql.includes('to_regclass')) return { rows: [{ present: true }] };
+    if (sql.startsWith('select count')) return { rows: [{ count: 1 }] };
+    return { rows: [] };
+  }, release() {} } as unknown as SqlClient;
+  await readOrderPage(async () => client, query);
+  assert.match(calls.find(sql => sql.startsWith('select count'))!, /or exists \(select 1 from public.order_bundles/);
+  assert.match(calls.find(sql => sql.includes('as "itemSummary"'))!, /left join public.order_items/);
 });
 
 test('failed paginated order read rolls back and releases its client', async () => {

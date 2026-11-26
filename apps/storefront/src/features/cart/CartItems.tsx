@@ -6,17 +6,21 @@ import { MAX_QUANTITY_SETS } from '../../stores/cart.persistence';
 import { cartKey, OUT_OF_STOCK_MESSAGE } from '../../stores/cart.store';
 import { formatPurchasePrice } from '../../entities/product/format';
 import { MinimumOrderNotice } from './minimum-order';
+import { BundleCartItems } from './BundleCartItems';
+import { BUNDLE_PURCHASE_ENABLED } from '../bundles/feature';
 
 const currency = new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS' });
 
 export const CartItems = observer(function CartItems() {
-  if (!cartStore.items.length) {
+  if (!cartStore.items.length && !cartStore.bundles.length) {
     return <Stack align="center" py="xl"><Text>העגלה שלך עדיין ריקה</Text><Button component={Link} to="/catalog" onClick={cartStore.close}>לבחירת מוצרים</Button></Stack>;
   }
   return (
     <Stack>
       {cartStore.storageNotice && <Alert color="yellow" role="status">{cartStore.storageNotice}</Alert>}
       {cartStore.refreshError && <Alert color="red" role="alert">{cartStore.refreshError}</Alert>}
+      {cartStore.bundles.length > 0 && <><BundleCartItems />{!BUNDLE_PURCHASE_ENABLED && <Alert color="blue">רכישת מארזים תתאפשר לאחר השלמת תהליך ההזמנה.</Alert>}
+        <Button component={Link} to="/catalog" variant="light" onClick={cartStore.close}>להרכבת מארז נוסף</Button></>}
       {cartStore.items.map((item) => {
         const key = cartKey(item);
         const details = cartStore.details.get(key);
